@@ -181,6 +181,23 @@ middleware deja pasar la petición en **modo compatibilidad** para no romper
 entornos anteriores a esta historia.
 
 
+### Contexto de autenticación en el frontend
+
+`PatternCareAuth` (en `index.php` / `index.html`) guarda la sesión y la expone
+a toda la interfaz:
+
+| Método | Para qué sirve |
+| --- | --- |
+| `tienePermiso('inventario.ajustar')` | Decidir si se muestra o se habilita una acción |
+| `sucursalesPermitidas()` | Ids asignados; `null` cuando el rol es global |
+| `puedeEnSucursal(id, 'ajustar')` | Validar la sucursal antes de operar |
+
+Todas las llamadas al backend pasan por `fetchConSesion()`, que envía la cookie
+de sesión y convierte el `401` en la pantalla de acceso y el `403` en un aviso
+visible. Al abrir `index.html` con doble clic no hay backend, así que el
+contexto usa una sesión local de demostración y el MVP sigue navegable.
+
+
 ## 🛡️ Seguridad y Buenas Prácticas
 - Consultas parametrizadas con **PDO Prepared Statements** en todos los endpoints PHP para prevenir inyecciones SQL.
 - Cabeceras de seguridad HTTP configuradas en `web.config` y `conexion.php`.
