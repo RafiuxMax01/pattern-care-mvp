@@ -4,7 +4,7 @@
  * Endpoint: Órdenes de Transferencia / Traspasos Inter-Sucursal
  */
 
-require_once __DIR__ . '/../conexion.php';
+require_once __DIR__ . '/middleware_auth.php';
 
 $pdo = getDBConnection();
 if (!$pdo) {
@@ -18,6 +18,14 @@ if (!$data) {
 }
 
 $action = $data['action'] ?? 'crear';
+
+// Autorización por acción (SCRUM-20)
+$permisosPorAccion = [
+    'crear'          => 'transferencias.crear',
+    'transferir'     => 'transferencias.crear',
+    'cambiar_estado' => 'transferencias.crear'
+];
+$perfil = requerirPermiso($permisosPorAccion[$action] ?? 'transferencias.ver');
 
 try {
     switch ($action) {
@@ -38,6 +46,9 @@ try {
             if ($origenId === $destinoId) {
                 jsonResponse(false, null, 'La sucursal de origen no puede ser igual a la sucursal de destino.', 400);
             }
+
+            // Solo se puede sacar mercancía de un punto de venta asignado
+            requerirSucursal($origenId, 'ajustar');
 
             // Iniciar transacción atómica en MySQL
             $pdo->beginTransaction();

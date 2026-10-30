@@ -16,12 +16,13 @@ Crear una herramienta de gestión y diagnóstico operativo que permita visualiza
 
 ```
 Pattern Care/
-├── index.php                    # Interfaz web principal (ERP completo, 10 módulos)
+├── index.php                    # Interfaz web principal (ERP completo, 11 módulos)
 ├── index.html                   # Versión autocontenida (modo standalone/localStorage)
 ├── conexion.php                 # Conexión PDO a MySQL (lee variables de entorno)
-├── database_master.sql          # Script SQL maestro unificado (esquema v2 + datos semilla)
+├── database_master.sql          # Script SQL maestro unificado (esquema v2 + accesos + datos semilla)
 ├── database.sql                 # Esquema base original (compatibilidad)
 ├── database_v2_products.sql     # Extensión v2 productos/variantes (compatibilidad)
+├── database_v3_usuarios.sql     # Extensión v3 roles, permisos y asignación a puntos de venta
 ├── Dockerfile                   # Imagen PHP 8.2 + Apache para Docker
 ├── docker-compose.yml           # Orquestación Docker (Web + MySQL + phpMyAdmin)
 ├── php.ini                      # Configuración PHP para contenedor
@@ -34,10 +35,15 @@ Pattern Care/
     ├── obtener_datos.php        # Datos consolidados (KPIs, SKUs, órdenes, mermas, alertas)
     ├── guardar_inventario.php   # CRUD de inventario y stock por sucursal
     ├── gestionar_productos.php  # CRUD de productos, variantes, números de pieza, fotos
+    ├── gestionar_sucursales.php # CRUD de sucursales y puntos de venta
     ├── registrar_produccion.php # Órdenes de producción y cambio de fases
     ├── control_mermas.php       # Bitácora de mermas y retrabajos
     ├── calcular_rendimiento.php # Simulador de tela SRA/CRO
     ├── transferir_stock.php     # Transferencias inter-sucursal (atómico)
+    ├── modelo_accesos.php       # Capa de datos de roles, permisos y puntos de venta
+    ├── middleware_auth.php      # Middleware de autorización (401 / 403 por permiso y sucursal)
+    ├── auth_sesion.php          # Login, logout, sesión y sucursal activa
+    ├── gestionar_usuarios.php   # CRUD de usuarios y asignación a puntos de venta
     └── instalar_bd.php          # Instalador automático de BD con 1 clic
 ```
 
@@ -174,6 +180,83 @@ Consulta `README_DOCKER.md` para la guía completa de Docker.
 8. **Transferencias inter-sucursal:** Traspaso atómico con validación de stock suficiente en origen.
 
 ---
+
+## 🔐 Roles, Permisos y Puntos de Venta
+
+El acceso se define con tres piezas: el **rol** (qué puede hacer), los **permisos**
+en formato `modulo.accion` (ej. `inventario.ajustar`) y la **asignación a puntos de
+venta** (sobre qué sucursales puede hacerlo).
+
+| Rol | Alcance | Puede |
+| --- | --- | --- |
+| Dueña / Encargada General | Todas las sucursales | Todo, incluida la administración de accesos |
+| Área Administrativa | Sucursales asignadas | Operación completa salvo accesos y alta de sucursales |
+| Corte y Control de Calidad | Sucursales asignadas | Producción, mermas, rendimiento e inventario |
+| Confección Textil | Sucursales asignadas | Avance de fases y registro de retrabajos |
+| Mostrador / Punto de Venta | Su punto de venta | Consultar y ajustar existencias de su sucursal |
+
+Cuentas sembradas (`usuario` / contraseña inicial `PatternCare2026`):
+`encargada`, `administracion`, `corte1`, `corte2`, `confeccion1`, `confeccion2`,
+`pv.hospital`.
+
+Para instalar el módulo sobre una base ya creada:
+
+```bash
+mysql -u root -p < database_v3_usuarios.sql
+```
+
+### Cómo se aplica el control de accesos
+
+`backend/middleware_auth.php` se incluye al inicio de cada endpoint y corta la
+petición antes de tocar la base de datos:
+
+| Situación | Respuesta |
+| --- | --- |
+| Sin sesión iniciada | `401` — el frontend abre la pantalla de acceso |
+| Permiso faltante para la acción | `403` + renglón en `bitacora_accesos` |
+| Sucursal no asignada al usuario | `403`, aunque el permiso sí exista |
+
+La sesión se maneja en `backend/auth_sesion.php` con las acciones `login`,
+`logout`, `sesion` y `seleccionar_sucursal`.
+
+Si la base de datos todavía no tiene instalado el módulo de accesos, el
+middleware deja pasar la petición en **modo compatibilidad** para no romper
+entornos anteriores a esta historia.
+
+
+### Contexto de autenticación en el frontend
+
+`PatternCareAuth` (en `index.php` / `index.html`) guarda la sesión y la expone
+a toda la interfaz:
+
+| Método | Para qué sirve |
+| --- | --- |
+| `tienePermiso('inventario.ajustar')` | Decidir si se muestra o se habilita una acción |
+| `sucursalesPermitidas()` | Ids asignados; `null` cuando el rol es global |
+| `puedeEnSucursal(id, 'ajustar')` | Validar la sucursal antes de operar |
+
+Todas las llamadas al backend pasan por `fetchConSesion()`, que envía la cookie
+de sesión y convierte el `401` en la pantalla de acceso y el `403` en un aviso
+visible. Al abrir `index.html` con doble clic no hay backend, así que el
+contexto usa una sesión local de demostración y el MVP sigue navegable.
+
+
+### Protección de rutas
+
+Cada botón del ribbon declara el permiso que exige en `data-permiso`:
+
+- `aplicarProteccionDeRutas()` oculta los módulos que el rol no puede abrir y,
+  si el módulo activo deja de estar permitido, mueve al usuario al primero que sí.
+- `cambiarModulo()` repite la comprobación, así que ni la búsqueda global ni un
+  enlace directo saltan la regla.
+- El selector de sucursales solo lista los puntos de venta asignados; la vista
+  consolidada de todas es exclusiva del alcance global.
+
+El módulo **Usuarios y Accesos** (permiso `usuarios.ver`) muestra el padrón del
+equipo con sus asignaciones y la bitácora de accesos. Asignar puntos de venta o
+activar cuentas exige además `usuarios.gestionar`, de modo que solo la Dueña o
+la Encargada General puede hacerlo.
+
 
 ## 🛡️ Seguridad y Buenas Prácticas
 

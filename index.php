@@ -64,6 +64,55 @@
 <body class="h-full flex flex-col font-sans bg-gray-50 text-gray-800 selection:bg-bc-blue selection:text-gray-900">
 
     <!-- ============================================================== -->
+    <!-- 0. PANTALLA DE ACCESO Y AVISOS DE SESIÓN (SCRUM-21)            -->
+    <!-- ============================================================== -->
+    <div id="pantalla-acceso" class="hidden fixed inset-0 z-[100] bg-gray-900/70 backdrop-blur-sm items-center justify-center p-4 no-print">
+        <div class="w-full max-w-sm bg-white rounded-2xl shadow-2xl border border-gray-200 overflow-hidden">
+            <div class="px-6 py-5 border-b border-gray-200">
+                <div class="font-heading font-extrabold text-lg tracking-tight text-gray-900">
+                    <span class="text-bc-blue font-black">Pattern Care</span>
+                    <span class="text-gray-400 font-normal">|</span>
+                    <span>Business Central</span>
+                </div>
+                <p class="text-xs text-gray-500 mt-1">Identifícate para operar tus puntos de venta.</p>
+            </div>
+
+            <form id="form-acceso" onsubmit="return enviarFormularioAcceso(event)" class="px-6 py-5 space-y-3">
+                <div>
+                    <label for="acceso-usuario" class="block text-[11px] font-semibold text-gray-600 mb-1">Usuario</label>
+                    <input type="text" id="acceso-usuario" autocomplete="username" required
+                           class="w-full bg-gray-50 border border-gray-300 rounded-lg px-3 py-2 text-xs text-gray-900 focus:outline-none focus:border-bc-blue focus:ring-1 focus:ring-bc-blue"
+                           placeholder="encargada">
+                </div>
+                <div>
+                    <label for="acceso-password" class="block text-[11px] font-semibold text-gray-600 mb-1">Contraseña</label>
+                    <input type="password" id="acceso-password" autocomplete="current-password" required
+                           class="w-full bg-gray-50 border border-gray-300 rounded-lg px-3 py-2 text-xs text-gray-900 focus:outline-none focus:border-bc-blue focus:ring-1 focus:ring-bc-blue"
+                           placeholder="••••••••">
+                </div>
+
+                <div id="acceso-error" class="hidden rounded-lg border border-rose-300 bg-rose-50 px-3 py-2 text-[11px] text-rose-700"></div>
+
+                <button type="submit" id="btn-acceso"
+                        class="w-full bg-bc-blue hover:bg-blue-700 text-white font-semibold rounded-lg px-3 py-2 text-xs transition flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-right-to-bracket text-[11px]"></i>
+                    <span id="btn-acceso-texto">Entrar</span>
+                </button>
+            </form>
+
+            <div class="px-6 py-3 bg-gray-50 border-t border-gray-200 text-[11px] text-gray-500 leading-relaxed">
+                Cuentas sembradas: <span class="font-mono text-gray-700">encargada</span>,
+                <span class="font-mono text-gray-700">administracion</span>,
+                <span class="font-mono text-gray-700">pv.hospital</span><br>
+                Contraseña inicial: <span class="font-mono text-gray-700">PatternCare2026</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Aviso flotante de permisos y sesión -->
+    <div id="aviso-acceso" class="hidden fixed top-4 right-4 z-[110] max-w-sm rounded-lg px-4 py-3 text-xs shadow-lg border no-print"></div>
+
+    <!-- ============================================================== -->
     <!-- 1. BARRA SUPERIOR MICROSOFT Pattern Care APP BAR               -->
     <!-- ============================================================== -->
     <header class="bg-white border-b border-gray-200 sticky top-0 z-50 text-xs shadow-sm">
@@ -132,13 +181,16 @@
                 </button>
 
                 <div class="flex items-center gap-2 pl-2 border-l border-gray-300">
-                    <div class="w-7 h-7 rounded-full bg-bc-blue text-white flex items-center justify-center font-bold text-xs shadow-sm">
-                        EG
+                    <div id="avatar-usuario" class="w-7 h-7 rounded-full bg-bc-blue text-white flex items-center justify-center font-bold text-xs shadow-sm">
+                        ··
                     </div>
                     <div class="hidden xl:block text-left">
-                        <div class="font-semibold text-gray-900 leading-tight">Dueña / Encargada General</div>
-                        <div class="text-[10px] text-gray-500">Rol: Dirección y Operaciones</div>
+                        <div id="nombre-usuario" class="font-semibold text-gray-900 leading-tight">Sin sesión</div>
+                        <div id="rol-usuario" class="text-[10px] text-gray-500">Identifícate para continuar</div>
                     </div>
+                    <button onclick="PatternCareAuth.cerrarSesion()" id="btn-cerrar-sesion" title="Cerrar sesión" class="hidden p-2 rounded-lg bg-gray-100 hover:bg-rose-50 hover:text-rose-600 text-gray-600 border border-gray-300 transition">
+                        <i class="fa-solid fa-right-from-bracket text-xs"></i>
+                    </button>
                 </div>
             </div>
 
@@ -146,45 +198,49 @@
 
         <!-- Ribbon de Módulos Business Central -->
         <div class="bg-gray-50 border-t border-gray-200 px-4 lg:px-6 flex items-center gap-1 overflow-x-auto py-1 font-medium no-print">
-            <button onclick="cambiarModulo('rolecenter')" class="bc-tab-btn active px-3 py-1.5 rounded text-bc-blue bg-blue-50 font-semibold border-b-2 border-bc-blue flex items-center gap-1.5 transition" data-target="modulo-rolecenter">
+            <button onclick="cambiarModulo('rolecenter')" class="bc-tab-btn active px-3 py-1.5 rounded text-bc-blue bg-blue-50 font-semibold border-b-2 border-bc-blue flex items-center gap-1.5 transition" data-target="modulo-rolecenter" data-permiso="rolecenter.ver">
                 <i class="fa-solid fa-table-columns text-bc-blue"></i>
                 <span>Centro de Funciones</span>
             </button>
-            <button onclick="cambiarModulo('inventario')" class="bc-tab-btn px-3 py-1.5 rounded text-gray-500 hover:text-bc-blue hover:bg-blue-50/60 flex items-center gap-1.5 transition" data-target="modulo-inventario">
+            <button onclick="cambiarModulo('inventario')" class="bc-tab-btn px-3 py-1.5 rounded text-gray-500 hover:text-bc-blue hover:bg-blue-50/60 flex items-center gap-1.5 transition" data-target="modulo-inventario" data-permiso="inventario.ver">
                 <i class="fa-solid fa-boxes-stacked text-emerald-400"></i>
                 <span>Productos & Sucursales</span>
             </button>
-            <button onclick="cambiarModulo('transferencias')" class="bc-tab-btn px-3 py-1.5 rounded text-gray-500 hover:text-bc-blue hover:bg-blue-50/60 flex items-center gap-1.5 transition" data-target="modulo-transferencias">
+            <button onclick="cambiarModulo('transferencias')" class="bc-tab-btn px-3 py-1.5 rounded text-gray-500 hover:text-bc-blue hover:bg-blue-50/60 flex items-center gap-1.5 transition" data-target="modulo-transferencias" data-permiso="transferencias.ver">
                 <i class="fa-solid fa-truck-ramp-box text-cyan-400"></i>
                 <span>Transferencias de Stock</span>
             </button>
-            <button onclick="cambiarModulo('produccion')" class="bc-tab-btn px-3 py-1.5 rounded text-gray-500 hover:text-bc-blue hover:bg-blue-50/60 flex items-center gap-1.5 transition" data-target="modulo-produccion">
+            <button onclick="cambiarModulo('produccion')" class="bc-tab-btn px-3 py-1.5 rounded text-gray-500 hover:text-bc-blue hover:bg-blue-50/60 flex items-center gap-1.5 transition" data-target="modulo-produccion" data-permiso="produccion.ver">
                 <i class="fa-solid fa-industry text-indigo-400"></i>
                 <span>Producción (7 Fases)</span>
             </button>
-            <button onclick="cambiarModulo('rendimiento')" class="bc-tab-btn px-3 py-1.5 rounded text-gray-500 hover:text-bc-blue hover:bg-blue-50/60 flex items-center gap-1.5 transition" data-target="modulo-rendimiento">
+            <button onclick="cambiarModulo('rendimiento')" class="bc-tab-btn px-3 py-1.5 rounded text-gray-500 hover:text-bc-blue hover:bg-blue-50/60 flex items-center gap-1.5 transition" data-target="modulo-rendimiento" data-permiso="rendimiento.ver">
                 <i class="fa-solid fa-calculator text-amber-400"></i>
                 <span>Cálculo de Tela (SRA/CRO)</span>
             </button>
-            <button onclick="cambiarModulo('mermas')" class="bc-tab-btn px-3 py-1.5 rounded text-gray-500 hover:text-bc-blue hover:bg-blue-50/60 flex items-center gap-1.5 transition" data-target="modulo-mermas">
+            <button onclick="cambiarModulo('mermas')" class="bc-tab-btn px-3 py-1.5 rounded text-gray-500 hover:text-bc-blue hover:bg-blue-50/60 flex items-center gap-1.5 transition" data-target="modulo-mermas" data-permiso="mermas.ver">
                 <i class="fa-solid fa-file-circle-exclamation text-rose-400"></i>
                 <span>Bitácora de Mermas</span>
             </button>
-            <button onclick="cambiarModulo('sucursales')" class="bc-tab-btn px-3 py-1.5 rounded text-gray-500 hover:text-bc-blue hover:bg-blue-50/60 flex items-center gap-1.5 transition" data-target="modulo-sucursales">
+            <button onclick="cambiarModulo('sucursales')" class="bc-tab-btn px-3 py-1.5 rounded text-gray-500 hover:text-bc-blue hover:bg-blue-50/60 flex items-center gap-1.5 transition" data-target="modulo-sucursales" data-permiso="sucursales.ver">
                 <i class="fa-solid fa-store text-teal-400"></i>
                 <span>Directorio Sucursales</span>
             </button>
-            <button onclick="cambiarModulo('diagnostico')" class="bc-tab-btn px-3 py-1.5 rounded text-gray-500 hover:text-bc-blue hover:bg-blue-50/60 flex items-center gap-1.5 transition" data-target="modulo-diagnostico">
+            <button onclick="cambiarModulo('diagnostico')" class="bc-tab-btn px-3 py-1.5 rounded text-gray-500 hover:text-bc-blue hover:bg-blue-50/60 flex items-center gap-1.5 transition" data-target="modulo-diagnostico" data-permiso="diagnostico.ver">
                 <i class="fa-solid fa-shield-virus text-amber-500"></i>
                 <span>Matriz de Puntos Críticos</span>
             </button>
-            <button onclick="cambiarModulo('reportes')" class="bc-tab-btn px-3 py-1.5 rounded text-gray-500 hover:text-bc-blue hover:bg-blue-50/60 flex items-center gap-1.5 transition" data-target="modulo-reportes">
+            <button onclick="cambiarModulo('reportes')" class="bc-tab-btn px-3 py-1.5 rounded text-gray-500 hover:text-bc-blue hover:bg-blue-50/60 flex items-center gap-1.5 transition" data-target="modulo-reportes" data-permiso="reportes.ver">
                 <i class="fa-solid fa-file-contract text-blue-400"></i>
                 <span>Plan de Acción</span>
             </button>
-            <button onclick="cambiarModulo('catalogo')" class="bc-tab-btn px-3 py-1.5 rounded text-gray-500 hover:text-bc-blue hover:bg-blue-50/60 flex items-center gap-1.5 transition" data-target="modulo-catalogo">
+            <button onclick="cambiarModulo('catalogo')" class="bc-tab-btn px-3 py-1.5 rounded text-gray-500 hover:text-bc-blue hover:bg-blue-50/60 flex items-center gap-1.5 transition" data-target="modulo-catalogo" data-permiso="catalogo.ver">
                 <i class="fa-solid fa-tag text-violet-500"></i>
                 <span>Catálogo de Productos</span>
+            </button>
+            <button onclick="cambiarModulo('accesos')" class="bc-tab-btn px-3 py-1.5 rounded text-gray-500 hover:text-bc-blue hover:bg-blue-50/60 flex items-center gap-1.5 transition" data-target="modulo-accesos" data-permiso="usuarios.ver">
+                <i class="fa-solid fa-users-gear text-bc-blue"></i>
+                <span>Usuarios y Accesos</span>
             </button>
         </div>
 
@@ -923,6 +979,62 @@
 
         </section>
 
+        <!-- ======================================================== -->
+        <!-- MÓDULO: USUARIOS Y ACCESOS (SCRUM-22)                    -->
+        <!-- ======================================================== -->
+        <section id="modulo-accesos" class="bc-seccion hidden space-y-5">
+
+            <div class="bg-white border border-gray-200 rounded-xl p-4 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-sm">
+                <div>
+                    <h2 class="text-lg font-heading font-bold text-gray-900 flex items-center gap-2">
+                        <i class="fa-solid fa-users-gear text-bc-blue"></i>
+                        <span>Usuarios y Puntos de Venta</span>
+                    </h2>
+                    <p class="text-xs text-gray-500 mt-0.5">Define sobre qué sucursales puede operar cada integrante del equipo. Quien no tenga un punto de venta asignado no puede mover su inventario.</p>
+                </div>
+                <button onclick="cargarAccesos()" class="px-3 py-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 border border-gray-300 font-semibold text-xs flex items-center gap-1.5 transition">
+                    <i class="fa-solid fa-rotate"></i>
+                    <span>Actualizar</span>
+                </button>
+            </div>
+
+            <div class="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-xs">
+                        <thead class="bg-gray-50 border-b border-gray-200 text-gray-500 uppercase text-[10px] tracking-wide">
+                            <tr>
+                                <th class="p-3 text-left">Integrante</th>
+                                <th class="p-3 text-left">Rol</th>
+                                <th class="p-3 text-left">Puntos de venta asignados</th>
+                                <th class="p-3 text-center">Estado</th>
+                                <th class="p-3 text-left">Último acceso</th>
+                                <th class="p-3 text-center">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabla-accesos-body" class="divide-y divide-gray-100">
+                            <tr><td colspan="6" class="p-6 text-center text-gray-500">Cargando usuarios...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
+                <div class="px-4 py-3 border-b border-gray-200 flex items-center gap-2">
+                    <i class="fa-solid fa-clipboard-list text-gray-400 text-xs"></i>
+                    <h3 class="font-heading font-bold text-gray-900 text-sm">Bitácora de accesos</h3>
+                    <span class="text-[11px] text-gray-500">Inicios de sesión y operaciones bloqueadas por el middleware</span>
+                </div>
+                <div class="overflow-x-auto max-h-64 overflow-y-auto">
+                    <table class="w-full text-xs">
+                        <tbody id="tabla-bitacora-body" class="divide-y divide-gray-100">
+                            <tr><td class="p-6 text-center text-gray-500">Sin movimientos registrados.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </section>
+
     </main>
 
     <!-- FOOTER GLOBAL -->
@@ -1474,6 +1586,322 @@
         </div>
     </div>
 
+    <!-- MODAL 6: ASIGNACIÓN DE PUNTOS DE VENTA (SCRUM-22) -->
+    <div id="modal-asignacion" class="fixed inset-0 z-50 bg-gray-900/40 backdrop-blur-sm hidden flex items-center justify-center p-4">
+        <div class="w-full max-w-lg bg-white rounded-xl border border-gray-200 shadow-2xl overflow-hidden">
+            <div class="px-5 py-4 border-b border-gray-200 flex items-center justify-between">
+                <div>
+                    <h3 class="font-heading font-bold text-gray-900 text-base">Puntos de venta asignados</h3>
+                    <p id="asignacion-subtitulo" class="text-[11px] text-gray-500 mt-0.5"></p>
+                </div>
+                <button onclick="cerrarModalAsignacion()" class="w-7 h-7 rounded hover:bg-gray-100 text-gray-500 flex items-center justify-center transition">
+                    <i class="fa-solid fa-xmark text-xs"></i>
+                </button>
+            </div>
+
+            <div id="lista-asignacion-sucursales" class="px-5 py-4 space-y-2 max-h-80 overflow-y-auto text-xs">
+                <!-- Inyectado dinámicamente -->
+            </div>
+
+            <div class="px-5 py-3 bg-gray-50 border-t border-gray-200 flex items-center justify-end gap-2">
+                <button onclick="cerrarModalAsignacion()" class="px-3 py-1.5 rounded-lg bg-white hover:bg-gray-100 text-gray-600 border border-gray-300 font-semibold text-xs transition">
+                    Cancelar
+                </button>
+                <button onclick="guardarAsignacionSucursales()" id="btn-guardar-asignacion" class="px-3 py-1.5 rounded-lg bg-bc-blue hover:bg-blue-700 text-white font-semibold text-xs transition flex items-center gap-1.5">
+                    <i class="fa-solid fa-floppy-disk text-[11px]"></i>
+                    <span>Guardar asignación</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- CONTEXTO DE AUTENTICACIÓN (SCRUM-21)                         -->
+    <!-- Mantiene la sesión, el rol, los permisos y los puntos de      -->
+    <!-- venta asignados, y los publica al resto de la aplicación.     -->
+    <!-- ============================================================ -->
+    <script>
+        // Sesión de demostración para el modo standalone (index.html sin servidor)
+        const SESION_STANDALONE = {
+            id: 0,
+            usuario: 'demo',
+            nombre_completo: 'Dueña / Encargada General',
+            correo: null,
+            iniciales: 'EG',
+            estado: 'Activo',
+            rol_clave: 'ENCARGADA_GENERAL',
+            rol_nombre: 'Dueña / Encargada General',
+            alcance_global: true,
+            sucursal_default_id: null,
+            permisos: ['*'],
+            sucursales: [],
+            modo_standalone: true
+        };
+
+        const authState = {
+            sesion: null,
+            modo: 'detectando',   // 'servidor' | 'standalone'
+            cargando: true
+        };
+
+        const PatternCareAuth = {
+            get usuario() {
+                return authState.sesion;
+            },
+            get modo() {
+                return authState.modo;
+            },
+            autenticado() {
+                return authState.sesion !== null;
+            },
+            esGlobal() {
+                return !!(authState.sesion && authState.sesion.alcance_global);
+            },
+
+            /** ¿El rol en sesión tiene este permiso? (ej. 'inventario.ajustar') */
+            tienePermiso(clave) {
+                if (!authState.sesion) return false;
+                const permisos = authState.sesion.permisos || [];
+                return permisos.includes('*') || permisos.includes(clave);
+            },
+
+            /** Ids de sucursales asignadas; null = sin restricción (alcance global) */
+            sucursalesPermitidas() {
+                if (!authState.sesion || authState.sesion.alcance_global) return null;
+                return (authState.sesion.sucursales || []).map(s => parseInt(s.sucursal_id, 10));
+            },
+
+            /** ¿Puede operar en esta sucursal? accion: 'ver' | 'vender' | 'ajustar' */
+            puedeEnSucursal(sucursalId, accion = 'ver') {
+                if (!authState.sesion) return false;
+                if (authState.sesion.alcance_global) return true;
+
+                const fila = (authState.sesion.sucursales || [])
+                    .find(s => parseInt(s.sucursal_id, 10) === parseInt(sucursalId, 10));
+                if (!fila) return false;
+                if (accion === 'vender') return !!fila.puede_vender;
+                if (accion === 'ajustar') return !!fila.puede_ajustar_inventario;
+                return true;
+            },
+
+            /** Lee la sesión del servidor al arrancar la aplicación */
+            async inicializar() {
+                authState.cargando = true;
+                try {
+                    const res = await fetch('backend/auth_sesion.php?action=sesion', {
+                        credentials: 'same-origin',
+                        cache: 'no-store'
+                    });
+                    if (!res.ok) throw new Error('Respuesta no válida del servidor de sesión');
+
+                    const json = await res.json();
+                    authState.modo = 'servidor';
+                    authState.sesion = json.data || null;
+                } catch (err) {
+                    // index.html abierto con doble clic: no hay backend que consultar
+                    authState.modo = 'standalone';
+                    authState.sesion = SESION_STANDALONE;
+                }
+                authState.cargando = false;
+
+                if (authState.sesion) {
+                    ocultarPantallaAcceso();
+                } else {
+                    mostrarPantallaAcceso();
+                }
+                notificarCambioDeSesion();
+                return authState.sesion;
+            },
+
+            /** Inicia sesión con usuario y contraseña */
+            async iniciarSesion(usuario, password) {
+                const res = await fetch('backend/auth_sesion.php', {
+                    method: 'POST',
+                    credentials: 'same-origin',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'login', usuario: usuario, password: password })
+                });
+                const json = await res.json();
+
+                if (!json.success) {
+                    return { ok: false, mensaje: json.message || 'No fue posible iniciar sesión.' };
+                }
+
+                authState.modo = 'servidor';
+                authState.sesion = json.data;
+                ocultarPantallaAcceso();
+                notificarCambioDeSesion();
+                return { ok: true, mensaje: json.message };
+            },
+
+            /** Cierra la sesión y devuelve al usuario a la pantalla de acceso */
+            async cerrarSesion() {
+                if (authState.modo === 'servidor') {
+                    try {
+                        await fetch('backend/auth_sesion.php', {
+                            method: 'POST',
+                            credentials: 'same-origin',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ action: 'logout' })
+                        });
+                    } catch (err) {
+                        console.error(err);
+                    }
+                }
+                authState.sesion = null;
+                mostrarPantallaAcceso();
+                notificarCambioDeSesion();
+            }
+        };
+
+        // ─────────────────────────────────────────────────────────
+        // PANTALLA DE ACCESO
+        // ─────────────────────────────────────────────────────────
+        function mostrarPantallaAcceso() {
+            const caja = document.getElementById('pantalla-acceso');
+            if (!caja) return;
+            caja.classList.remove('hidden');
+            caja.classList.add('flex');
+
+            const usuario = document.getElementById('acceso-usuario');
+            if (usuario) setTimeout(() => usuario.focus(), 60);
+        }
+
+        function ocultarPantallaAcceso() {
+            const caja = document.getElementById('pantalla-acceso');
+            if (!caja) return;
+            caja.classList.add('hidden');
+            caja.classList.remove('flex');
+
+            const error = document.getElementById('acceso-error');
+            if (error) error.classList.add('hidden');
+            const password = document.getElementById('acceso-password');
+            if (password) password.value = '';
+        }
+
+        async function enviarFormularioAcceso(evento) {
+            evento.preventDefault();
+
+            const usuario  = document.getElementById('acceso-usuario').value.trim();
+            const password = document.getElementById('acceso-password').value;
+            const error    = document.getElementById('acceso-error');
+            const boton    = document.getElementById('btn-acceso');
+            const texto    = document.getElementById('btn-acceso-texto');
+
+            error.classList.add('hidden');
+            boton.disabled = true;
+            texto.innerText = 'Verificando...';
+
+            try {
+                const resultado = await PatternCareAuth.iniciarSesion(usuario, password);
+                if (!resultado.ok) {
+                    error.innerText = resultado.mensaje;
+                    error.classList.remove('hidden');
+                } else {
+                    mostrarAvisoAcceso(resultado.mensaje, 'ok');
+                    sincronizarDatos();
+                }
+            } catch (err) {
+                error.innerText = 'No fue posible contactar al servidor de sesión.';
+                error.classList.remove('hidden');
+            }
+
+            boton.disabled = false;
+            texto.innerText = 'Entrar';
+            return false;
+        }
+
+        // ─────────────────────────────────────────────────────────
+        // IDENTIDAD EN LA BARRA SUPERIOR
+        // ─────────────────────────────────────────────────────────
+        function renderizarIdentidadUsuario() {
+            const sesion  = authState.sesion;
+            const avatar  = document.getElementById('avatar-usuario');
+            const nombre  = document.getElementById('nombre-usuario');
+            const rol     = document.getElementById('rol-usuario');
+            const salir   = document.getElementById('btn-cerrar-sesion');
+
+            if (avatar) avatar.innerText = sesion ? (sesion.iniciales || 'PC') : '··';
+            if (nombre) nombre.innerText = sesion ? sesion.nombre_completo : 'Sin sesión';
+
+            if (rol) {
+                if (!sesion) {
+                    rol.innerText = 'Identifícate para continuar';
+                } else if (sesion.alcance_global) {
+                    rol.innerText = `${sesion.rol_nombre} · Todas las sucursales`;
+                } else {
+                    const total = (sesion.sucursales || []).length;
+                    rol.innerText = `${sesion.rol_nombre} · ${total} punto(s) de venta`;
+                }
+            }
+
+            if (salir) {
+                salir.classList.toggle('hidden', !sesion || authState.modo !== 'servidor');
+            }
+        }
+
+        /** Avisa al resto de la aplicación de que la sesión cambió */
+        function notificarCambioDeSesion() {
+            renderizarIdentidadUsuario();
+            document.dispatchEvent(new CustomEvent('patterncare:sesion', { detail: authState.sesion }));
+        }
+
+        // ─────────────────────────────────────────────────────────
+        // AVISOS DE ACCESO
+        // ─────────────────────────────────────────────────────────
+        let _avisoAccesoTimeout = null;
+
+        function mostrarAvisoAcceso(mensaje, tipo = 'error') {
+            const caja = document.getElementById('aviso-acceso');
+            if (!caja) return;
+
+            const estilos = {
+                error: 'bg-rose-50 border-rose-300 text-rose-700',
+                info:  'bg-blue-50 border-blue-300 text-bc-blue',
+                ok:    'bg-emerald-50 border-emerald-300 text-emerald-700'
+            };
+            const iconos = { error: 'fa-shield-halved', info: 'fa-circle-info', ok: 'fa-circle-check' };
+
+            caja.className = 'fixed top-4 right-4 z-[110] max-w-sm rounded-lg px-4 py-3 text-xs shadow-lg border no-print ' + (estilos[tipo] || estilos.error);
+            caja.innerHTML = `
+                <div class="flex items-start gap-2">
+                    <i class="fa-solid ${iconos[tipo] || iconos.error} mt-0.5"></i>
+                    <span>${mensaje}</span>
+                </div>
+            `;
+
+            clearTimeout(_avisoAccesoTimeout);
+            _avisoAccesoTimeout = setTimeout(() => caja.classList.add('hidden'), 6000);
+        }
+
+        // ─────────────────────────────────────────────────────────
+        // PETICIONES CON SESIÓN
+        // Envuelve a fetch() para enviar la cookie de sesión y traducir
+        // las respuestas 401 / 403 del middleware a la interfaz.
+        // ─────────────────────────────────────────────────────────
+        async function fetchConSesion(url, opciones = {}) {
+            const res = await fetch(url, Object.assign({ credentials: 'same-origin' }, opciones));
+
+            if (res.status === 401) {
+                authState.sesion = null;
+                mostrarPantallaAcceso();
+                notificarCambioDeSesion();
+                mostrarAvisoAcceso('Tu sesión terminó. Vuelve a identificarte.', 'info');
+            } else if (res.status === 403) {
+                let mensaje = 'No tienes permiso para esa operación.';
+                try {
+                    const cuerpo = await res.clone().json();
+                    if (cuerpo && cuerpo.message) mensaje = cuerpo.message;
+                } catch (err) {
+                    // Respuesta sin cuerpo JSON: se conserva el mensaje genérico
+                }
+                mostrarAvisoAcceso(mensaje, 'error');
+            }
+
+            return res;
+        }
+    </script>
+
     <!-- MOTOR JAVASCRIPT BUSINESS CENTRAL & MULTI-SUCURSAL -->
     <script>
         let bcState = {
@@ -1574,11 +2002,17 @@
             ]
         };
 
-        document.addEventListener('DOMContentLoaded', () => {
+        document.addEventListener('DOMContentLoaded', async () => {
+            // El contexto de autenticación decide qué se puede pedir y mostrar
+            await PatternCareAuth.inicializar();
+
             renderizarDropdownSucursales();
             verDetalleFase(1);
             calcularRendimientoEnVivo();
-            sincronizarDatos();
+
+            if (PatternCareAuth.autenticado()) {
+                sincronizarDatos();
+            }
         });
 
         async function sincronizarDatos() {
@@ -1589,7 +2023,7 @@
             const urlParams = bcState.sucursalActivaId ? `?sucursal_id=${bcState.sucursalActivaId}` : '';
 
             try {
-                const res = await fetch(`backend/obtener_datos.php${urlParams}`, {
+                const res = await fetchConSesion(`backend/obtener_datos.php${urlParams}`, {
                     headers: { 'Accept': 'application/json' },
                     cache: 'no-store'
                 });
@@ -1887,7 +2321,14 @@
             const cont = document.getElementById('lista-opciones-sucursal');
             if (!cont) return;
 
-            let html = `
+            // Protección de rutas (SCRUM-22): solo se listan los puntos de venta asignados
+            const permitidas = typeof PatternCareAuth !== 'undefined' ? PatternCareAuth.sucursalesPermitidas() : null;
+            const sucursalesVisibles = permitidas === null
+                ? bcState.sucursales
+                : bcState.sucursales.filter(s => permitidas.includes(parseInt(s.id, 10)));
+
+            // La vista consolidada de todas las sucursales es exclusiva del alcance global
+            let html = permitidas !== null ? '' : `
                 <button onclick="seleccionarSucursalGlobal(null)" class="w-full text-left px-2.5 py-1.5 rounded hover:bg-gray-100 transition flex items-center justify-between ${bcState.sucursalActivaId === null ? 'bg-blue-50 text-bc-blue font-bold' : 'text-gray-600'}">
                     <span class="flex items-center gap-2">
                         <i class="fa-solid fa-globe text-xs"></i>
@@ -1897,7 +2338,7 @@
                 </button>
             `;
 
-            bcState.sucursales.forEach(s => {
+            sucursalesVisibles.forEach(s => {
                 const activo = bcState.sucursalActivaId == s.id;
                 html += `
                     <button onclick="seleccionarSucursalGlobal(${s.id})" class="w-full text-left px-2.5 py-1.5 rounded hover:bg-gray-100 transition flex items-center justify-between ${activo ? 'bg-blue-50 text-bc-blue font-bold' : 'text-gray-600'}">
@@ -1914,6 +2355,21 @@
         }
 
         function seleccionarSucursalGlobal(sucursalId) {
+            // Protección de rutas (SCRUM-22): la sucursal activa debe estar asignada
+            if (typeof PatternCareAuth !== 'undefined') {
+                if (sucursalId === null && !PatternCareAuth.esGlobal()) {
+                    mostrarAvisoAcceso('Tu rol solo puede trabajar sobre sus puntos de venta asignados.', 'error');
+                    toggleDropdownSucursal();
+                    return;
+                }
+                if (sucursalId !== null && !PatternCareAuth.puedeEnSucursal(sucursalId, 'ver')) {
+                    mostrarAvisoAcceso('No tienes asignado ese punto de venta.', 'error');
+                    toggleDropdownSucursal();
+                    return;
+                }
+                sincronizarSucursalConServidor(sucursalId);
+            }
+
             bcState.sucursalActivaId = sucursalId;
             toggleDropdownSucursal();
 
@@ -2094,7 +2550,7 @@
 
             if (bcState.modoBackend === 'mysql') {
                 try {
-                    const res = await fetch('backend/guardar_inventario.php', {
+                    const res = await fetchConSesion('backend/guardar_inventario.php', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ action: 'ajustar_stock', id: id, sucursal_id: sucursalId, delta: delta })
@@ -2219,7 +2675,7 @@
 
             if (bcState.modoBackend === 'mysql') {
                 try {
-                    const res = await fetch('backend/transferir_stock.php', {
+                    const res = await fetchConSesion('backend/transferir_stock.php', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(payload)
@@ -2393,7 +2849,7 @@
 
             if (bcState.modoBackend === 'mysql') {
                 try {
-                    const res = await fetch('backend/guardar_inventario.php', {
+                    const res = await fetchConSesion('backend/guardar_inventario.php', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(payload)
@@ -2442,7 +2898,7 @@
 
             if (bcState.modoBackend === 'mysql') {
                 try {
-                    const res = await fetch('backend/guardar_inventario.php', {
+                    const res = await fetchConSesion('backend/guardar_inventario.php', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ action: 'eliminar', id: id })
@@ -2512,7 +2968,7 @@
 
             if (bcState.modoBackend === 'mysql') {
                 try {
-                    const res = await fetch('backend/calcular_rendimiento.php', {
+                    const res = await fetchConSesion('backend/calcular_rendimiento.php', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(payload)
@@ -2702,7 +3158,7 @@
 
             if (bcState.modoBackend === 'mysql') {
                 try {
-                    const res = await fetch('backend/registrar_produccion.php', {
+                    const res = await fetchConSesion('backend/registrar_produccion.php', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(payload)
@@ -2726,7 +3182,7 @@
         async function avanzarFaseOrden(id, nextFase) {
             if (bcState.modoBackend === 'mysql') {
                 try {
-                    await fetch('backend/registrar_produccion.php', {
+                    await fetchConSesion('backend/registrar_produccion.php', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ action: 'cambiar_fase', id: id, fase_actual: nextFase })
@@ -2752,7 +3208,7 @@
 
             if (bcState.modoBackend === 'mysql') {
                 try {
-                    await fetch('backend/registrar_produccion.php', {
+                    await fetchConSesion('backend/registrar_produccion.php', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ action: 'cambiar_estado', id: id, estado: nuevoEstado })
@@ -2841,7 +3297,7 @@
 
             if (bcState.modoBackend === 'mysql') {
                 try {
-                    const res = await fetch('backend/control_mermas.php', {
+                    const res = await fetchConSesion('backend/control_mermas.php', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(payload)
@@ -2865,7 +3321,7 @@
         async function eliminarMerma(id) {
             if (bcState.modoBackend === 'mysql') {
                 try {
-                    await fetch('backend/control_mermas.php', {
+                    await fetchConSesion('backend/control_mermas.php', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ action: 'eliminar', id: id })
@@ -2903,7 +3359,7 @@
             Swal.fire({ title: 'Instalando tablas...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
 
             try {
-                const res = await fetch('backend/instalar_bd.php', { method: 'POST' });
+                const res = await fetchConSesion('backend/instalar_bd.php', { method: 'POST' });
                 const json = await res.json();
                 if (json.success) {
                     Swal.fire('¡Éxito!', 'Base de datos de Business Central inicializada correctamente.', 'success');
@@ -2949,6 +3405,12 @@
         });
 
         function cambiarModulo(key) {
+            // Protección de rutas (SCRUM-22): el rol decide a qué módulos entra
+            if (typeof moduloPermitido === 'function' && !moduloPermitido(key)) {
+                mostrarAvisoAcceso('Tu rol no tiene acceso a ese módulo.', 'error');
+                return;
+            }
+
             document.querySelectorAll('.bc-seccion').forEach(s => s.classList.add('hidden'));
             document.querySelectorAll('.bc-tab-btn').forEach(b => {
                 b.classList.remove('active', 'text-bc-blue', 'bg-blue-50', 'font-semibold', 'border-b-2', 'border-bc-blue');
@@ -2970,6 +3432,9 @@
             }
             if (key === 'catalogo') {
                 renderizarCatalogo();
+            }
+            if (key === 'accesos') {
+                cargarAccesos();
             }
         }
     </script>
@@ -3018,7 +3483,7 @@
         function renderizarCatalogo() {
             // Intentar cargar desde backend; si falla, usar estado local o semilla
             if (bcState.modoBackend === 'mysql') {
-                fetch('backend/gestionar_productos.php?action=listar')
+                fetchConSesion('backend/gestionar_productos.php?action=listar')
                     .then(r => r.json())
                     .then(j => {
                         if (j.success) {
@@ -3267,7 +3732,7 @@
 
             if (bcState.modoBackend === 'mysql') {
                 try {
-                    const r = await fetch('backend/gestionar_productos.php?action=generar_numero&categoria=' + encodeURIComponent(cat));
+                    const r = await fetchConSesion('backend/gestionar_productos.php?action=generar_numero&categoria=' + encodeURIComponent(cat));
                     const j = await r.json();
                     if (j.success) { input.value = j.data.numero_pieza; return; }
                 } catch(e) {}
@@ -3461,7 +3926,7 @@
             // Si hay base64 e internet, subir a Cloudinary
             if (catalogoState.fotoBase64 && bcState.modoBackend === 'mysql') {
                 try {
-                    const r = await fetch('backend/gestionar_productos.php', {
+                    const r = await fetchConSesion('backend/gestionar_productos.php', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
@@ -3499,7 +3964,7 @@
 
             if (bcState.modoBackend === 'mysql') {
                 try {
-                    const r = await fetch('backend/gestionar_productos.php', {
+                    const r = await fetchConSesion('backend/gestionar_productos.php', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(payload)
@@ -3603,7 +4068,7 @@
 
             if (bcState.modoBackend === 'mysql') {
                 try {
-                    const r = await fetch('backend/gestionar_productos.php', {
+                    const r = await fetchConSesion('backend/gestionar_productos.php', {
                         method: 'POST', headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ action: 'eliminar', id })
                     });
@@ -3617,5 +4082,382 @@
             _pintarCatalogo();
         }
     </script>
+    <!-- ============================================================ -->
+    <!-- PROTECCIÓN DE RUTAS Y MÓDULO DE ACCESOS (SCRUM-22)           -->
+    <!-- Oculta los módulos que el rol no puede abrir, acota el       -->
+    <!-- selector de sucursales a los puntos de venta asignados y     -->
+    <!-- permite a la Dueña administrar esas asignaciones.            -->
+    <!-- ============================================================ -->
+    <script>
+        // ─────────────────────────────────────────────────────────
+        // PROTECCIÓN DE RUTAS
+        // El permiso de cada módulo se declara en data-permiso, sobre
+        // el propio botón del ribbon.
+        // ─────────────────────────────────────────────────────────
+        function botonDeModulo(key) {
+            return document.querySelector('.bc-tab-btn[data-target="modulo-' + key + '"]');
+        }
+
+        function moduloPermitido(key) {
+            const boton = botonDeModulo(key);
+            const permiso = boton ? boton.dataset.permiso : null;
+            if (!permiso) return true;
+            return PatternCareAuth.tienePermiso(permiso);
+        }
+
+        function primerModuloPermitido() {
+            const boton = Array.from(document.querySelectorAll('.bc-tab-btn[data-target]'))
+                .find(b => !b.dataset.permiso || PatternCareAuth.tienePermiso(b.dataset.permiso));
+            return boton ? boton.dataset.target.replace('modulo-', '') : null;
+        }
+
+        function aplicarProteccionDeRutas() {
+            document.querySelectorAll('.bc-tab-btn[data-target]').forEach(boton => {
+                const permiso = boton.dataset.permiso;
+                const permitido = !permiso || PatternCareAuth.tienePermiso(permiso);
+                boton.classList.toggle('hidden', !permitido);
+            });
+
+            if (!PatternCareAuth.autenticado()) return;
+
+            const seccionVisible = document.querySelector('.bc-seccion:not(.hidden)');
+            const claveActual = seccionVisible ? seccionVisible.id.replace('modulo-', '') : null;
+
+            if (claveActual && moduloPermitido(claveActual)) return;
+
+            const destino = primerModuloPermitido();
+            if (destino) {
+                cambiarModulo(destino);
+            } else {
+                mostrarAvisoAcceso('Tu rol no tiene ningún módulo habilitado. Contacta a la Encargada General.', 'error');
+            }
+        }
+
+        // ─────────────────────────────────────────────────────────
+        // SUCURSAL ACTIVA ACOTADA A LA ASIGNACIÓN
+        // ─────────────────────────────────────────────────────────
+        function actualizarEtiquetasSucursal(sucursalId) {
+            const txt = document.getElementById('txt-sucursal-actual');
+            const lblVista = document.getElementById('lbl-vista-activa');
+            const nombre = sucursalId === null ? 'Todas las Sucursales' : obtenerNombreSucursal(sucursalId);
+
+            if (txt) txt.innerText = nombre;
+            if (lblVista) lblVista.innerText = sucursalId === null ? 'Consolidada' : nombre;
+        }
+
+        function ajustarSucursalActivaSegunSesion() {
+            const permitidas = PatternCareAuth.sucursalesPermitidas();
+            if (permitidas === null || permitidas.length === 0) return;
+
+            const actual = bcState.sucursalActivaId;
+            if (actual !== null && permitidas.includes(parseInt(actual, 10))) return;
+
+            const preferida = PatternCareAuth.usuario ? PatternCareAuth.usuario.sucursal_default_id : null;
+            const destino = (preferida !== null && permitidas.includes(parseInt(preferida, 10)))
+                ? parseInt(preferida, 10)
+                : permitidas[0];
+
+            bcState.sucursalActivaId = destino;
+            actualizarEtiquetasSucursal(destino);
+            renderizarDropdownSucursales();
+        }
+
+        /** Deja constancia en el servidor de cuál es la sucursal activa */
+        async function sincronizarSucursalConServidor(sucursalId) {
+            if (PatternCareAuth.modo !== 'servidor') return;
+            try {
+                await fetchConSesion('backend/auth_sesion.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'seleccionar_sucursal', sucursal_id: sucursalId })
+                });
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        // La sesión manda: cada vez que cambia se recalculan rutas y sucursal
+        document.addEventListener('patterncare:sesion', () => {
+            ajustarSucursalActivaSegunSesion();
+            aplicarProteccionDeRutas();
+        });
+
+        // ─────────────────────────────────────────────────────────
+        // MÓDULO DE USUARIOS Y ACCESOS
+        // ─────────────────────────────────────────────────────────
+        const accesosState = {
+            usuarios: [],
+            sucursales: [],
+            editando: null,     // usuario cuya asignación se está editando
+            seleccion: {}       // { sucursalId: { puede_vender, puede_ajustar_inventario } }
+        };
+
+        async function cargarAccesos() {
+            const cuerpo = document.getElementById('tabla-accesos-body');
+            if (!cuerpo) return;
+
+            if (PatternCareAuth.modo !== 'servidor') {
+                cuerpo.innerHTML = '<tr><td colspan="6" class="p-6 text-center text-gray-500">La administración de accesos requiere el backend activo (MySQL).</td></tr>';
+                return;
+            }
+
+            cuerpo.innerHTML = '<tr><td colspan="6" class="p-6 text-center text-gray-500">Cargando usuarios...</td></tr>';
+
+            try {
+                const [resUsuarios, resCatalogos] = await Promise.all([
+                    fetchConSesion('backend/gestionar_usuarios.php?action=listar'),
+                    fetchConSesion('backend/gestionar_usuarios.php?action=catalogos')
+                ]);
+
+                const jsonUsuarios  = await resUsuarios.json();
+                const jsonCatalogos = await resCatalogos.json();
+
+                if (!jsonUsuarios.success) {
+                    cuerpo.innerHTML = `<tr><td colspan="6" class="p-6 text-center text-rose-600">${jsonUsuarios.message}</td></tr>`;
+                    return;
+                }
+
+                accesosState.usuarios   = jsonUsuarios.data || [];
+                accesosState.sucursales = (jsonCatalogos.data && jsonCatalogos.data.sucursales) || [];
+
+                renderizarTablaAccesos();
+                cargarBitacoraAccesos();
+            } catch (err) {
+                cuerpo.innerHTML = '<tr><td colspan="6" class="p-6 text-center text-rose-600">No fue posible consultar los accesos.</td></tr>';
+            }
+        }
+
+        function etiquetasDeSucursales(usuario) {
+            if (usuario.alcance_global) {
+                return '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 text-bc-blue border border-blue-200">Todas las sucursales</span>';
+            }
+            if (!usuario.sucursales || usuario.sucursales.length === 0) {
+                return '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-50 text-rose-600 border border-rose-200">Sin asignación</span>';
+            }
+            return usuario.sucursales.map(s => {
+                const marca = s.puede_ajustar_inventario
+                    ? '<i class="fa-solid fa-pen-to-square text-[9px] ml-1 text-emerald-600" title="Puede ajustar existencias"></i>'
+                    : '';
+                return `<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-teal-50 text-teal-700 border border-teal-200 mr-1 mb-1">${s.nombre}${marca}</span>`;
+            }).join('');
+        }
+
+        function renderizarTablaAccesos() {
+            const cuerpo = document.getElementById('tabla-accesos-body');
+            if (!cuerpo) return;
+
+            if (accesosState.usuarios.length === 0) {
+                cuerpo.innerHTML = '<tr><td colspan="6" class="p-6 text-center text-gray-500">Sin usuarios registrados.</td></tr>';
+                return;
+            }
+
+            const puedeEditar = PatternCareAuth.tienePermiso('usuarios.gestionar');
+
+            cuerpo.innerHTML = accesosState.usuarios.map(u => {
+                const activo = u.estado === 'Activo';
+                const badgeEstado = activo
+                    ? '<span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">Activo</span>'
+                    : '<span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-gray-100 text-gray-500 border border-gray-300">Inactivo</span>';
+
+                const acciones = puedeEditar
+                    ? `
+                        <button onclick="abrirModalAsignacion(${u.id})" class="px-2 py-1 rounded bg-blue-50 hover:bg-blue-100 text-bc-blue border border-blue-200 font-semibold transition" title="Asignar puntos de venta">
+                            <i class="fa-solid fa-store text-[11px]"></i>
+                        </button>
+                        <button onclick="alternarEstadoUsuario(${u.id}, '${activo ? 'Inactivo' : 'Activo'}')" class="px-2 py-1 rounded bg-gray-50 hover:bg-gray-100 text-gray-600 border border-gray-300 font-semibold transition" title="${activo ? 'Desactivar cuenta' : 'Activar cuenta'}">
+                            <i class="fa-solid ${activo ? 'fa-user-slash' : 'fa-user-check'} text-[11px]"></i>
+                        </button>
+                      `
+                    : '<span class="text-[10px] text-gray-400">Solo lectura</span>';
+
+                return `
+                    <tr class="hover:bg-gray-50">
+                        <td class="p-3">
+                            <div class="flex items-center gap-2">
+                                <div class="w-7 h-7 rounded-full bg-bc-blue text-white flex items-center justify-center font-bold text-[10px]">${(u.nombre_completo || '').substring(0, 2).toUpperCase()}</div>
+                                <div>
+                                    <div class="font-semibold text-gray-900">${u.nombre_completo}</div>
+                                    <div class="text-[10px] text-gray-500 font-mono">@${u.usuario}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="p-3 text-gray-700">${u.rol_nombre}</td>
+                        <td class="p-3">${etiquetasDeSucursales(u)}</td>
+                        <td class="p-3 text-center">${badgeEstado}</td>
+                        <td class="p-3 text-gray-500">${u.ultimo_acceso ? u.ultimo_acceso.substring(0, 16) : 'Nunca'}</td>
+                        <td class="p-3 text-center whitespace-nowrap">${acciones}</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        async function cargarBitacoraAccesos() {
+            const cuerpo = document.getElementById('tabla-bitacora-body');
+            if (!cuerpo) return;
+
+            try {
+                const res = await fetchConSesion('backend/gestionar_usuarios.php?action=bitacora&limite=25');
+                const json = await res.json();
+                const filas = (json.success && json.data) ? json.data : [];
+
+                if (filas.length === 0) {
+                    cuerpo.innerHTML = '<tr><td class="p-6 text-center text-gray-500">Sin movimientos registrados.</td></tr>';
+                    return;
+                }
+
+                const iconos = {
+                    login_ok:        'fa-right-to-bracket text-emerald-600',
+                    login_fallido:   'fa-triangle-exclamation text-amber-600',
+                    logout:          'fa-right-from-bracket text-gray-500',
+                    acceso_denegado: 'fa-ban text-rose-600'
+                };
+
+                cuerpo.innerHTML = filas.map(f => `
+                    <tr class="hover:bg-gray-50">
+                        <td class="p-2.5 w-8 text-center"><i class="fa-solid ${iconos[f.evento] || 'fa-circle-info text-gray-400'} text-xs"></i></td>
+                        <td class="p-2.5 font-mono text-gray-700">${f.usuario || 'anónimo'}</td>
+                        <td class="p-2.5 text-gray-600">${f.evento.replace('_', ' ')}${f.permiso ? ' · ' + f.permiso : ''}</td>
+                        <td class="p-2.5 text-gray-500">${f.recurso || ''}</td>
+                        <td class="p-2.5 text-gray-500 text-right">${f.fecha ? f.fecha.substring(0, 16) : ''}</td>
+                    </tr>
+                `).join('');
+            } catch (err) {
+                cuerpo.innerHTML = '<tr><td class="p-6 text-center text-gray-500">Bitácora no disponible.</td></tr>';
+            }
+        }
+
+        // ─────────────────────────────────────────────────────────
+        // ASIGNACIÓN DE PUNTOS DE VENTA
+        // ─────────────────────────────────────────────────────────
+        function abrirModalAsignacion(usuarioId) {
+            const usuario = accesosState.usuarios.find(u => u.id === usuarioId);
+            if (!usuario) return;
+
+            accesosState.editando = usuario;
+            accesosState.seleccion = {};
+            (usuario.sucursales || []).forEach(s => {
+                accesosState.seleccion[s.sucursal_id] = {
+                    puede_vender: !!s.puede_vender,
+                    puede_ajustar_inventario: !!s.puede_ajustar_inventario
+                };
+            });
+
+            const subtitulo = document.getElementById('asignacion-subtitulo');
+            if (subtitulo) {
+                subtitulo.innerText = usuario.alcance_global
+                    ? `${usuario.nombre_completo} · su rol ya tiene alcance global sobre todas las sucursales`
+                    : `${usuario.nombre_completo} · ${usuario.rol_nombre}`;
+            }
+
+            renderizarListaAsignacion();
+            document.getElementById('modal-asignacion').classList.remove('hidden');
+        }
+
+        function cerrarModalAsignacion() {
+            document.getElementById('modal-asignacion').classList.add('hidden');
+            accesosState.editando = null;
+        }
+
+        function renderizarListaAsignacion() {
+            const lista = document.getElementById('lista-asignacion-sucursales');
+            if (!lista) return;
+
+            lista.innerHTML = accesosState.sucursales.map(s => {
+                const id = parseInt(s.id, 10);
+                const sel = accesosState.seleccion[id];
+                const activa = !!sel;
+
+                return `
+                    <div class="rounded-lg border ${activa ? 'border-bc-blue bg-blue-50/40' : 'border-gray-200'} px-3 py-2.5 transition">
+                        <label class="flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" ${activa ? 'checked' : ''} onchange="alternarSucursalAsignacion(${id}, this.checked)" class="rounded border-gray-300 text-bc-blue focus:ring-bc-blue">
+                            <span class="font-semibold text-gray-800">${s.nombre}</span>
+                            <span class="text-[10px] text-gray-500">${s.tipo}</span>
+                        </label>
+                        <div class="flex items-center gap-4 mt-2 ml-6 ${activa ? '' : 'opacity-40 pointer-events-none'}">
+                            <label class="flex items-center gap-1.5 cursor-pointer text-[11px] text-gray-600">
+                                <input type="checkbox" ${activa && sel.puede_vender ? 'checked' : ''} onchange="marcarPermisoAsignacion(${id}, 'puede_vender', this.checked)" class="rounded border-gray-300 text-teal-600 focus:ring-teal-500">
+                                <span>Puede vender</span>
+                            </label>
+                            <label class="flex items-center gap-1.5 cursor-pointer text-[11px] text-gray-600">
+                                <input type="checkbox" ${activa && sel.puede_ajustar_inventario ? 'checked' : ''} onchange="marcarPermisoAsignacion(${id}, 'puede_ajustar_inventario', this.checked)" class="rounded border-gray-300 text-emerald-600 focus:ring-emerald-500">
+                                <span>Puede ajustar existencias</span>
+                            </label>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function alternarSucursalAsignacion(sucursalId, activa) {
+            if (activa) {
+                accesosState.seleccion[sucursalId] = { puede_vender: true, puede_ajustar_inventario: false };
+            } else {
+                delete accesosState.seleccion[sucursalId];
+            }
+            renderizarListaAsignacion();
+        }
+
+        function marcarPermisoAsignacion(sucursalId, campo, valor) {
+            if (!accesosState.seleccion[sucursalId]) return;
+            accesosState.seleccion[sucursalId][campo] = valor;
+        }
+
+        async function guardarAsignacionSucursales() {
+            const usuario = accesosState.editando;
+            if (!usuario) return;
+
+            const boton = document.getElementById('btn-guardar-asignacion');
+            if (boton) boton.disabled = true;
+
+            const sucursales = Object.keys(accesosState.seleccion).map(id => ({
+                sucursal_id: parseInt(id, 10),
+                puede_vender: accesosState.seleccion[id].puede_vender ? 1 : 0,
+                puede_ajustar_inventario: accesosState.seleccion[id].puede_ajustar_inventario ? 1 : 0
+            }));
+
+            try {
+                const res = await fetchConSesion('backend/gestionar_usuarios.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'asignar_sucursales', id: usuario.id, sucursales: sucursales })
+                });
+                const json = await res.json();
+
+                if (json.success) {
+                    mostrarAvisoAcceso(json.message, 'ok');
+                    cerrarModalAsignacion();
+                    cargarAccesos();
+                } else {
+                    mostrarAvisoAcceso(json.message, 'error');
+                }
+            } catch (err) {
+                mostrarAvisoAcceso('No fue posible guardar la asignación.', 'error');
+            }
+
+            if (boton) boton.disabled = false;
+        }
+
+        async function alternarEstadoUsuario(usuarioId, estado) {
+            try {
+                const res = await fetchConSesion('backend/gestionar_usuarios.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'cambiar_estado', id: usuarioId, estado: estado })
+                });
+                const json = await res.json();
+
+                if (json.success) {
+                    mostrarAvisoAcceso(json.message, 'ok');
+                    cargarAccesos();
+                } else {
+                    mostrarAvisoAcceso(json.message, 'error');
+                }
+            } catch (err) {
+                mostrarAvisoAcceso('No fue posible cambiar el estado de la cuenta.', 'error');
+            }
+        }
+    </script>
+
 </body>
 </html>

@@ -18,6 +18,12 @@ services:
       - ./uploads:/var/www/html/uploads
     environment:
       - APACHE_DOCUMENT_ROOT=/var/www/html
+      # Credenciales que lee conexion.php dentro del contenedor
+      - DB_HOST=db
+      - DB_PORT=3306
+      - DB_NAME=${MYSQL_DATABASE:-pattern_care}
+      - DB_USER=${MYSQL_USER:-pattern_user}
+      - DB_PASS=${MYSQL_PASSWORD:-pattern_pass}
     depends_on:
       db:
         condition: service_healthy

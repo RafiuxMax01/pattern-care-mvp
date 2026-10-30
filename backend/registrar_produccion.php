@@ -4,7 +4,7 @@
  * Control de fases, órdenes de trabajo, responsables y cuellos de botella.
  */
 
-require_once __DIR__ . '/../conexion.php';
+require_once __DIR__ . '/middleware_auth.php';
 
 $pdo = getDBConnection();
 if (!$pdo) {
@@ -18,6 +18,15 @@ if (!$data) {
 }
 
 $action = $data['action'] ?? 'crear';
+
+// Autorización por acción (SCRUM-20)
+$permisosPorAccion = [
+    'crear'          => 'produccion.avanzar',
+    'cambiar_fase'   => 'produccion.avanzar',
+    'cambiar_estado' => 'produccion.avanzar',
+    'eliminar'       => 'produccion.avanzar'
+];
+$perfil = requerirPermiso($permisosPorAccion[$action] ?? 'produccion.ver');
 
 $fasesPermitidas = ['Diseño', 'Abastecimiento', 'Impresión', 'Corte', 'Confección', 'Empaque', 'Distribución'];
 $estadosPermitidos = ['En Proceso', 'Detenido / Alerta', 'Completado'];
