@@ -162,6 +162,25 @@ Para instalar el módulo sobre una base ya creada:
 mysql -u root -p < database_v3_usuarios.sql
 ```
 
+### Cómo se aplica el control de accesos
+
+`backend/middleware_auth.php` se incluye al inicio de cada endpoint y corta la
+petición antes de tocar la base de datos:
+
+| Situación | Respuesta |
+| --- | --- |
+| Sin sesión iniciada | `401` — el frontend abre la pantalla de acceso |
+| Permiso faltante para la acción | `403` + renglón en `bitacora_accesos` |
+| Sucursal no asignada al usuario | `403`, aunque el permiso sí exista |
+
+La sesión se maneja en `backend/auth_sesion.php` con las acciones `login`,
+`logout`, `sesion` y `seleccionar_sucursal`.
+
+Si la base de datos todavía no tiene instalado el módulo de accesos, el
+middleware deja pasar la petición en **modo compatibilidad** para no romper
+entornos anteriores a esta historia.
+
+
 ## 🛡️ Seguridad y Buenas Prácticas
 - Consultas parametrizadas con **PDO Prepared Statements** en todos los endpoints PHP para prevenir inyecciones SQL.
 - Cabeceras de seguridad HTTP configuradas en `web.config` y `conexion.php`.
