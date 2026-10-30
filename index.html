@@ -64,6 +64,55 @@
 <body class="h-full flex flex-col font-sans bg-gray-50 text-gray-800 selection:bg-bc-blue selection:text-gray-900">
 
     <!-- ============================================================== -->
+    <!-- 0. PANTALLA DE ACCESO Y AVISOS DE SESIÓN (SCRUM-21)            -->
+    <!-- ============================================================== -->
+    <div id="pantalla-acceso" class="hidden fixed inset-0 z-[100] bg-gray-900/70 backdrop-blur-sm items-center justify-center p-4 no-print">
+        <div class="w-full max-w-sm bg-white rounded-2xl shadow-2xl border border-gray-200 overflow-hidden">
+            <div class="px-6 py-5 border-b border-gray-200">
+                <div class="font-heading font-extrabold text-lg tracking-tight text-gray-900">
+                    <span class="text-bc-blue font-black">Pattern Care</span>
+                    <span class="text-gray-400 font-normal">|</span>
+                    <span>Business Central</span>
+                </div>
+                <p class="text-xs text-gray-500 mt-1">Identifícate para operar tus puntos de venta.</p>
+            </div>
+
+            <form id="form-acceso" onsubmit="return enviarFormularioAcceso(event)" class="px-6 py-5 space-y-3">
+                <div>
+                    <label for="acceso-usuario" class="block text-[11px] font-semibold text-gray-600 mb-1">Usuario</label>
+                    <input type="text" id="acceso-usuario" autocomplete="username" required
+                           class="w-full bg-gray-50 border border-gray-300 rounded-lg px-3 py-2 text-xs text-gray-900 focus:outline-none focus:border-bc-blue focus:ring-1 focus:ring-bc-blue"
+                           placeholder="encargada">
+                </div>
+                <div>
+                    <label for="acceso-password" class="block text-[11px] font-semibold text-gray-600 mb-1">Contraseña</label>
+                    <input type="password" id="acceso-password" autocomplete="current-password" required
+                           class="w-full bg-gray-50 border border-gray-300 rounded-lg px-3 py-2 text-xs text-gray-900 focus:outline-none focus:border-bc-blue focus:ring-1 focus:ring-bc-blue"
+                           placeholder="••••••••">
+                </div>
+
+                <div id="acceso-error" class="hidden rounded-lg border border-rose-300 bg-rose-50 px-3 py-2 text-[11px] text-rose-700"></div>
+
+                <button type="submit" id="btn-acceso"
+                        class="w-full bg-bc-blue hover:bg-blue-700 text-white font-semibold rounded-lg px-3 py-2 text-xs transition flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-right-to-bracket text-[11px]"></i>
+                    <span id="btn-acceso-texto">Entrar</span>
+                </button>
+            </form>
+
+            <div class="px-6 py-3 bg-gray-50 border-t border-gray-200 text-[11px] text-gray-500 leading-relaxed">
+                Cuentas sembradas: <span class="font-mono text-gray-700">encargada</span>,
+                <span class="font-mono text-gray-700">administracion</span>,
+                <span class="font-mono text-gray-700">pv.hospital</span><br>
+                Contraseña inicial: <span class="font-mono text-gray-700">PatternCare2026</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Aviso flotante de permisos y sesión -->
+    <div id="aviso-acceso" class="hidden fixed top-4 right-4 z-[110] max-w-sm rounded-lg px-4 py-3 text-xs shadow-lg border no-print"></div>
+
+    <!-- ============================================================== -->
     <!-- 1. BARRA SUPERIOR MICROSOFT Pattern Care APP BAR               -->
     <!-- ============================================================== -->
     <header class="bg-white border-b border-gray-200 sticky top-0 z-50 text-xs shadow-sm">
@@ -132,13 +181,16 @@
                 </button>
 
                 <div class="flex items-center gap-2 pl-2 border-l border-gray-300">
-                    <div class="w-7 h-7 rounded-full bg-bc-blue text-white flex items-center justify-center font-bold text-xs shadow-sm">
-                        EG
+                    <div id="avatar-usuario" class="w-7 h-7 rounded-full bg-bc-blue text-white flex items-center justify-center font-bold text-xs shadow-sm">
+                        ··
                     </div>
                     <div class="hidden xl:block text-left">
-                        <div class="font-semibold text-gray-900 leading-tight">Dueña / Encargada General</div>
-                        <div class="text-[10px] text-gray-500">Rol: Dirección y Operaciones</div>
+                        <div id="nombre-usuario" class="font-semibold text-gray-900 leading-tight">Sin sesión</div>
+                        <div id="rol-usuario" class="text-[10px] text-gray-500">Identifícate para continuar</div>
                     </div>
+                    <button onclick="PatternCareAuth.cerrarSesion()" id="btn-cerrar-sesion" title="Cerrar sesión" class="hidden p-2 rounded-lg bg-gray-100 hover:bg-rose-50 hover:text-rose-600 text-gray-600 border border-gray-300 transition">
+                        <i class="fa-solid fa-right-from-bracket text-xs"></i>
+                    </button>
                 </div>
             </div>
 
@@ -1474,6 +1526,293 @@
         </div>
     </div>
 
+    <!-- ============================================================ -->
+    <!-- CONTEXTO DE AUTENTICACIÓN (SCRUM-21)                         -->
+    <!-- Mantiene la sesión, el rol, los permisos y los puntos de      -->
+    <!-- venta asignados, y los publica al resto de la aplicación.     -->
+    <!-- ============================================================ -->
+    <script>
+        // Sesión de demostración para el modo standalone (index.html sin servidor)
+        const SESION_STANDALONE = {
+            id: 0,
+            usuario: 'demo',
+            nombre_completo: 'Dueña / Encargada General',
+            correo: null,
+            iniciales: 'EG',
+            estado: 'Activo',
+            rol_clave: 'ENCARGADA_GENERAL',
+            rol_nombre: 'Dueña / Encargada General',
+            alcance_global: true,
+            sucursal_default_id: null,
+            permisos: ['*'],
+            sucursales: [],
+            modo_standalone: true
+        };
+
+        const authState = {
+            sesion: null,
+            modo: 'detectando',   // 'servidor' | 'standalone'
+            cargando: true
+        };
+
+        const PatternCareAuth = {
+            get usuario() {
+                return authState.sesion;
+            },
+            get modo() {
+                return authState.modo;
+            },
+            autenticado() {
+                return authState.sesion !== null;
+            },
+            esGlobal() {
+                return !!(authState.sesion && authState.sesion.alcance_global);
+            },
+
+            /** ¿El rol en sesión tiene este permiso? (ej. 'inventario.ajustar') */
+            tienePermiso(clave) {
+                if (!authState.sesion) return false;
+                const permisos = authState.sesion.permisos || [];
+                return permisos.includes('*') || permisos.includes(clave);
+            },
+
+            /** Ids de sucursales asignadas; null = sin restricción (alcance global) */
+            sucursalesPermitidas() {
+                if (!authState.sesion || authState.sesion.alcance_global) return null;
+                return (authState.sesion.sucursales || []).map(s => parseInt(s.sucursal_id, 10));
+            },
+
+            /** ¿Puede operar en esta sucursal? accion: 'ver' | 'vender' | 'ajustar' */
+            puedeEnSucursal(sucursalId, accion = 'ver') {
+                if (!authState.sesion) return false;
+                if (authState.sesion.alcance_global) return true;
+
+                const fila = (authState.sesion.sucursales || [])
+                    .find(s => parseInt(s.sucursal_id, 10) === parseInt(sucursalId, 10));
+                if (!fila) return false;
+                if (accion === 'vender') return !!fila.puede_vender;
+                if (accion === 'ajustar') return !!fila.puede_ajustar_inventario;
+                return true;
+            },
+
+            /** Lee la sesión del servidor al arrancar la aplicación */
+            async inicializar() {
+                authState.cargando = true;
+                try {
+                    const res = await fetch('backend/auth_sesion.php?action=sesion', {
+                        credentials: 'same-origin',
+                        cache: 'no-store'
+                    });
+                    if (!res.ok) throw new Error('Respuesta no válida del servidor de sesión');
+
+                    const json = await res.json();
+                    authState.modo = 'servidor';
+                    authState.sesion = json.data || null;
+                } catch (err) {
+                    // index.html abierto con doble clic: no hay backend que consultar
+                    authState.modo = 'standalone';
+                    authState.sesion = SESION_STANDALONE;
+                }
+                authState.cargando = false;
+
+                if (authState.sesion) {
+                    ocultarPantallaAcceso();
+                } else {
+                    mostrarPantallaAcceso();
+                }
+                notificarCambioDeSesion();
+                return authState.sesion;
+            },
+
+            /** Inicia sesión con usuario y contraseña */
+            async iniciarSesion(usuario, password) {
+                const res = await fetch('backend/auth_sesion.php', {
+                    method: 'POST',
+                    credentials: 'same-origin',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'login', usuario: usuario, password: password })
+                });
+                const json = await res.json();
+
+                if (!json.success) {
+                    return { ok: false, mensaje: json.message || 'No fue posible iniciar sesión.' };
+                }
+
+                authState.modo = 'servidor';
+                authState.sesion = json.data;
+                ocultarPantallaAcceso();
+                notificarCambioDeSesion();
+                return { ok: true, mensaje: json.message };
+            },
+
+            /** Cierra la sesión y devuelve al usuario a la pantalla de acceso */
+            async cerrarSesion() {
+                if (authState.modo === 'servidor') {
+                    try {
+                        await fetch('backend/auth_sesion.php', {
+                            method: 'POST',
+                            credentials: 'same-origin',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ action: 'logout' })
+                        });
+                    } catch (err) {
+                        console.error(err);
+                    }
+                }
+                authState.sesion = null;
+                mostrarPantallaAcceso();
+                notificarCambioDeSesion();
+            }
+        };
+
+        // ─────────────────────────────────────────────────────────
+        // PANTALLA DE ACCESO
+        // ─────────────────────────────────────────────────────────
+        function mostrarPantallaAcceso() {
+            const caja = document.getElementById('pantalla-acceso');
+            if (!caja) return;
+            caja.classList.remove('hidden');
+            caja.classList.add('flex');
+
+            const usuario = document.getElementById('acceso-usuario');
+            if (usuario) setTimeout(() => usuario.focus(), 60);
+        }
+
+        function ocultarPantallaAcceso() {
+            const caja = document.getElementById('pantalla-acceso');
+            if (!caja) return;
+            caja.classList.add('hidden');
+            caja.classList.remove('flex');
+
+            const error = document.getElementById('acceso-error');
+            if (error) error.classList.add('hidden');
+            const password = document.getElementById('acceso-password');
+            if (password) password.value = '';
+        }
+
+        async function enviarFormularioAcceso(evento) {
+            evento.preventDefault();
+
+            const usuario  = document.getElementById('acceso-usuario').value.trim();
+            const password = document.getElementById('acceso-password').value;
+            const error    = document.getElementById('acceso-error');
+            const boton    = document.getElementById('btn-acceso');
+            const texto    = document.getElementById('btn-acceso-texto');
+
+            error.classList.add('hidden');
+            boton.disabled = true;
+            texto.innerText = 'Verificando...';
+
+            try {
+                const resultado = await PatternCareAuth.iniciarSesion(usuario, password);
+                if (!resultado.ok) {
+                    error.innerText = resultado.mensaje;
+                    error.classList.remove('hidden');
+                } else {
+                    mostrarAvisoAcceso(resultado.mensaje, 'ok');
+                    sincronizarDatos();
+                }
+            } catch (err) {
+                error.innerText = 'No fue posible contactar al servidor de sesión.';
+                error.classList.remove('hidden');
+            }
+
+            boton.disabled = false;
+            texto.innerText = 'Entrar';
+            return false;
+        }
+
+        // ─────────────────────────────────────────────────────────
+        // IDENTIDAD EN LA BARRA SUPERIOR
+        // ─────────────────────────────────────────────────────────
+        function renderizarIdentidadUsuario() {
+            const sesion  = authState.sesion;
+            const avatar  = document.getElementById('avatar-usuario');
+            const nombre  = document.getElementById('nombre-usuario');
+            const rol     = document.getElementById('rol-usuario');
+            const salir   = document.getElementById('btn-cerrar-sesion');
+
+            if (avatar) avatar.innerText = sesion ? (sesion.iniciales || 'PC') : '··';
+            if (nombre) nombre.innerText = sesion ? sesion.nombre_completo : 'Sin sesión';
+
+            if (rol) {
+                if (!sesion) {
+                    rol.innerText = 'Identifícate para continuar';
+                } else if (sesion.alcance_global) {
+                    rol.innerText = `${sesion.rol_nombre} · Todas las sucursales`;
+                } else {
+                    const total = (sesion.sucursales || []).length;
+                    rol.innerText = `${sesion.rol_nombre} · ${total} punto(s) de venta`;
+                }
+            }
+
+            if (salir) {
+                salir.classList.toggle('hidden', !sesion || authState.modo !== 'servidor');
+            }
+        }
+
+        /** Avisa al resto de la aplicación de que la sesión cambió */
+        function notificarCambioDeSesion() {
+            renderizarIdentidadUsuario();
+            document.dispatchEvent(new CustomEvent('patterncare:sesion', { detail: authState.sesion }));
+        }
+
+        // ─────────────────────────────────────────────────────────
+        // AVISOS DE ACCESO
+        // ─────────────────────────────────────────────────────────
+        let _avisoAccesoTimeout = null;
+
+        function mostrarAvisoAcceso(mensaje, tipo = 'error') {
+            const caja = document.getElementById('aviso-acceso');
+            if (!caja) return;
+
+            const estilos = {
+                error: 'bg-rose-50 border-rose-300 text-rose-700',
+                info:  'bg-blue-50 border-blue-300 text-bc-blue',
+                ok:    'bg-emerald-50 border-emerald-300 text-emerald-700'
+            };
+            const iconos = { error: 'fa-shield-halved', info: 'fa-circle-info', ok: 'fa-circle-check' };
+
+            caja.className = 'fixed top-4 right-4 z-[110] max-w-sm rounded-lg px-4 py-3 text-xs shadow-lg border no-print ' + (estilos[tipo] || estilos.error);
+            caja.innerHTML = `
+                <div class="flex items-start gap-2">
+                    <i class="fa-solid ${iconos[tipo] || iconos.error} mt-0.5"></i>
+                    <span>${mensaje}</span>
+                </div>
+            `;
+
+            clearTimeout(_avisoAccesoTimeout);
+            _avisoAccesoTimeout = setTimeout(() => caja.classList.add('hidden'), 6000);
+        }
+
+        // ─────────────────────────────────────────────────────────
+        // PETICIONES CON SESIÓN
+        // Envuelve a fetch() para enviar la cookie de sesión y traducir
+        // las respuestas 401 / 403 del middleware a la interfaz.
+        // ─────────────────────────────────────────────────────────
+        async function fetchConSesion(url, opciones = {}) {
+            const res = await fetch(url, Object.assign({ credentials: 'same-origin' }, opciones));
+
+            if (res.status === 401) {
+                authState.sesion = null;
+                mostrarPantallaAcceso();
+                notificarCambioDeSesion();
+                mostrarAvisoAcceso('Tu sesión terminó. Vuelve a identificarte.', 'info');
+            } else if (res.status === 403) {
+                let mensaje = 'No tienes permiso para esa operación.';
+                try {
+                    const cuerpo = await res.clone().json();
+                    if (cuerpo && cuerpo.message) mensaje = cuerpo.message;
+                } catch (err) {
+                    // Respuesta sin cuerpo JSON: se conserva el mensaje genérico
+                }
+                mostrarAvisoAcceso(mensaje, 'error');
+            }
+
+            return res;
+        }
+    </script>
+
     <!-- MOTOR JAVASCRIPT BUSINESS CENTRAL & MULTI-SUCURSAL -->
     <script>
         let bcState = {
@@ -1574,11 +1913,17 @@
             ]
         };
 
-        document.addEventListener('DOMContentLoaded', () => {
+        document.addEventListener('DOMContentLoaded', async () => {
+            // El contexto de autenticación decide qué se puede pedir y mostrar
+            await PatternCareAuth.inicializar();
+
             renderizarDropdownSucursales();
             verDetalleFase(1);
             calcularRendimientoEnVivo();
-            sincronizarDatos();
+
+            if (PatternCareAuth.autenticado()) {
+                sincronizarDatos();
+            }
         });
 
         async function sincronizarDatos() {
@@ -1589,7 +1934,7 @@
             const urlParams = bcState.sucursalActivaId ? `?sucursal_id=${bcState.sucursalActivaId}` : '';
 
             try {
-                const res = await fetch(`backend/obtener_datos.php${urlParams}`, {
+                const res = await fetchConSesion(`backend/obtener_datos.php${urlParams}`, {
                     headers: { 'Accept': 'application/json' },
                     cache: 'no-store'
                 });
@@ -2094,7 +2439,7 @@
 
             if (bcState.modoBackend === 'mysql') {
                 try {
-                    const res = await fetch('backend/guardar_inventario.php', {
+                    const res = await fetchConSesion('backend/guardar_inventario.php', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ action: 'ajustar_stock', id: id, sucursal_id: sucursalId, delta: delta })
@@ -2219,7 +2564,7 @@
 
             if (bcState.modoBackend === 'mysql') {
                 try {
-                    const res = await fetch('backend/transferir_stock.php', {
+                    const res = await fetchConSesion('backend/transferir_stock.php', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(payload)
@@ -2393,7 +2738,7 @@
 
             if (bcState.modoBackend === 'mysql') {
                 try {
-                    const res = await fetch('backend/guardar_inventario.php', {
+                    const res = await fetchConSesion('backend/guardar_inventario.php', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(payload)
@@ -2442,7 +2787,7 @@
 
             if (bcState.modoBackend === 'mysql') {
                 try {
-                    const res = await fetch('backend/guardar_inventario.php', {
+                    const res = await fetchConSesion('backend/guardar_inventario.php', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ action: 'eliminar', id: id })
@@ -2512,7 +2857,7 @@
 
             if (bcState.modoBackend === 'mysql') {
                 try {
-                    const res = await fetch('backend/calcular_rendimiento.php', {
+                    const res = await fetchConSesion('backend/calcular_rendimiento.php', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(payload)
@@ -2702,7 +3047,7 @@
 
             if (bcState.modoBackend === 'mysql') {
                 try {
-                    const res = await fetch('backend/registrar_produccion.php', {
+                    const res = await fetchConSesion('backend/registrar_produccion.php', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(payload)
@@ -2726,7 +3071,7 @@
         async function avanzarFaseOrden(id, nextFase) {
             if (bcState.modoBackend === 'mysql') {
                 try {
-                    await fetch('backend/registrar_produccion.php', {
+                    await fetchConSesion('backend/registrar_produccion.php', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ action: 'cambiar_fase', id: id, fase_actual: nextFase })
@@ -2752,7 +3097,7 @@
 
             if (bcState.modoBackend === 'mysql') {
                 try {
-                    await fetch('backend/registrar_produccion.php', {
+                    await fetchConSesion('backend/registrar_produccion.php', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ action: 'cambiar_estado', id: id, estado: nuevoEstado })
@@ -2841,7 +3186,7 @@
 
             if (bcState.modoBackend === 'mysql') {
                 try {
-                    const res = await fetch('backend/control_mermas.php', {
+                    const res = await fetchConSesion('backend/control_mermas.php', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(payload)
@@ -2865,7 +3210,7 @@
         async function eliminarMerma(id) {
             if (bcState.modoBackend === 'mysql') {
                 try {
-                    await fetch('backend/control_mermas.php', {
+                    await fetchConSesion('backend/control_mermas.php', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ action: 'eliminar', id: id })
@@ -2903,7 +3248,7 @@
             Swal.fire({ title: 'Instalando tablas...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
 
             try {
-                const res = await fetch('backend/instalar_bd.php', { method: 'POST' });
+                const res = await fetchConSesion('backend/instalar_bd.php', { method: 'POST' });
                 const json = await res.json();
                 if (json.success) {
                     Swal.fire('¡Éxito!', 'Base de datos de Business Central inicializada correctamente.', 'success');
@@ -3018,7 +3363,7 @@
         function renderizarCatalogo() {
             // Intentar cargar desde backend; si falla, usar estado local o semilla
             if (bcState.modoBackend === 'mysql') {
-                fetch('backend/gestionar_productos.php?action=listar')
+                fetchConSesion('backend/gestionar_productos.php?action=listar')
                     .then(r => r.json())
                     .then(j => {
                         if (j.success) {
@@ -3267,7 +3612,7 @@
 
             if (bcState.modoBackend === 'mysql') {
                 try {
-                    const r = await fetch('backend/gestionar_productos.php?action=generar_numero&categoria=' + encodeURIComponent(cat));
+                    const r = await fetchConSesion('backend/gestionar_productos.php?action=generar_numero&categoria=' + encodeURIComponent(cat));
                     const j = await r.json();
                     if (j.success) { input.value = j.data.numero_pieza; return; }
                 } catch(e) {}
@@ -3461,7 +3806,7 @@
             // Si hay base64 e internet, subir a Cloudinary
             if (catalogoState.fotoBase64 && bcState.modoBackend === 'mysql') {
                 try {
-                    const r = await fetch('backend/gestionar_productos.php', {
+                    const r = await fetchConSesion('backend/gestionar_productos.php', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
@@ -3499,7 +3844,7 @@
 
             if (bcState.modoBackend === 'mysql') {
                 try {
-                    const r = await fetch('backend/gestionar_productos.php', {
+                    const r = await fetchConSesion('backend/gestionar_productos.php', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify(payload)
@@ -3603,7 +3948,7 @@
 
             if (bcState.modoBackend === 'mysql') {
                 try {
-                    const r = await fetch('backend/gestionar_productos.php', {
+                    const r = await fetchConSesion('backend/gestionar_productos.php', {
                         method: 'POST', headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ action: 'eliminar', id })
                     });
