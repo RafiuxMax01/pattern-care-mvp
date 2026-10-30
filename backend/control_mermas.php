@@ -4,7 +4,7 @@
  * Registro de costos ocultos, errores de estampado, confección y empaquetado.
  */
 
-require_once __DIR__ . '/../conexion.php';
+require_once __DIR__ . '/middleware_auth.php';
 
 $pdo = getDBConnection();
 if (!$pdo) {
@@ -18,6 +18,13 @@ if (!$data) {
 }
 
 $action = $data['action'] ?? 'crear';
+
+// Autorización por acción (SCRUM-20)
+$permisosPorAccion = [
+    'crear'    => 'mermas.registrar',
+    'eliminar' => 'mermas.registrar'
+];
+$perfil = requerirPermiso($permisosPorAccion[$action] ?? 'mermas.ver');
 
 try {
     switch ($action) {

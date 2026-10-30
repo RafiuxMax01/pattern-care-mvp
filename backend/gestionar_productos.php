@@ -15,7 +15,7 @@
  *   POST action=subir_foto         → Recibe base64, guarda en Cloudinary o local
  */
 
-require_once __DIR__ . '/../conexion.php';
+require_once __DIR__ . '/middleware_auth.php';
 
 header('Content-Type: application/json; charset=utf-8');
 header('Access-Control-Allow-Origin: *');
@@ -38,6 +38,18 @@ if ($method === 'POST') {
 }
 
 $action = $input['action'] ?? 'listar';
+
+// Autorización por acción (SCRUM-20)
+$permisosPorAccion = [
+    'crear'             => 'catalogo.editar',
+    'actualizar'        => 'catalogo.editar',
+    'eliminar'          => 'catalogo.editar',
+    'agregar_variante'  => 'catalogo.editar',
+    'eliminar_variante' => 'catalogo.editar',
+    'generar_numero'    => 'catalogo.editar',
+    'subir_foto'        => 'catalogo.editar'
+];
+$perfil = requerirPermiso($permisosPorAccion[$action] ?? 'catalogo.ver');
 
 // ──────────────────────────────────────────────────────────────
 // CONFIGURACIÓN CLOUDINARY (opcional – rellenar con tus datos)

@@ -15,7 +15,7 @@
  *   POST action=permisos_rol          → Reemplaza los permisos de un rol
  */
 
-require_once __DIR__ . '/modelo_accesos.php';
+require_once __DIR__ . '/middleware_auth.php';
 
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(200);
@@ -31,6 +31,17 @@ if ($method === 'POST') {
 }
 
 $action = $input['action'] ?? 'listar';
+
+// Autorización por acción (SCRUM-20): solo la Encargada General administra accesos
+$permisosPorAccion = [
+    'crear'              => 'usuarios.gestionar',
+    'actualizar'         => 'usuarios.gestionar',
+    'cambiar_estado'     => 'usuarios.gestionar',
+    'asignar_sucursales' => 'usuarios.gestionar',
+    'cambiar_password'   => 'usuarios.gestionar',
+    'permisos_rol'       => 'usuarios.gestionar'
+];
+$perfil = requerirPermiso($permisosPorAccion[$action] ?? 'usuarios.ver');
 
 $pdo = getDBConnection();
 if (!$pdo) {
@@ -219,7 +230,7 @@ try {
             // Asignación inicial de puntos de venta (opcional en el alta)
             $asignaciones = $input['sucursales'] ?? [];
             if (is_array($asignaciones) && count($asignaciones) > 0) {
-                reemplazarSucursalesDeUsuario($pdo, $nuevoId, $asignaciones, $input['asignado_por'] ?? null);
+                reemplazarSucursalesDeUsuario($pdo, $nuevoId, $asignaciones, $perfil['nombre_completo'] ?? null);
             }
 
             jsonResponse(true, perfilDeUsuario($pdo, $nuevoId), 'Usuario creado correctamente.', 201);
@@ -246,7 +257,7 @@ try {
             $stmt->execute([$nombre, $correo ?: null, $rolId, $sucursalDefault, $id]);
 
             if (isset($input['sucursales']) && is_array($input['sucursales'])) {
-                reemplazarSucursalesDeUsuario($pdo, $id, $input['sucursales'], $input['asignado_por'] ?? null);
+                reemplazarSucursalesDeUsuario($pdo, $id, $input['sucursales'], $perfil['nombre_completo'] ?? null);
             }
 
             jsonResponse(true, perfilDeUsuario($pdo, $id), 'Usuario actualizado correctamente.');
@@ -278,7 +289,7 @@ try {
                 jsonResponse(false, null, 'El usuario no existe.', 404);
             }
 
-            $total = reemplazarSucursalesDeUsuario($pdo, $id, $asignaciones, $input['asignado_por'] ?? null);
+            $total = reemplazarSucursalesDeUsuario($pdo, $id, $asignaciones, $perfil['nombre_completo'] ?? null);
 
             jsonResponse(true, perfilDeUsuario($pdo, $id), "Se asignaron {$total} punto(s) de venta al usuario.");
             break;

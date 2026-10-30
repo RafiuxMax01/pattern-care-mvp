@@ -4,7 +4,7 @@
  * Calculadora y registro de lotes de tela SRA (6 pzas/m) y CRO (4 pzas/m + 50cm sobrante/m)
  */
 
-require_once __DIR__ . '/../conexion.php';
+require_once __DIR__ . '/middleware_auth.php';
 
 $pdo = getDBConnection();
 if (!$pdo) {
@@ -18,6 +18,12 @@ if (!$data) {
 }
 
 $action = $data['action'] ?? 'calcular_y_guardar';
+
+// Autorización por acción (SCRUM-20)
+$permisosPorAccion = [
+    'calcular_y_guardar' => 'rendimiento.registrar'
+];
+$perfil = requerirPermiso($permisosPorAccion[$action] ?? 'rendimiento.ver');
 
 try {
     switch ($action) {
