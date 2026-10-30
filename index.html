@@ -330,7 +330,7 @@
                             <span id="cue-skus-criticos" class="text-3xl font-heading font-extrabold text-rose-400">0</span>
                             <span class="text-[10px] text-gray-500">SKUs</span>
                         </div>
-                        <div class="mt-1 text-[11px] text-rose-400/90 font-medium truncate">Norma 6 pzas/sucursal</div>
+                        <div class="mt-1 text-[11px] text-rose-400/90 font-medium truncate">Mínimo dinámico por variante</div>
                     </div>
 
                     <div onclick="cambiarModulo('transferencias')" class="bc-cue-card bg-white border border-gray-200 border-b-4 border-b-cyan-500 rounded-xl p-4 cursor-pointer hover:border-gray-300">
@@ -400,8 +400,8 @@
                 <div class="bg-white border border-gray-200 rounded-xl p-5 lg:col-span-2">
                     <div class="flex items-center justify-between mb-3">
                         <div>
-                            <h3 class="font-heading font-semibold text-gray-900 text-sm">Existencias por Producto vs. Umbral Mínimo (6 pzas)</h3>
-                            <p class="text-xs text-gray-500">Monitoreo consolidado e individual para prevenir desabasto en sucursales hospitalarias.</p>
+                            <h3 class="font-heading font-semibold text-white text-sm">Existencias por Produvcxvs
+                            <p class="text-xs text-slate-400">Monitoreo consolidado e individual para prevenir desabasto en sucursales hospitalarias.</p>
                         </div>
                         <button onclick="cambiarModulo('inventario')" class="text-xs text-bc-blue hover:text-blue-600 font-semibold">
                             Ver Lista Completa &rarr;
@@ -439,7 +439,7 @@
                         <i class="fa-solid fa-boxes-stacked text-emerald-400"></i>
                         <span>Catálogo de Productos & Inventario por Sucursal</span>
                     </h2>
-                    <p class="text-xs text-gray-500">Control estricto de existencias con alerta visual para stock menor a 6 piezas por sucursal.</p>
+                    <p class="text-xs text-slate-400">Control estricto con alerta visual según el stock mínimo asignado a cada variante.</p>
                 </div>
                 
                 <div class="flex flex-wrap items-center gap-2">
@@ -1103,8 +1103,8 @@
                         <input type="number" id="sku-stock-actual" required min="0" value="10" class="w-full bg-gray-50 border border-gray-300 rounded px-2.5 py-1.5 text-gray-900">
                     </div>
                     <div>
-                        <label class="block font-semibold text-gray-600 mb-1">Stock Mínimo (Alerta &lt;6) *</label>
-                        <input type="number" id="sku-stock-minimo" required min="1" value="6" class="w-full bg-gray-50 border border-gray-300 rounded px-2.5 py-1.5 text-gray-900">
+                        <label class="block font-semibold text-slate-300 mb-1">Stock Mínimo por Variante *</label>
+                        <input type="number" id="sku-stock-minimo" required min="1" value="" placeholder="Ej. 6" class="w-full bg-slate-950 border border-slate-700 rounded px-2.5 py-1.5 text-white">
                     </div>
                     <div>
                         <label class="block font-semibold text-gray-600 mb-1">Sucursal Inicial *</label>
