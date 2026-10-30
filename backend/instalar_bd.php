@@ -18,10 +18,10 @@ try {
     $serverConn->exec("CREATE DATABASE IF NOT EXISTS `" . DB_NAME . "` CHARACTER SET " . DB_CHARSET . " COLLATE utf8mb4_unicode_ci");
     $serverConn->exec("USE `" . DB_NAME . "`");
 
-    // 2. Leer archivo database.sql
-    $sqlFile = __DIR__ . '/../database.sql';
+    // 2. Leer archivo database_master.sql (esquema unificado v2)
+    $sqlFile = __DIR__ . '/../database_master.sql';
     if (!file_exists($sqlFile)) {
-        throw new Exception("El archivo database.sql no se encuentra en el directorio raíz.");
+        throw new Exception("El archivo database_master.sql no se encuentra en el directorio raíz.");
     }
 
     $sqlContent = file_get_contents($sqlFile);

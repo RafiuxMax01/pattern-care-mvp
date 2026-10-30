@@ -1,0 +1,80 @@
+version: '3.8'
+
+services:
+  # -----------------------------------------------------------
+  # SERVIDOR WEB: PHP + Apache (frontend del ERP Pattern Care)
+  # -----------------------------------------------------------
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: pattern_care_web
+    ports:
+      - "8000:80"
+    volumes:
+      - ./index.php:/var/www/html/index.php
+      - ./conexion.php:/var/www/html/conexion.php
+      - ./backend:/var/www/html/backend
+      - ./uploads:/var/www/html/uploads
+    environment:
+      - APACHE_DOCUMENT_ROOT=/var/www/html
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - pattern-care-net
+    restart: unless-stopped
+
+  # -----------------------------------------------------------
+  # BASE DE DATOS: MySQL 8.0
+  # -----------------------------------------------------------
+  db:
+    image: mysql:8.0
+    container_name: pattern_care_db
+    ports:
+      - "3307:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-rootpassword}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-pattern_care}
+      MYSQL_USER: ${MYSQL_USER:-pattern_user}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-pattern_pass}
+      MYSQL_TCP_PORT: 3306
+    volumes:
+      - pattern_care_db_data:/var/lib/mysql
+      - ./database_master.sql:/docker-entrypoint-initdb.d/01-create-schema.sql:ro
+    networks:
+      - pattern-care-net
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  # -----------------------------------------------------------
+  # PHPMYADMIN: Gestor de base de datos (opcional, puerto 8080)
+  # -----------------------------------------------------------
+  phpmyadmin:
+    image: phpmyadmin:latest
+    container_name: pattern_care_pma
+    ports:
+      - "8080:80"
+    environment:
+      PMA_HOST: db
+      PMA_PORT: 3306
+      PMA_ARBITRARY: 1
+      PMA_USER: ${MYSQL_USER:-pattern_user}
+      PMA_PASSWORD: ${MYSQL_PASSWORD:-pattern_pass}
+    depends_on:
+      - db
+    networks:
+      - pattern-care-net
+    restart: unless-stopped
+
+volumes:
+  pattern_care_db_data:
+
+networks:
+  pattern-care-net:
+    driver: bridge
