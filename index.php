@@ -793,23 +793,143 @@
             </div>
         </section>
 
-        <!-- MÓDULO 6: DIRECTORIO DE SUCURSALES -->
-        <section id="modulo-sucursales" class="bc-seccion hidden space-y-6">
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-gray-200 pb-4">
-                <div>
-                    <h2 class="text-lg font-heading font-bold text-gray-900 flex items-center gap-2">
-                        <i class="fa-solid fa-store text-teal-400"></i>
-                        <span>Directorio de Sucursales & Puntos de Distribución</span>
-                    </h2>
-                    <p class="text-xs text-gray-500">Gestión de almacenes, encargados, existencias y canales de venta asociados.</p>
-                </div>
-            </div>
+<!-- MÓDULO 6: DIRECTORIO DE SUCURSALES -->
+<section id="modulo-sucursales" class="bc-seccion hidden space-y-6">
 
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4" id="grid-sucursales-cards">
-                <!-- Inyectado dinámicamente -->
-            </div>
-        </section>
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-gray-200 pb-4">
+    <div>
+      <h2 class="text-lg font-heading font-bold text-gray-900 flex items-center gap-2">
+        <i class="fa-solid fa-store text-teal-400"></i>
+        <span>Administración de Sucursales</span>
+      </h2>
+      <p class="text-xs text-gray-500">
+        Registrar, consultar, editar y dar de baja sucursales.
+      </p>
+    </div>
 
+    <div class="flex gap-2">
+      <button type="button" onclick="cargarSucursalesAdmin()"
+        class="px-4 py-2 rounded-lg border border-gray-300 text-sm font-semibold hover:bg-gray-50">
+        <i class="fa-solid fa-rotate mr-1"></i> Actualizar
+      </button>
+      <button type="button" onclick="nuevaSucursal()"
+        class="px-4 py-2 rounded-lg bg-teal-600 text-white text-sm font-semibold hover:bg-teal-700">
+        <i class="fa-solid fa-plus mr-1"></i> Nueva sucursal
+      </button>
+    </div>
+  </div>
+
+  <div id="sucursales-mensaje" class="hidden rounded-lg p-3 text-sm" role="status"></div>
+
+  <!-- FORMULARIO -->
+  <div class="bg-white rounded-xl border border-gray-200 p-5 shadow-sm">
+    <h3 id="titulo-form-sucursal" class="font-bold text-gray-800 mb-4">
+      Registrar sucursal
+    </h3>
+
+    <form id="form-sucursal-admin" onsubmit="guardarSucursalAdmin(event)"
+      class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+
+      <input type="hidden" id="admin-sucursal-id">
+
+      <div>
+        <label for="admin-sucursal-codigo" class="block text-sm font-medium mb-1">CÃ³digo *</label>
+        <input id="admin-sucursal-codigo" maxlength="20" required
+          class="w-full rounded-lg border border-gray-300 p-2 text-sm"
+          placeholder="Ej. SUC-005">
+      </div>
+
+      <div>
+        <label for="admin-sucursal-nombre" class="block text-sm font-medium mb-1">Nombre *</label>
+        <input id="admin-sucursal-nombre" maxlength="100" required
+          class="w-full rounded-lg border border-gray-300 p-2 text-sm"
+          placeholder="Nombre de la sucursal">
+      </div>
+
+      <div>
+        <label for="admin-sucursal-tipo" class="block text-sm font-medium mb-1">Tipo de canal *</label>
+        <select id="admin-sucursal-tipo" required
+          class="w-full rounded-lg border border-gray-300 p-2 text-sm">
+          <option value="Planta / Taller Central">Planta / Taller Central</option>
+          <option value="Punto de Venta / Showroom">Punto de Venta / Showroom</option>
+          <option value="AlmacÃ©n Digital">AlmacÃ©n Digital</option>
+        </select>
+      </div>
+
+      <div>
+        <label for="admin-sucursal-encargado" class="block text-sm font-medium mb-1">Encargado *</label>
+        <input id="admin-sucursal-encargado" maxlength="100" required
+          class="w-full rounded-lg border border-gray-300 p-2 text-sm"
+          placeholder="Nombre del encargado">
+      </div>
+
+      <div>
+        <label for="admin-sucursal-telefono" class="block text-sm font-medium mb-1">TelÃ©fono</label>
+        <input id="admin-sucursal-telefono" maxlength="50"
+          class="w-full rounded-lg border border-gray-300 p-2 text-sm"
+          placeholder="TelÃ©fono de contacto">
+      </div>
+
+      <div>
+        <label for="admin-sucursal-direccion" class="block text-sm font-medium mb-1">DirecciÃ³n *</label>
+        <input id="admin-sucursal-direccion" maxlength="200" required
+          class="w-full rounded-lg border border-gray-300 p-2 text-sm"
+          placeholder="DirecciÃ³n completa">
+      </div>
+
+      <div class="md:col-span-2 lg:col-span-3 flex flex-wrap gap-2 pt-2">
+        <button type="submit"
+          class="px-5 py-2 rounded-lg bg-teal-600 text-white text-sm font-semibold hover:bg-teal-700">
+          <i class="fa-solid fa-floppy-disk mr-1"></i> Guardar sucursal
+        </button>
+        <button type="button" onclick="cancelarEdicionSucursal()"
+          class="px-5 py-2 rounded-lg border border-gray-300 text-sm font-semibold hover:bg-gray-50">
+          Limpiar formulario
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <!-- TABLA DINÃMICA -->
+  <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+    <div class="p-4 border-b border-gray-200">
+      <h3 class="font-bold text-gray-800">Directorio de sucursales</h3>
+      <p class="text-xs text-gray-500 mt-1">La informaciÃ³n se consulta desde la API.</p>
+    </div>
+
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm text-left">
+        <thead class="bg-gray-50 text-gray-600 uppercase text-xs">
+          <tr>
+            <th class="p-3">CÃ³digo / Nombre</th>
+            <th class="p-3">Tipo</th>
+            <th class="p-3">Encargado / Contacto</th>
+            <th class="p-3">Estado</th>
+            <th class="p-3">Acciones</th>
+          </tr>
+        </thead>
+        <tbody id="tabla-sucursales-admin">
+          <tr>
+            <td colspan="5" class="p-5 text-center text-gray-500">
+              Pulsa Â«ActualizarÂ» para consultar las sucursales.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- TARJETAS EXISTENTES: SE CONSERVAN -->
+  <div>
+    <h3 class="font-bold text-gray-800 mb-3">Resumen de sucursales e inventario</h3>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4"
+      id="grid-sucursales-cards">
+      <!-- Inyectado dinámicamente -->
+    </div>
+  </div>
+
+</section>
+<!-- FIN MÓDULO 6 -->
         <!-- MÓDULO 7: PUNTOS CRÍTICOS -->
         <section id="modulo-diagnostico" class="bc-seccion hidden space-y-6">
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-gray-200 pb-4">
@@ -2007,6 +2127,7 @@
             await PatternCareAuth.inicializar();
 
             renderizarDropdownSucursales();
+            cargarSucursalesAdmin();
             verDetalleFase(1);
             calcularRendimientoEnVivo();
 
@@ -2033,7 +2154,7 @@
                     if (json.success && json.data) {
                         bcState.modoBackend = 'mysql';
                         bcState.sucursales = json.data.sucursales || bcState.sucursales;
-                        bcState.productos = json.data.productos || [];
+                        bcState.productos = json.data.skus_planos || [];
                         bcState.inventarioDetalle = json.data.inventario_detalle || [];
                         bcState.transferencias = json.data.transferencias || [];
                         bcState.ordenes = json.data.ordenes || [];
@@ -2172,6 +2293,241 @@
                 { area: 'Control de Calidad', titulo: 'Merma Oculta en Confección y Empaque', descripcion: 'Pérdidas acumuladas por desajustes mecánicos y retrazado de tela CRO no costeadas formalmente.', severidad: 'media' }
             ];
         }
+
+
+const API_SUCURSALES_ADMIN = 'backend/gestionar_sucursales.php';
+
+function escaparTextoSucursalAdmin(valor) {
+    return String(valor ?? '').replace(/[&<>"']/g, caracter => ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#39;'
+    })[caracter]);
+}
+
+function mostrarMensajeSucursalAdmin(mensaje, error = false) {
+    const elemento = document.getElementById('sucursales-mensaje');
+    if (!elemento) return;
+
+    elemento.textContent = mensaje;
+    elemento.style.color = error ? '#dc2626' : '#16a34a';
+}
+
+async function peticionSucursalAdmin(url, opciones = {}) {
+    const respuesta = await fetch(url, {
+        headers: {
+            'Accept': 'application/json',
+            ...(opciones.body ? { 'Content-Type': 'application/json' } : {})
+        },
+        ...opciones
+    });
+
+    let resultado;
+
+    try {
+        resultado = await respuesta.json();
+    } catch {
+        throw new Error('El servidor no devolvió una respuesta JSON válida.');
+    }
+
+    if (!respuesta.ok || resultado.success === false) {
+        throw new Error(
+            resultado.message ||
+            resultado.mensaje ||
+            `Error HTTP ${respuesta.status}`
+        );
+    }
+
+    return resultado;
+}
+
+async function cargarSucursalesAdmin() {
+    const cuerpo = document.getElementById('tabla-sucursales-admin');
+    if (!cuerpo) return;
+
+    cuerpo.innerHTML = '<tr><td colspan="5">Cargando sucursales...</td></tr>';
+
+    try {
+        const resultado = await peticionSucursalAdmin(
+            `${API_SUCURSALES_ADMIN}?accion=listar`
+        );
+
+        const sucursales = resultado.data?.sucursales ?? [];
+
+        if (!sucursales.length) {
+            cuerpo.innerHTML =
+                '<tr><td colspan="5">No hay sucursales registradas.</td></tr>';
+            return;
+        }
+
+        cuerpo.innerHTML = sucursales.map(sucursal => {
+            const id = Number(sucursal.id);
+            const estado = String(sucursal.estado ?? 'Activo');
+            const siguienteEstado = estado === 'Activo' ? 'Inactivo' : 'Activo';
+            const textoAccion = siguienteEstado === 'Inactivo'
+                ? 'Desactivar'
+                : 'Reactivar';
+
+            return `
+                <tr>
+                    <td>
+                        <strong>${escaparTextoSucursalAdmin(sucursal.codigo)}</strong><br>
+                        ${escaparTextoSucursalAdmin(sucursal.nombre)}
+                    </td>
+                    <td>${escaparTextoSucursalAdmin(sucursal.tipo)}</td>
+                    <td>
+                        ${escaparTextoSucursalAdmin(sucursal.encargado)}<br>
+                        ${escaparTextoSucursalAdmin(sucursal.telefono || 'Sin teléfono')}
+                    </td>
+                    <td>${escaparTextoSucursalAdmin(estado)}</td>
+                    <td>
+                        <button type="button"
+                            onclick="editarSucursalAdmin(${id})">Editar</button>
+                        <button type="button"
+                            onclick="cambiarEstadoSucursalAdmin(${id}, '${siguienteEstado}')">
+                            ${textoAccion}
+                        </button>
+                    </td>
+                </tr>
+            `;
+        }).join('');
+
+    } catch (error) {
+        cuerpo.innerHTML =
+            '<tr><td colspan="5">No se pudieron cargar las sucursales.</td></tr>';
+        mostrarMensajeSucursalAdmin(error.message, true);
+    }
+}
+
+function nuevaSucursal() {
+    const formulario = document.getElementById('form-sucursal-admin');
+    if (!formulario) return;
+
+    formulario.reset();
+    document.getElementById('admin-sucursal-id').value = '';
+
+    mostrarMensajeSucursalAdmin('Formulario listo para registrar una sucursal.');
+    document.getElementById('admin-sucursal-codigo')?.focus();
+}
+
+function cancelarEdicionSucursal() {
+    const formulario = document.getElementById('form-sucursal-admin');
+    if (!formulario) return;
+
+    formulario.reset();
+    document.getElementById('admin-sucursal-id').value = '';
+    mostrarMensajeSucursalAdmin('Edición cancelada.');
+}
+
+async function editarSucursalAdmin(id) {
+    try {
+        const resultado = await peticionSucursalAdmin(
+            `${API_SUCURSALES_ADMIN}?accion=obtener&id=${encodeURIComponent(id)}`
+        );
+
+        const sucursal = resultado.data;
+
+        if (!sucursal || typeof sucursal !== 'object') {
+            throw new Error('No se encontraron los datos de la sucursal.');
+        }
+
+        document.getElementById('admin-sucursal-id').value = sucursal.id ?? '';
+        document.getElementById('admin-sucursal-codigo').value = sucursal.codigo ?? '';
+        document.getElementById('admin-sucursal-nombre').value = sucursal.nombre ?? '';
+        document.getElementById('admin-sucursal-tipo').value = sucursal.tipo ?? '';
+        document.getElementById('admin-sucursal-encargado').value = sucursal.encargado ?? '';
+        document.getElementById('admin-sucursal-telefono').value = sucursal.telefono ?? '';
+        document.getElementById('admin-sucursal-direccion').value = sucursal.direccion ?? '';
+
+        mostrarMensajeSucursalAdmin(
+            `Editando la sucursal ${sucursal.codigo ?? ''}.`
+        );
+
+        document.getElementById('admin-sucursal-codigo')?.focus();
+
+    } catch (error) {
+        mostrarMensajeSucursalAdmin(error.message, true);
+    }
+}
+
+async function guardarSucursalAdmin(event) {
+    event.preventDefault();
+
+    const id = document.getElementById('admin-sucursal-id').value;
+
+    const sucursal = {
+        codigo: document.getElementById('admin-sucursal-codigo').value.trim(),
+        nombre: document.getElementById('admin-sucursal-nombre').value.trim(),
+        tipo: document.getElementById('admin-sucursal-tipo').value,
+        encargado: document.getElementById('admin-sucursal-encargado').value.trim(),
+        telefono: document.getElementById('admin-sucursal-telefono').value.trim(),
+        direccion: document.getElementById('admin-sucursal-direccion').value.trim()
+    };
+
+    if (id) {
+        sucursal.id = Number(id);
+    }
+
+    try {
+        const resultado = await peticionSucursalAdmin(API_SUCURSALES_ADMIN, {
+            method: id ? 'PUT' : 'POST',
+            body: JSON.stringify(sucursal)
+        });
+
+        mostrarMensajeSucursalAdmin(
+            resultado.message || (id
+                ? 'Sucursal actualizada correctamente.'
+                : 'Sucursal registrada correctamente.')
+        );
+
+        document.getElementById('form-sucursal-admin').reset();
+        document.getElementById('admin-sucursal-id').value = '';
+
+        await cargarSucursalesAdmin();
+
+        if (typeof sincronizarDatos === 'function') {
+            await sincronizarDatos();
+        }
+
+    } catch (error) {
+        mostrarMensajeSucursalAdmin(error.message, true);
+    }
+}
+
+async function cambiarEstadoSucursalAdmin(id, estado) {
+    const accion = estado === 'Inactivo' ? 'desactivar' : 'reactivar';
+
+    if (!confirm(`¿Seguro que deseas ${accion} esta sucursal?`)) {
+        return;
+    }
+
+    try {
+        const resultado = await peticionSucursalAdmin(API_SUCURSALES_ADMIN, {
+            method: 'POST',
+            body: JSON.stringify({
+                accion: 'cambiar_estado',
+                id: Number(id),
+                estado
+            })
+        });
+
+        mostrarMensajeSucursalAdmin(
+            resultado.message || `Sucursal ${accion === 'desactivar' ? 'desactivada' : 'reactivada'} correctamente.`
+        );
+
+        await cargarSucursalesAdmin();
+
+        if (typeof sincronizarDatos === 'function') {
+            await sincronizarDatos();
+        }
+
+    } catch (error) {
+        mostrarMensajeSucursalAdmin(error.message, true);
+    }
+}
+
 
         function renderizarTodo() {
             renderizarHeadline();
