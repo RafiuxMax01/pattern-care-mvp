@@ -9,6 +9,8 @@ Sistema web integral de arquitectura full-stack diseñado para formalizar la lí
 ```text
 Pattern Care/
 ├── database.sql                  # Script SQL de creación de BD 'pattern_care', tablas y datos semilla
+├── database_master.sql           # Script maestro unificado (multi-sucursal, catálogo y accesos)
+├── database_v3_usuarios.sql      # Extensión v3: roles, permisos y asignación a puntos de venta
 ├── conexion.php                  # Conexión centralizada PDO a MySQL con manejo de excepciones
 ├── index.php                     # Interfaz web principal para servidores IIS / PHP / MySQL
 ├── index.html                    # Versión web autocontenida (ejecutable directo en navegador con doble clic)
@@ -19,6 +21,8 @@ Pattern Care/
 │   ├── registrar_produccion.php  # Control de órdenes por lote y avance de las 7 fases de producción
 │   ├── control_mermas.php        # Bitácora de mermas y retrabajos con costeo financiero
 │   ├── calcular_rendimiento.php  # Simulador técnico de tela SRA (6 pzas/m) y CRO (4 pzas/m + 50cm)
+│   ├── modelo_accesos.php        # Capa de datos de roles, permisos y asignación a puntos de venta
+│   ├── gestionar_usuarios.php    # CRUD de usuarios, roles y sucursales asignadas
 │   └── instalar_bd.php           # Instalador / sembrador automático de base de datos con 1 clic
 └── README.md                     # Documentación técnica y manual de despliegue
 ```
@@ -131,6 +135,32 @@ define('DB_PASS', ''); // Coloca tu contraseña si aplica
 5. Si deseas inicializar o resetear la base de datos directamente desde el navegador, puedes hacer clic en **"Reinstalar / Sembrar BD"** en el pie de página o visitar `http://localhost/pattern-care/backend/instalar_bd.php`.
 
 ---
+
+---
+
+## 🔐 Roles, Permisos y Puntos de Venta
+
+El acceso se define con tres piezas: el **rol** (qué puede hacer), los **permisos**
+en formato `modulo.accion` (ej. `inventario.ajustar`) y la **asignación a puntos de
+venta** (sobre qué sucursales puede hacerlo).
+
+| Rol | Alcance | Puede |
+| --- | --- | --- |
+| Dueña / Encargada General | Todas las sucursales | Todo, incluida la administración de accesos |
+| Área Administrativa | Sucursales asignadas | Operación completa salvo accesos y alta de sucursales |
+| Corte y Control de Calidad | Sucursales asignadas | Producción, mermas, rendimiento e inventario |
+| Confección Textil | Sucursales asignadas | Avance de fases y registro de retrabajos |
+| Mostrador / Punto de Venta | Su punto de venta | Consultar y ajustar existencias de su sucursal |
+
+Cuentas sembradas (`usuario` / contraseña inicial `PatternCare2026`):
+`encargada`, `administracion`, `corte1`, `corte2`, `confeccion1`, `confeccion2`,
+`pv.hospital`.
+
+Para instalar el módulo sobre una base ya creada:
+
+```bash
+mysql -u root -p < database_v3_usuarios.sql
+```
 
 ## 🛡️ Seguridad y Buenas Prácticas
 - Consultas parametrizadas con **PDO Prepared Statements** en todos los endpoints PHP para prevenir inyecciones SQL.
