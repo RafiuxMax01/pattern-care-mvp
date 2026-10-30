@@ -198,6 +198,23 @@ visible. Al abrir `index.html` con doble clic no hay backend, así que el
 contexto usa una sesión local de demostración y el MVP sigue navegable.
 
 
+### Protección de rutas
+
+Cada botón del ribbon declara el permiso que exige en `data-permiso`:
+
+- `aplicarProteccionDeRutas()` oculta los módulos que el rol no puede abrir y,
+  si el módulo activo deja de estar permitido, mueve al usuario al primero que sí.
+- `cambiarModulo()` repite la comprobación, así que ni la búsqueda global ni un
+  enlace directo saltan la regla.
+- El selector de sucursales solo lista los puntos de venta asignados; la vista
+  consolidada de todas es exclusiva del alcance global.
+
+El módulo **Usuarios y Accesos** (permiso `usuarios.ver`) muestra el padrón del
+equipo con sus asignaciones y la bitácora de accesos. Asignar puntos de venta o
+activar cuentas exige además `usuarios.gestionar`, de modo que solo la Dueña o
+la Encargada General puede hacerlo.
+
+
 ## 🛡️ Seguridad y Buenas Prácticas
 - Consultas parametrizadas con **PDO Prepared Statements** en todos los endpoints PHP para prevenir inyecciones SQL.
 - Cabeceras de seguridad HTTP configuradas en `web.config` y `conexion.php`.
