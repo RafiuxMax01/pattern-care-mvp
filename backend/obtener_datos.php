@@ -105,6 +105,20 @@ try {
             ];
         }
     }
+    // 3.1 Construir el detalle de inventario para el frontend
+ $inventarioDetalle = [];
+
+foreach ($skusPlanos as $sku) {
+    foreach ($sku['desglose_sucursales'] as $sucursal) {
+        $inventarioDetalle[] = [
+            'producto_id'  => (int) $sku['id'], // ID de la variante/SKU
+            'variant_id'   => (int) $sku['id'],
+            'sucursal_id'  => (int) $sucursal['sucursal_id'],
+            'stock_actual' => (int) $sucursal['stock_actual'],
+            'stock_minimo' => (int) $sucursal['stock_minimo']
+        ];
+    }
+}
 
     // 4. Calcular stock crítico total (SKUs con stock < mínimo en al menos una sucursal o global)
     $skusCriticosTotales = 0;
@@ -208,7 +222,7 @@ try {
         'kpis'             => $kpis,
         'productos'        => $productos,
         'skus_planos'      => $skusPlanos,
-        'inventario_detalle'=> [], // mantenido por compatibilidad
+        'inventario_detalle' => $inventarioDetalle,
         'transferencias'   => $transferencias,
         'ordenes'          => $ordenes,
         'mermas'           => $mermas,
