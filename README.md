@@ -16,8 +16,8 @@ Crear una herramienta de gestión y diagnóstico operativo que permita visualiza
 
 ```
 Pattern Care/
-├── index.php                    # Interfaz web principal (ERP completo, 11 módulos)
-├── index.html                   # Versión autocontenida (modo standalone/localStorage)
+├── index.html                   # Interfaz web completa (ERP, 11 módulos) — fuente única
+├── index.php                    # Punto de entrada del servidor: solo lee index.html
 ├── conexion.php                 # Conexión PDO a MySQL (lee variables de entorno)
 ├── database_master.sql          # Script SQL maestro unificado (esquema v2 + accesos + datos semilla)
 ├── database.sql                 # Esquema base original (compatibilidad)
@@ -46,6 +46,13 @@ Pattern Care/
     ├── gestionar_usuarios.php   # CRUD de usuarios y asignación a puntos de venta
     └── instalar_bd.php          # Instalador automático de BD con 1 clic
 ```
+
+> **Sobre `index.html` e `index.php`:** toda la interfaz vive en `index.html`.
+> `index.php` existe únicamente porque Apache e IIS resuelven `index.php` como
+> documento por defecto, y un `.php` abierto con `file://` se descargaría en vez
+> de mostrarse; su contenido completo es un `readfile()` de `index.html`. Así el
+> modo standalone (abrir el archivo con doble clic) sigue funcionando y no hay
+> que mantener dos copias del marcado. **Edita siempre `index.html`.**
 
 ---
 
@@ -226,7 +233,7 @@ entornos anteriores a esta historia.
 
 ### Contexto de autenticación en el frontend
 
-`PatternCareAuth` (en `index.php` / `index.html`) guarda la sesión y la expone
+`PatternCareAuth` (en `index.html`) guarda la sesión y la expone
 a toda la interfaz:
 
 | Método | Para qué sirve |

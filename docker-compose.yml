@@ -12,7 +12,9 @@ services:
     ports:
       - "8000:80"
     volumes:
+      # index.php solo lee index.html, asi que ambos deben estar montados
       - ./index.php:/var/www/html/index.php
+      - ./index.html:/var/www/html/index.html
       - ./conexion.php:/var/www/html/conexion.php
       - ./backend:/var/www/html/backend
       - ./uploads:/var/www/html/uploads
