@@ -16,8 +16,16 @@ Crear una herramienta de gestión y diagnóstico operativo que permita visualiza
 
 ```
 Pattern Care/
-├── index.html                   # Interfaz web completa (ERP, 11 módulos) — fuente única
+├── index.html                   # Marcado de la interfaz (ERP, 11 módulos) — fuente única
 ├── index.php                    # Punto de entrada del servidor: solo lee index.html
+├── assets/                      # Estilos y JavaScript de la interfaz
+│   ├── estilos.css              # Estilos propios (scrollbar, componentes Business Central)
+│   ├── tailwind.config.js       # Configuración del tema de Tailwind
+│   └── js/
+│       ├── auth.js              # Contexto de sesión: PatternCareAuth, permisos, standalone
+│       ├── app.js               # Motor principal: inventario, transferencias, producción, mermas
+│       ├── catalogo.js          # Módulo de catálogo: productos, variantes, fotos
+│       └── accesos.js           # Protección de rutas y administración de accesos
 ├── conexion.php                 # Conexión PDO a MySQL (lee variables de entorno)
 ├── database_master.sql          # Script SQL maestro unificado (esquema v2 + accesos + datos semilla)
 ├── database.sql                 # Esquema base original (compatibilidad)
@@ -53,6 +61,11 @@ Pattern Care/
 > de mostrarse; su contenido completo es un `readfile()` de `index.html`. Así el
 > modo standalone (abrir el archivo con doble clic) sigue funcionando y no hay
 > que mantener dos copias del marcado. **Edita siempre `index.html`.**
+>
+> Los estilos y el JavaScript viven en `assets/`. Se cargan como scripts
+> clásicos, en el mismo orden en que estaban embebidos, porque comparten
+> variables globales (`PatternCareAuth`, `bcState`, `catalogoState`) y porque
+> `type="module"` no funcionaría al abrir la página con `file://`.
 
 ---
 
