@@ -16,6 +16,8 @@ services:
       - ./index.php:/var/www/html/index.php
       - ./index.html:/var/www/html/index.html
       - ./conexion.php:/var/www/html/conexion.php
+      # Estilos y JavaScript de la interfaz, referenciados por index.html
+      - ./assets:/var/www/html/assets
       - ./backend:/var/www/html/backend
       - ./uploads:/var/www/html/uploads
     environment:
