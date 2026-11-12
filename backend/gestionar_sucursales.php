@@ -2,21 +2,10 @@
 <?php
 /**
  * PATTERN CARE - Registro y AdministraciÃ³n de Sucursales
- * Operaciones: listar, obtener, crear, actualizar, cambiar_estado
+ * Operaciones: listar, obtener, crear, actualizar, eliminar, cambiar_estado
  */
 
-require_once __DIR__ . '/../conexion.php';
-
-$pdo = getDBConnection();
-
-if (!$pdo) {
-    jsonResponse(
-        false,
-        null,
-        'No se pudo conectar con la base de datos.',
-        503
-    );
-}
+require_once __DIR__ . '/middleware_auth.php';
 
 // Permitir solicitudes de preflight CORS.
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
@@ -69,6 +58,26 @@ if ($accion === null) {
             header('Allow: GET, POST, PUT, DELETE, OPTIONS');
             jsonResponse(false, null, 'MÃ©todo HTTP no permitido.', 405);
     }
+}
+
+// AutorizaciÃ³n por acciÃ³n (SCRUM-20): consultar requiere lectura, escribir requiere ediciÃ³n.
+$permisosPorAccion = [
+    'crear'          => 'sucursales.editar',
+    'actualizar'     => 'sucursales.editar',
+    'eliminar'       => 'sucursales.editar',
+    'cambiar_estado' => 'sucursales.editar'
+];
+$perfil = requerirPermiso($permisosPorAccion[$accion] ?? 'sucursales.ver');
+
+$pdo = getDBConnection();
+
+if (!$pdo) {
+    jsonResponse(
+        false,
+        null,
+        'No se pudo conectar con la base de datos.',
+        503
+    );
 }
 
 
