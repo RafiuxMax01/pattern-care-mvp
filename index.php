@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es" class="h-full bg-gray-50 text-gray-800">
 <head>
     <meta charset="UTF-8">
@@ -833,7 +833,7 @@
       <input type="hidden" id="admin-sucursal-id">
 
       <div>
-        <label for="admin-sucursal-codigo" class="block text-sm font-medium mb-1">CÃ³digo *</label>
+        <label for="admin-sucursal-codigo" class="block text-sm font-medium mb-1">Código *</label>
         <input id="admin-sucursal-codigo" maxlength="20" required
           class="w-full rounded-lg border border-gray-300 p-2 text-sm"
           placeholder="Ej. SUC-005">
@@ -852,7 +852,7 @@
           class="w-full rounded-lg border border-gray-300 p-2 text-sm">
           <option value="Planta / Taller Central">Planta / Taller Central</option>
           <option value="Punto de Venta / Showroom">Punto de Venta / Showroom</option>
-          <option value="AlmacÃ©n Digital">AlmacÃ©n Digital</option>
+          <option value="Almacén Digital">Almacén Digital</option>
         </select>
       </div>
 
@@ -864,17 +864,17 @@
       </div>
 
       <div>
-        <label for="admin-sucursal-telefono" class="block text-sm font-medium mb-1">TelÃ©fono</label>
+        <label for="admin-sucursal-telefono" class="block text-sm font-medium mb-1">Teléfono</label>
         <input id="admin-sucursal-telefono" maxlength="50"
           class="w-full rounded-lg border border-gray-300 p-2 text-sm"
-          placeholder="TelÃ©fono de contacto">
+          placeholder="Teléfono de contacto">
       </div>
 
       <div>
-        <label for="admin-sucursal-direccion" class="block text-sm font-medium mb-1">DirecciÃ³n *</label>
+        <label for="admin-sucursal-direccion" class="block text-sm font-medium mb-1">Dirección *</label>
         <input id="admin-sucursal-direccion" maxlength="200" required
           class="w-full rounded-lg border border-gray-300 p-2 text-sm"
-          placeholder="DirecciÃ³n completa">
+          placeholder="Dirección completa">
       </div>
 
       <div class="md:col-span-2 lg:col-span-3 flex flex-wrap gap-2 pt-2">
@@ -890,18 +890,18 @@
     </form>
   </div>
 
-  <!-- TABLA DINÃMICA -->
+  <!-- TABLA DINÁMICA -->
   <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
     <div class="p-4 border-b border-gray-200">
       <h3 class="font-bold text-gray-800">Directorio de sucursales</h3>
-      <p class="text-xs text-gray-500 mt-1">La informaciÃ³n se consulta desde la API.</p>
+      <p class="text-xs text-gray-500 mt-1">La información se consulta desde la API.</p>
     </div>
 
     <div class="overflow-x-auto">
       <table class="w-full text-sm text-left">
         <thead class="bg-gray-50 text-gray-600 uppercase text-xs">
           <tr>
-            <th class="p-3">CÃ³digo / Nombre</th>
+            <th class="p-3">Código / Nombre</th>
             <th class="p-3">Tipo</th>
             <th class="p-3">Encargado / Contacto</th>
             <th class="p-3">Estado</th>
@@ -911,7 +911,7 @@
         <tbody id="tabla-sucursales-admin">
           <tr>
             <td colspan="5" class="p-5 text-center text-gray-500">
-              Pulsa Â«ActualizarÂ» para consultar las sucursales.
+              Pulsa «Actualizar» para consultar las sucursales.
             </td>
           </tr>
         </tbody>
