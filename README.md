@@ -28,9 +28,8 @@ Pattern Care/
 │       └── accesos.js           # Protección de rutas y administración de accesos
 ├── conexion.php                 # Conexión PDO a MySQL (lee variables de entorno)
 ├── database_master.sql          # Script SQL maestro unificado (esquema v2 + accesos + datos semilla)
-├── database.sql                 # Esquema base original (compatibilidad)
-├── database_v2_products.sql     # Extensión v2 productos/variantes (compatibilidad)
 ├── database_v3_usuarios.sql     # Extensión v3 roles, permisos y asignación a puntos de venta
+├── legacy/                      # Esquemas SQL históricos — no importar (ver legacy/README.md)
 ├── Dockerfile                   # Imagen PHP 8.2 + Apache para Docker
 ├── docker-compose.yml           # Orquestación Docker (Web + MySQL + phpMyAdmin)
 ├── php.ini                      # Configuración PHP para contenedor
@@ -50,6 +49,7 @@ Pattern Care/
     ├── transferir_stock.php     # Transferencias inter-sucursal (atómico)
     ├── modelo_accesos.php       # Capa de datos de roles, permisos y puntos de venta
     ├── middleware_auth.php      # Middleware de autorización (401 / 403 por permiso y sucursal)
+    ├── bootstrap_endpoint.php   # Arranque común: CORS, lectura de entrada, permisos y conexión
     ├── auth_sesion.php          # Login, logout, sesión y sucursal activa
     ├── gestionar_usuarios.php   # CRUD de usuarios y asignación a puntos de venta
     └── instalar_bd.php          # Instalador automático de BD con 1 clic
@@ -238,6 +238,24 @@ petición antes de tocar la base de datos:
 
 La sesión se maneja en `backend/auth_sesion.php` con las acciones `login`,
 `logout`, `sesion` y `seleccionar_sucursal`.
+
+El preámbulo que repetían todos los endpoints (preflight CORS, lectura del
+cuerpo, resolución de la acción, permisos y conexión) vive en
+`backend/bootstrap_endpoint.php`. Un endpoint de escritura nuevo se reduce a:
+
+```php
+require_once __DIR__ . '/bootstrap_endpoint.php';
+
+[$pdo, $data, $action, $perfil] = arrancarEndpointJson([
+    'crear'      => 'inventario.editar',
+    'actualizar' => 'inventario.editar'
+], 'inventario.ver');
+```
+
+El segundo argumento es el permiso que se exige a cualquier acción no listada,
+normalmente el de solo lectura. Para los endpoints que necesitan otro orden o
+otro manejo de errores están por separado `atenderPreflightCors()`,
+`leerEntradaJson()`, `leerEntradaPorMetodo()` y `conexionObligatoria()`.
 
 Si la base de datos todavía no tiene instalado el módulo de accesos, el
 middleware deja pasar la petición en **modo compatibilidad** para no romper
