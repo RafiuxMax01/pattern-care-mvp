@@ -71,6 +71,7 @@ switch ($action) {
                 (SELECT GROUP_CONCAT(DISTINCT pv3.talla ORDER BY FIELD(pv3.talla,'XS','S','M','L','XL','XXL','Unitalla') SEPARATOR ', ')
                  FROM product_variants pv3 WHERE pv3.product_id = p.id AND pv3.activo=1) AS tallas
             FROM products p
+            LEFT JOIN product_variants pv ON pv.product_id = p.id
             WHERE p.activo = 1
             GROUP BY p.id
             ORDER BY p.categoria, p.nombre
@@ -84,7 +85,7 @@ switch ($action) {
                 SELECT pv.*, 
                        COALESCE(SUM(inv.stock_actual), 0) AS stock_total
                 FROM   product_variants pv
-                LEFT JOIN inventario_sucursales inv ON inv.sku_variante_id = pv.id
+                LEFT JOIN inventario_sucursales inv ON inv.variant_id = pv.id
                 WHERE  pv.product_id = ? AND pv.activo = 1
                 GROUP BY pv.id
                 ORDER BY pv.color, pv.talla
