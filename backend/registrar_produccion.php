@@ -4,29 +4,15 @@
  * Control de fases, órdenes de trabajo, responsables y cuellos de botella.
  */
 
-require_once __DIR__ . '/middleware_auth.php';
-
-$pdo = getDBConnection();
-if (!$pdo) {
-    jsonResponse(false, null, 'Error de conexión con la base de datos.', 500);
-}
-
-$rawInput = file_get_contents('php://input');
-$data = json_decode($rawInput, true);
-if (!$data) {
-    $data = $_POST;
-}
-
-$action = $data['action'] ?? 'crear';
+require_once __DIR__ . '/bootstrap_endpoint.php';
 
 // Autorización por acción (SCRUM-20)
-$permisosPorAccion = [
+[$pdo, $data, $action, $perfil] = arrancarEndpointJson([
     'crear'          => 'produccion.avanzar',
     'cambiar_fase'   => 'produccion.avanzar',
     'cambiar_estado' => 'produccion.avanzar',
     'eliminar'       => 'produccion.avanzar'
-];
-$perfil = requerirPermiso($permisosPorAccion[$action] ?? 'produccion.ver');
+], 'produccion.ver');
 
 $fasesPermitidas = ['Diseño', 'Abastecimiento', 'Impresión', 'Corte', 'Confección', 'Empaque', 'Distribución'];
 $estadosPermitidos = ['En Proceso', 'Detenido / Alerta', 'Completado'];

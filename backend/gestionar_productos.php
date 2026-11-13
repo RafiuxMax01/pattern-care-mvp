@@ -15,28 +15,17 @@
  *   POST action=subir_foto         → Recibe base64, guarda en Cloudinary o local
  */
 
-require_once __DIR__ . '/middleware_auth.php';
+require_once __DIR__ . '/bootstrap_endpoint.php';
 
 header('Content-Type: application/json; charset=utf-8');
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type');
 
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-    http_response_code(200);
-    exit;
-}
+atenderPreflightCors();
 
 $method = $_SERVER['REQUEST_METHOD'];
-$input  = [];
-
-if ($method === 'POST') {
-    $raw = file_get_contents('php://input');
-    $input = json_decode($raw, true) ?? $_POST;
-} else {
-    $input = $_GET;
-}
-
+$input  = leerEntradaPorMetodo();
 $action = $input['action'] ?? 'listar';
 
 // Autorización por acción (SCRUM-20)

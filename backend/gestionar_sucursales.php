@@ -4,15 +4,14 @@
  * Operaciones: listar, obtener, crear, actualizar, eliminar, cambiar_estado
  */
 
-require_once __DIR__ . '/middleware_auth.php';
+require_once __DIR__ . '/bootstrap_endpoint.php';
 
 // Permitir solicitudes de preflight CORS.
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-    http_response_code(204);
-    exit;
-}
+atenderPreflightCors(204);
 
-// Aceptar datos JSON o formularios tradicionales.
+// Aceptar datos JSON o formularios tradicionales. A diferencia del resto de
+// endpoints, aquí un cuerpo JSON mal formado se rechaza con 400 en vez de
+// ignorarse, así que la lectura no usa los auxiliares del bootstrap.
 $entrada = [];
 $contenido = file_get_contents('php://input');
 
@@ -68,16 +67,7 @@ $permisosPorAccion = [
 ];
 $perfil = requerirPermiso($permisosPorAccion[$accion] ?? 'sucursales.ver');
 
-$pdo = getDBConnection();
-
-if (!$pdo) {
-    jsonResponse(
-        false,
-        null,
-        'No se pudo conectar con la base de datos.',
-        503
-    );
-}
+$pdo = conexionObligatoria('No se pudo conectar con la base de datos.', 503);
 
 
 $tiposPermitidos = [
