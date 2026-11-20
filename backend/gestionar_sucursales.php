@@ -1,30 +1,17 @@
-﻿
 <?php
 /**
- * PATTERN CARE - Registro y AdministraciÃ³n de Sucursales
- * Operaciones: listar, obtener, crear, actualizar, cambiar_estado
+ * PATTERN CARE - Registro y Administración de Sucursales
+ * Operaciones: listar, obtener, crear, actualizar, eliminar, cambiar_estado
  */
 
-require_once __DIR__ . '/../conexion.php';
-
-$pdo = getDBConnection();
-
-if (!$pdo) {
-    jsonResponse(
-        false,
-        null,
-        'No se pudo conectar con la base de datos.',
-        503
-    );
-}
+require_once __DIR__ . '/bootstrap_endpoint.php';
 
 // Permitir solicitudes de preflight CORS.
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-    http_response_code(204);
-    exit;
-}
+atenderPreflightCors(204);
 
-// Aceptar datos JSON o formularios tradicionales.
+// Aceptar datos JSON o formularios tradicionales. A diferencia del resto de
+// endpoints, aquí un cuerpo JSON mal formado se rechaza con 400 en vez de
+// ignorarse, así que la lectura no usa los auxiliares del bootstrap.
 $entrada = [];
 $contenido = file_get_contents('php://input');
 
@@ -39,7 +26,7 @@ if ($contenido !== false && trim($contenido) !== '') {
             'application/json'
         )
     ) {
-        jsonResponse(false, null, 'El JSON recibido no es vÃ¡lido.', 400);
+        jsonResponse(false, null, 'El JSON recibido no es válido.', 400);
     }
 }
 
@@ -50,7 +37,7 @@ $metodo = $_SERVER['REQUEST_METHOD'];
 
 $accion = $_GET['accion'] ?? $entrada['accion'] ?? null;
 
-// Determinar la acciÃ³n segÃºn el mÃ©todo HTTP.
+// Determinar la acción según el método HTTP.
 if ($accion === null) {
     switch ($metodo) {
         case 'GET':
@@ -67,15 +54,26 @@ if ($accion === null) {
             break;
         default:
             header('Allow: GET, POST, PUT, DELETE, OPTIONS');
-            jsonResponse(false, null, 'MÃ©todo HTTP no permitido.', 405);
+            jsonResponse(false, null, 'Método HTTP no permitido.', 405);
     }
 }
+
+// Autorización por acción (SCRUM-20): consultar requiere lectura, escribir requiere edición.
+$permisosPorAccion = [
+    'crear'          => 'sucursales.editar',
+    'actualizar'     => 'sucursales.editar',
+    'eliminar'       => 'sucursales.editar',
+    'cambiar_estado' => 'sucursales.editar'
+];
+$perfil = requerirPermiso($permisosPorAccion[$accion] ?? 'sucursales.ver');
+
+$pdo = conexionObligatoria('No se pudo conectar con la base de datos.', 503);
 
 
 $tiposPermitidos = [
     'Planta / Taller Central',
     'Punto de Venta / Showroom',
-    'AlmacÃ©n Digital'
+    'Almacén Digital'
 ];
 
 function texto($datos, $campo) {
@@ -97,7 +95,7 @@ function validarSucursal($datos, $tiposPermitidos) {
     }
 
     if (!in_array($datos['tipo'], $tiposPermitidos, true)) {
-        jsonResponse(false, null, 'El tipo de sucursal no es vÃ¡lido.', 422);
+        jsonResponse(false, null, 'El tipo de sucursal no es válido.', 422);
     }
 
     $limites = [
@@ -142,7 +140,7 @@ try {
             );
 
             if (!$id || $id < 1) {
-                jsonResponse(false, null, 'El ID no es vÃ¡lido.', 422);
+                jsonResponse(false, null, 'El ID no es válido.', 422);
             }
 
             $stmt = $pdo->prepare(
@@ -168,7 +166,7 @@ try {
             $estado = $entrada['estado'] ?? 'Activo';
 
             if (!in_array($estado, ['Activo', 'Inactivo'], true)) {
-                jsonResponse(false, null, 'El estado no es vÃ¡lido.', 422);
+                jsonResponse(false, null, 'El estado no es válido.', 422);
             }
 
             $stmt = $pdo->prepare(
@@ -213,7 +211,7 @@ try {
             );
 
             if (!$id || $id < 1) {
-                jsonResponse(false, null, 'El ID no es vÃ¡lido.', 422);
+                jsonResponse(false, null, 'El ID no es válido.', 422);
             }
 
             validarSucursal($entrada, $tiposPermitidos);
@@ -301,11 +299,11 @@ try {
             $estado = $entrada['estado'] ?? '';
 
             if (!$id || $id < 1) {
-                jsonResponse(false, null, 'El ID no es vÃ¡lido.', 422);
+                jsonResponse(false, null, 'El ID no es válido.', 422);
             }
 
             if (!in_array($estado, ['Activo', 'Inactivo'], true)) {
-                jsonResponse(false, null, 'El estado no es vÃ¡lido.', 422);
+                jsonResponse(false, null, 'El estado no es válido.', 422);
             }
 
             $stmt = $pdo->prepare(
@@ -347,17 +345,17 @@ try {
                     'eliminar',
                     'cambiar_estado'
                 ]],
-                'La acciÃ³n solicitada no existe.',
+                'La acción solicitada no existe.',
                 400
             );
     }
 } catch (PDOException $e) {
-    // SQLSTATE 23000 incluye errores de integridad, como cÃ³digos duplicados.
+    // SQLSTATE 23000 incluye errores de integridad, como códigos duplicados.
     if ($e->getCode() === '23000') {
         jsonResponse(
             false,
             null,
-            'No se pudo guardar. Verifica que el cÃ³digo de sucursal no estÃ© repetido.',
+            'No se pudo guardar. Verifica que el código de sucursal no esté repetido.',
             409
         );
     }
@@ -367,7 +365,7 @@ try {
     jsonResponse(
         false,
         null,
-        'OcurriÃ³ un error al procesar la solicitud.',
+        'Ocurrió un error al procesar la solicitud.',
         500
     );
 }

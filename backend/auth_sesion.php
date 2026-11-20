@@ -12,20 +12,11 @@
  * carga que consume el contexto de autenticación del frontend (SCRUM-21).
  */
 
-require_once __DIR__ . '/middleware_auth.php';
+require_once __DIR__ . '/bootstrap_endpoint.php';
 
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-    http_response_code(200);
-    exit;
-}
+atenderPreflightCors();
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $raw   = file_get_contents('php://input');
-    $input = json_decode($raw, true) ?? $_POST;
-} else {
-    $input = $_GET;
-}
-
+$input  = leerEntradaPorMetodo();
 $action = $input['action'] ?? 'sesion';
 $pdo    = getDBConnection();
 

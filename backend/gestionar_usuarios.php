@@ -15,21 +15,12 @@
  *   POST action=permisos_rol          → Reemplaza los permisos de un rol
  */
 
-require_once __DIR__ . '/middleware_auth.php';
+require_once __DIR__ . '/bootstrap_endpoint.php';
 
-if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
-    http_response_code(200);
-    exit;
-}
+atenderPreflightCors();
 
 $method = $_SERVER['REQUEST_METHOD'];
-if ($method === 'POST') {
-    $raw   = file_get_contents('php://input');
-    $input = json_decode($raw, true) ?? $_POST;
-} else {
-    $input = $_GET;
-}
-
+$input  = leerEntradaPorMetodo();
 $action = $input['action'] ?? 'listar';
 
 // Autorización por acción (SCRUM-20): solo la Encargada General administra accesos
@@ -43,10 +34,7 @@ $permisosPorAccion = [
 ];
 $perfil = requerirPermiso($permisosPorAccion[$action] ?? 'usuarios.ver');
 
-$pdo = getDBConnection();
-if (!$pdo) {
-    jsonResponse(false, null, 'Base de datos no disponible.', 503);
-}
+$pdo = conexionObligatoria('Base de datos no disponible.', 503);
 if (!accesosInstalados($pdo)) {
     jsonResponse(false, null, 'El módulo de accesos no está instalado. Ejecuta database_v3_usuarios.sql.', 503);
 }
