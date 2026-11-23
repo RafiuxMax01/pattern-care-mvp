@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pattern Care — Iniciar sesión</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Segoe+UI:wght@300;400;600;700&display=swap" rel="stylesheet" />
+  <style>
+    /* ── Reset ─────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    /* ── Root palette (Business Central light) ────────── */
+    :root {
+      --bc-blue:     #0078d4;
+      --bc-blue-dk:  #005a9e;
+      --bc-blue-lt:  #deecf9;
+      --bc-teal:     #008575;
+      --bg-page:     #f3f2f1;
+      --bg-card:     #f1f7fe;
+      --bg-footer:   #e0ecfb;
+      --text-main:   #201f1e;
+      --text-muted:  #605e5c;
+      --border:      #edebe9;
+      --input-bg:    #ffffff;
+      --radius-card: 16px;
+      --radius-btn:  24px;
+      --shadow-card: 0 4px 24px rgba(0,0,0,.10);
+      --font:        'Segoe UI', system-ui, -apple-system, sans-serif;
+    }
+
+    /* ── Page layout ───────────────────────────────────── */
+    html, body {
+      height: 100%;
+      font-family: var(--font);
+      background: var(--bg-page);
+      color: var(--text-main);
+    }
+
+    .page-wrapper {
+      min-height: 100vh;
+      display: grid;
+      grid-template-columns: 1fr 480px;
+    }
+
+    /* ── Left panel — branding / hero ──────────────────── */
+    .hero {
+      background: linear-gradient(145deg, #005a9e 0%, #0078d4 55%, #008575 100%);
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 60px 72px;
+      color: #fff;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(circle at 20% 80%, rgba(255,255,255,.07) 0%, transparent 50%),
+        radial-gradient(circle at 80% 20%, rgba(255,255,255,.05) 0%, transparent 50%);
+    }
+
+    .hero-logo {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 48px;
+      position: relative;
+    }
+
+    .hero-logo-icon {
+      width: 48px;
+      height: 48px;
+      background: rgba(255,255,255,.18);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(255,255,255,.25);
+    }
+
+    .hero-logo-text {
+      font-size: 1.3rem;
+      font-weight: 700;
+      letter-spacing: .02em;
+    }
+
+    .hero-logo-sub {
+      font-size: .75rem;
+      opacity: .75;
+      font-weight: 400;
+      margin-top: 2px;
+    }
+
+    .hero h1 {
+      font-size: clamp(2rem, 3vw, 2.8rem);
+      font-weight: 300;
+      line-height: 1.25;
+      margin-bottom: 16px;
+      position: relative;
+    }
+
+    .hero h1 strong { font-weight: 700; }
+
+    .hero p {
+      font-size: 1rem;
+      opacity: .8;
+      max-width: 400px;
+      line-height: 1.6;
+      position: relative;
+      margin-bottom: 48px;
+    }
+
+    .hero-badges {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      position: relative;
+    }
+
+    .hero-badge {
+      background: rgba(255,255,255,.15);
+      border: 1px solid rgba(255,255,255,.25);
+      border-radius: 20px;
+      padding: 6px 14px;
+      font-size: .8rem;
+      backdrop-filter: blur(6px);
+    }
+
+    /* ── Right panel — auth card ───────────────────────── */
+    .auth-panel {
+      background: #fff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 48px 40px;
+      position: relative;
+    }
+
+    .auth-panel::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, var(--bc-blue), var(--bc-teal));
+    }
+
+    /* ── Uiverse-inspired form-box ─────────────────────── */
+    .form-box {
+      width: 100%;
+      max-width: 340px;
+      background: var(--bg-card);
+      border-radius: var(--radius-card);
+      box-shadow: var(--shadow-card);
+      overflow: hidden;
+    }
+
+    .form {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      padding: 36px 28px 24px;
+      gap: 16px;
+      text-align: center;
+    }
+
+    .form .title {
+      font-weight: 700;
+      font-size: 1.55rem;
+      color: var(--text-main);
+    }
+
+    .form .subtitle {
+      font-size: .92rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+
+    .form-container {
+      overflow: hidden;
+      border-radius: 10px;
+      background: var(--input-bg);
+      border: 1px solid var(--border);
+      margin: .5rem 0;
+      width: 100%;
+    }
+
+    .input {
+      background: none;
+      border: 0;
+      outline: 0;
+      height: 44px;
+      width: 100%;
+      border-bottom: 1px solid var(--border);
+      font-size: .9rem;
+      font-family: var(--font);
+      padding: 10px 16px;
+      color: var(--text-main);
+      transition: background .15s;
+    }
+
+    .input:last-child { border-bottom: 0; }
+
+    .input:focus {
+      background: var(--bc-blue-lt);
+      outline: 2px solid var(--bc-blue);
+      outline-offset: -2px;
+    }
+
+    .input::placeholder { color: #a19f9d; }
+
+    /* ── Error / success states ────────────────────────── */
+    .alert-box {
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: .82rem;
+      text-align: left;
+      display: none;
+    }
+
+    .alert-box.error {
+      background: #fde7e9;
+      color: #c50f1f;
+      border: 1px solid #f1707b;
+    }
+
+    .alert-box.success {
+      background: #dff6dd;
+      color: #107c10;
+      border: 1px solid #55a855;
+    }
+
+    .alert-box.show { display: flex; align-items: center; gap: 8px; }
+
+    /* ── Submit button ─────────────────────────────────── */
+    .form button[type="submit"] {
+      background: var(--bc-blue);
+      color: #fff;
+      border: 0;
+      border-radius: var(--radius-btn);
+      padding: 11px 20px;
+      font-size: .97rem;
+      font-weight: 600;
+      font-family: var(--font);
+      cursor: pointer;
+      transition: background .2s, transform .1s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .form button[type="submit"]:hover { background: var(--bc-blue-dk); }
+    .form button[type="submit"]:active { transform: scale(.98); }
+    .form button[type="submit"]:disabled { background: #a19f9d; cursor: not-allowed; }
+
+    .btn-spinner {
+      width: 16px; height: 16px;
+      border: 2px solid rgba(255,255,255,.4);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin .6s linear infinite;
+      display: none;
+    }
+
+    .btn-spinner.show { display: block; }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Form section footer ───────────────────────────── */
+    .form-section {
+      padding: 16px;
+      font-size: .84rem;
+      background: var(--bg-footer);
+      box-shadow: 0 -1px 0 rgba(0,0,0,.06);
+      text-align: center;
+      color: var(--text-muted);
+    }
+
+    .form-section a {
+      font-weight: 600;
+      color: var(--bc-blue);
+      text-decoration: none;
+      transition: color .2s;
+    }
+
+    .form-section a:hover {
+      color: var(--bc-blue-dk);
+      text-decoration: underline;
+    }
+
+    /* ── Tab switcher (Login / Register) ───────────────── */
+    .tab-row {
+      display: flex;
+      border-bottom: 2px solid var(--border);
+      background: var(--input-bg);
+    }
+
+    .tab-btn {
+      flex: 1;
+      padding: 12px 8px;
+      background: none;
+      border: 0;
+      font-family: var(--font);
+      font-size: .88rem;
+      font-weight: 500;
+      color: var(--text-muted);
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -2px;
+      transition: color .15s, border-color .15s;
+    }
+
+    .tab-btn.active {
+      color: var(--bc-blue);
+      border-bottom-color: var(--bc-blue);
+      font-weight: 600;
+    }
+
+    .tab-btn:hover:not(.active) { color: var(--text-main); }
+
+    /* Panels */
+    .tab-panel { display: none; }
+    .tab-panel.active { display: flex; flex-direction: column; }
+
+    /* ── Rol selector ──────────────────────────────────── */
+    .rol-select {
+      appearance: none;
+      background: none;
+      border: 0;
+      outline: 0;
+      height: 44px;
+      width: 100%;
+      border-bottom: 1px solid var(--border);
+      font-size: .9rem;
+      font-family: var(--font);
+      padding: 10px 16px;
+      color: var(--text-main);
+      cursor: pointer;
+    }
+
+    .rol-select:focus { background: var(--bc-blue-lt); }
+
+    /* ── BC-style top bar (decorative) ────────────────── */
+    .bc-topbar {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      height: 48px;
+      background: var(--bc-blue);
+      display: flex;
+      align-items: center;
+      padding: 0 20px;
+      gap: 16px;
+      z-index: 10;
+      box-shadow: 0 2px 4px rgba(0,0,0,.2);
+    }
+
+    .bc-topbar-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: #fff;
+      font-size: .9rem;
+      font-weight: 600;
+    }
+
+    .bc-waffle {
+      display: grid;
+      grid-template-columns: repeat(3,6px);
+      gap: 2px;
+    }
+
+    .bc-waffle span {
+      width: 6px; height: 6px;
+      background: rgba(255,255,255,.85);
+      border-radius: 1px;
+    }
+
+    /* push page content below topbar */
+    .page-wrapper { padding-top: 48px; }
+
+    /* ── Responsive ────────────────────────────────────── */
+    @media (max-width: 768px) {
+      .page-wrapper { grid-template-columns: 1fr; }
+      .hero { display: none; }
+      .auth-panel { padding: 32px 20px; }
+    }
+
+    /* ── Users hint (dev helper) ───────────────────────── */
+    .users-hint {
+      margin-top: 20px;
+      max-width: 340px;
+      background: #fff8e1;
+      border: 1px solid #ffe082;
+      border-radius: 8px;
+      padding: 12px 14px;
+      font-size: .78rem;
+      color: #795548;
+      line-height: 1.6;
+    }
+
+    .users-hint strong { color: #5d4037; display: block; margin-bottom: 4px; }
+
+    .users-hint table { width: 100%; border-collapse: collapse; margin-top: 6px; }
+    .users-hint td { padding: 2px 6px; }
+    .users-hint td:first-child { font-weight: 600; }
+  </style>
+</head>
+<body>
+
+  <!-- BC-style top navigation bar -->
+  <nav class="bc-topbar" role="banner" aria-label="Barra de navegación principal">
+    <div class="bc-topbar-logo">
+      <div class="bc-waffle" aria-hidden="true">
+        <span></span><span></span><span></span>
+        <span></span><span></span><span></span>
+        <span></span><span></span><span></span>
+      </div>
+      <span>Pattern Care ERP</span>
+    </div>
+  </nav>
+
+  <div class="page-wrapper">
+
+    <!-- ── Hero / Branding panel ──────────────────────── -->
+    <section class="hero" aria-hidden="true">
+      <div class="hero-logo">
+        <div class="hero-logo-icon">🧵</div>
+        <div>
+          <div class="hero-logo-text">Pattern Care</div>
+          <div class="hero-logo-sub">Sistema de Gestión Operativa</div>
+        </div>
+      </div>
+
+      <h1>Bienvenido al<br><strong>Centro de Control</strong></h1>
+      <p>
+        Gestiona tu producción de uniformes médicos, inventarios,
+        sucursales y reportes desde un solo lugar.
+      </p>
+
+      <div class="hero-badges">
+        <span class="hero-badge">🏭 Producción</span>
+        <span class="hero-badge">📦 Inventario</span>
+        <span class="hero-badge">🏥 Canales de venta</span>
+        <span class="hero-badge">📊 Reportes</span>
+        <span class="hero-badge">🏢 Multi-sucursal</span>
+      </div>
+    </section>
+
+    <!-- ── Auth panel ─────────────────────────────────── -->
+    <main class="auth-panel" role="main">
+      <div class="form-box" role="region" aria-label="Formulario de autenticación">
+
+        <!-- Tab switcher -->
+        <div class="tab-row" role="tablist" aria-label="Modo de autenticación">
+          <button class="tab-btn active" role="tab" aria-selected="true"
+                  aria-controls="panel-login" id="tab-login"
+                  onclick="switchTab('login')">Iniciar sesión</button>
+          <button class="tab-btn" role="tab" aria-selected="false"
+                  aria-controls="panel-register" id="tab-register"
+                  onclick="switchTab('register')">Crear cuenta</button>
+        </div>
+
+        <!-- ── LOGIN PANEL ─────────────────────────────── -->
+        <div id="panel-login" class="tab-panel active" role="tabpanel"
+             aria-labelledby="tab-login">
+          <form class="form" id="form-login" novalidate onsubmit="handleLogin(event)">
+            <span class="title">Iniciar sesión</span>
+            <span class="subtitle">Ingresa tus credenciales para acceder al sistema.</span>
+
+            <div id="login-alert" class="alert-box error" role="alert" aria-live="polite"></div>
+
+            <div class="form-container" role="group" aria-label="Credenciales">
+              <label for="login-usuario" class="sr-only">Usuario</label>
+              <input type="text" id="login-usuario" name="usuario"
+                     class="input" placeholder="Usuario" autocomplete="username"
+                     required aria-required="true" />
+
+              <label for="login-password" class="sr-only">Contraseña</label>
+              <input type="password" id="login-password" name="password"
+                     class="input" placeholder="Contraseña" autocomplete="current-password"
+                     required aria-required="true" />
+            </div>
+
+            <button type="submit" id="login-btn">
+              <span class="btn-spinner" id="login-spinner" aria-hidden="true"></span>
+              <span id="login-btn-text">Iniciar sesión</span>
+            </button>
+          </form>
+
+          <div class="form-section">
+            <p>¿No tienes cuenta?
+              <a href="#" onclick="switchTab('register'); return false;">Crear cuenta</a>
+            </p>
+          </div>
+        </div>
+
+        <!-- ── REGISTER PANEL ──────────────────────────── -->
+        <div id="panel-register" class="tab-panel" role="tabpanel"
+             aria-labelledby="tab-register">
+          <form class="form" id="form-register" novalidate onsubmit="handleRegister(event)">
+            <span class="title">Crear cuenta</span>
+            <span class="subtitle">Regístrate con tu nombre y correo institucional.</span>
+
+            <div id="register-alert" class="alert-box" role="alert" aria-live="polite"></div>
+
+            <div class="form-container" role="group" aria-label="Datos de registro">
+              <label for="reg-nombre" class="sr-only">Nombre completo</label>
+              <input type="text" id="reg-nombre" name="nombre"
+                     class="input" placeholder="Nombre completo"
+                     autocomplete="name" required aria-required="true" />
+
+              <label for="reg-email" class="sr-only">Correo electrónico</label>
+              <input type="email" id="reg-email" name="email"
+                     class="input" placeholder="Correo electrónico"
+                     autocomplete="email" required aria-required="true" />
+
+              <label for="reg-rol" class="sr-only">Rol en la organización</label>
+              <select id="reg-rol" name="rol" class="rol-select"
+                      required aria-required="true">
+                <option value="" disabled selected>— Selecciona tu rol —</option>
+                <option value="Dueña / Encargada General">Dueña / Encargada General</option>
+                <option value="Área Administrativa">Área Administrativa</option>
+                <option value="Corte y Calidad">Corte y Calidad</option>
+                <option value="Confección">Confección</option>
+              </select>
+
+              <label for="reg-password" class="sr-only">Contraseña</label>
+              <input type="password" id="reg-password" name="password"
+                     class="input" placeholder="Contraseña (mín. 6 caracteres)"
+                     autocomplete="new-password" minlength="6"
+                     required aria-required="true" />
+            </div>
+
+            <button type="submit" id="register-btn">
+              <span class="btn-spinner" id="register-spinner" aria-hidden="true"></span>
+              <span id="register-btn-text">Crear cuenta</span>
+            </button>
+          </form>
+
+          <div class="form-section">
+            <p>¿Ya tienes cuenta?
+              <a href="#" onclick="switchTab('login'); return false;">Iniciar sesión</a>
+            </p>
+          </div>
+        </div>
+
+      </div><!-- /.form-box -->
+
+      <!-- Dev helper: show preset users -->
+      <details class="users-hint">
+        <summary><strong>👤 Usuarios de prueba (MVP)</strong></summary>
+        <table aria-label="Usuarios de prueba">
+          <tr><td>admin</td><td>admin123</td><td>Encargada General</td></tr>
+          <tr><td>admin2</td><td>admin456</td><td>Área Administrativa</td></tr>
+          <tr><td>corte1</td><td>corte123</td><td>Corte y Calidad</td></tr>
+          <tr><td>corte2</td><td>corte456</td><td>Corte y Calidad</td></tr>
+          <tr><td>conf1</td><td>conf123</td><td>Confección</td></tr>
+          <tr><td>conf2</td><td>conf456</td><td>Confección</td></tr>
+        </table>
+      </details>
+
+    </main>
+  </div>
+
+  <!-- Visually-hidden utility class -->
+  <style>.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}</style>
+
+  <script>
+    'use strict';
+
+    /* ── Preset users (MVP — replace with real API when backend is ready) ── */
+    const USUARIOS = [
+      { usuario: 'admin',  password: 'admin123', nombre: 'Encargada General',   rol: 'Dueña / Encargada General', sucursal: 'Matriz Planta' },
+      { usuario: 'admin2', password: 'admin456', nombre: 'Administración',       rol: 'Área Administrativa',       sucursal: 'Matriz Planta' },
+      { usuario: 'corte1', password: 'corte123', nombre: 'Corte y Calidad 1',   rol: 'Corte y Calidad',           sucursal: 'Matriz Planta' },
+      { usuario: 'corte2', password: 'corte456', nombre: 'Corte y Calidad 2',   rol: 'Corte y Calidad',           sucursal: 'Sucursal Hospital' },
+      { usuario: 'conf1',  password: 'conf123',  nombre: 'Confección 1',         rol: 'Confección',                sucursal: 'Sucursal Zona Norte' },
+      { usuario: 'conf2',  password: 'conf456',  nombre: 'Confección 2',         rol: 'Confección',                sucursal: 'Almacén Digital' },
+    ];
+
+    /* ── Registered users (persist in localStorage for MVP) ── */
+    function loadRegistered() {
+      try { return JSON.parse(localStorage.getItem('pc_registered_users') || '[]'); }
+      catch { return []; }
+    }
+
+    function saveRegistered(users) {
+      localStorage.setItem('pc_registered_users', JSON.stringify(users));
+    }
+
+    /* ── Tab switcher ──────────────────────────────────────── */
+    function switchTab(tab) {
+      ['login', 'register'].forEach(t => {
+        const btn = document.getElementById('tab-' + t);
+        const panel = document.getElementById('panel-' + t);
+        const isActive = t === tab;
+        btn.classList.toggle('active', isActive);
+        btn.setAttribute('aria-selected', isActive);
+        panel.classList.toggle('active', isActive);
+      });
+      hideAlert('login-alert');
+      hideAlert('register-alert');
+    }
+
+    /* ── Alert helpers ─────────────────────────────────────── */
+    function showAlert(id, msg, type = 'error') {
+      const el = document.getElementById(id);
+      el.textContent = msg;
+      el.className = 'alert-box show ' + type;
+    }
+
+    function hideAlert(id) {
+      const el = document.getElementById(id);
+      el.className = 'alert-box error';
+    }
+
+    /* ── Spinner helpers ───────────────────────────────────── */
+    function setLoading(prefix, loading) {
+      const btn = document.getElementById(prefix + '-btn');
+      const spinner = document.getElementById(prefix + '-spinner');
+      const txt = document.getElementById(prefix + '-btn-text');
+      btn.disabled = loading;
+      spinner.classList.toggle('show', loading);
+      txt.textContent = loading ? 'Por favor espera…' : (prefix === 'login' ? 'Iniciar sesión' : 'Crear cuenta');
+    }
+
+    /* ── Login handler ─────────────────────────────────────── */
+    function handleLogin(e) {
+      e.preventDefault();
+      hideAlert('login-alert');
+
+      const usuario  = document.getElementById('login-usuario').value.trim();
+      const password = document.getElementById('login-password').value;
+
+      if (!usuario || !password) {
+        showAlert('login-alert', '⚠️ Por favor completa todos los campos.');
+        return;
+      }
+
+      setLoading('login', true);
+
+      /* Simulate async (replace with fetch('/api/login') when backend ready) */
+      setTimeout(() => {
+        setLoading('login', false);
+
+        const allUsers = [...USUARIOS, ...loadRegistered()];
+        const found = allUsers.find(u => u.usuario === usuario && u.password === password);
+
+        if (!found) {
+          showAlert('login-alert', '❌ Usuario o contraseña incorrectos.');
+          document.getElementById('login-password').value = '';
+          return;
+        }
+
+        /* Save session */
+        const session = {
+          usuario:   found.usuario,
+          nombre:    found.nombre,
+          rol:       found.rol,
+          sucursal:  found.sucursal || 'Matriz Planta',
+          loginAt:   new Date().toISOString(),
+        };
+        sessionStorage.setItem('pc_user', JSON.stringify(session));
+
+        showAlert('login-alert', '✅ Acceso concedido. Redirigiendo…', 'success');
+
+        /* Redirect to ERP */
+        setTimeout(() => {
+          window.location.href = 'index.html';
+        }, 900);
+      }, 700);
+    }
+
+    /* ── Register handler ──────────────────────────────────── */
+    function handleRegister(e) {
+      e.preventDefault();
+      hideAlert('register-alert');
+
+      const nombre   = document.getElementById('reg-nombre').value.trim();
+      const email    = document.getElementById('reg-email').value.trim();
+      const rol      = document.getElementById('reg-rol').value;
+      const password = document.getElementById('reg-password').value;
+
+      if (!nombre || !email || !rol || !password) {
+        showAlert('register-alert', '⚠️ Por favor completa todos los campos.');
+        return;
+      }
+
+      if (password.length < 6) {
+        showAlert('register-alert', '⚠️ La contraseña debe tener al menos 6 caracteres.');
+        return;
+      }
+
+      /* Generate username from email prefix */
+      const usuario = email.split('@')[0].toLowerCase().replace(/[^a-z0-9]/g, '');
+
+      const allUsers = [...USUARIOS, ...loadRegistered()];
+      if (allUsers.find(u => u.usuario === usuario || u.email === email)) {
+        showAlert('register-alert', '⚠️ Este correo o nombre de usuario ya está registrado.');
+        return;
+      }
+
+      setLoading('register', true);
+
+      setTimeout(() => {
+        setLoading('register', false);
+
+        const registered = loadRegistered();
+        registered.push({ usuario, password, nombre, rol, email, sucursal: 'Matriz Planta' });
+        saveRegistered(registered);
+
+        showAlert('register-alert', `✅ Cuenta creada. Usuario: <strong>${usuario}</strong>`, 'success');
+        document.getElementById('form-register').reset();
+
+        setTimeout(() => switchTab('login'), 1800);
+      }, 700);
+    }
+
+    /* ── Auto-redirect if already logged in ───────────────── */
+    (function checkSession() {
+      try {
+        const session = sessionStorage.getItem('pc_user');
+        if (session) {
+          const data = JSON.parse(session);
+          if (data && data.usuario) {
+            window.location.href = 'index.html';
+          }
+        }
+      } catch { /* ignore */ }
+    })();
+  </script>
+</body>
+</html>
