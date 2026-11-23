@@ -4,7 +4,10 @@
  * Crea la base de datos 'pattern_care', las tablas y los datos semilla iniciales.
  */
 
-require_once __DIR__ . '/../conexion.php';
+require_once __DIR__ . '/middleware_auth.php';
+
+// Reinstalar o sembrar la base solo lo puede hacer quien administra accesos (SCRUM-20)
+requerirPermiso('usuarios.gestionar');
 
 // Permitir peticiones GET o POST
 $serverConn = getServerConnection();

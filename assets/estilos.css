@@ -1,0 +1,18 @@
+/* Estilos propios del ERP: scrollbar, utilidades y componentes Business Central. */
+
+::-webkit-scrollbar { width: 7px; height: 7px; }
+::-webkit-scrollbar-track { background: #f3f4f6; }
+::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: #9ca3af; }
+.bc-cue-card {
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.bc-cue-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.08);
+}
+@media print {
+    .no-print { display: none !important; }
+    .print-only { display: block !important; }
+    body { background: white !important; color: black !important; }
+}

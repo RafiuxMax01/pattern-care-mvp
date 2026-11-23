@@ -5,7 +5,7 @@
  * Incluye catálogo de modelos (products), variantes (product_variants) e inventario por sucursal.
  */
 
-require_once __DIR__ . '/../conexion.php';
+require_once __DIR__ . '/middleware_auth.php';
 
 $pdo = getDBConnection();
 
@@ -16,12 +16,27 @@ if (!$pdo) {
     ], 'Error de conexión a MySQL.', 503);
 }
 
+// Control de accesos (SCRUM-20): consultar el ERP exige sesión iniciada
+$perfil = requerirAutenticacion();
+
 try {
-    $sucursalFiltro = isset($_GET['sucursal_id']) && is_numeric($_GET['sucursal_id']) ? (int)$_GET['sucursal_id'] : null;
+    $sucursalSolicitada = isset($_GET['sucursal_id']) && is_numeric($_GET['sucursal_id']) ? (int)$_GET['sucursal_id'] : null;
+
+    // El usuario solo consulta los puntos de venta que tiene asignados.
+    // Si no pide ninguno, se le devuelve el primero de su lista (nunca el consolidado ajeno).
+    $sucursalFiltro = resolverSucursalConsulta($perfil, $sucursalSolicitada);
+    $sucursalesPermitidas = sucursalesPermitidasIds($perfil);
 
     // 1. Obtener lista de Sucursales
     $stmtSucursales = $pdo->query("SELECT * FROM `sucursales` WHERE `estado` = 'Activo' ORDER BY `id` ASC");
     $sucursales = $stmtSucursales->fetchAll();
+
+    // Se recorta el catálogo de sucursales a las asignadas al usuario
+    if ($sucursalesPermitidas !== null) {
+        $sucursales = array_values(array_filter($sucursales, function ($s) use ($sucursalesPermitidas) {
+            return in_array((int)$s['id'], $sucursalesPermitidas, true);
+        }));
+    }
 
     // 2. Obtener Productos (modelos base) con conteo de variantes
     $stmtProductos = $pdo->query("
@@ -105,6 +120,20 @@ try {
             ];
         }
     }
+    // 3.1 Construir el detalle de inventario para el frontend
+ $inventarioDetalle = [];
+
+foreach ($skusPlanos as $sku) {
+    foreach ($sku['desglose_sucursales'] as $sucursal) {
+        $inventarioDetalle[] = [
+            'producto_id'  => (int) $sku['id'], // ID de la variante/SKU
+            'variant_id'   => (int) $sku['id'],
+            'sucursal_id'  => (int) $sucursal['sucursal_id'],
+            'stock_actual' => (int) $sucursal['stock_actual'],
+            'stock_minimo' => (int) $sucursal['stock_minimo']
+        ];
+    }
+}
 
     // 4. Calcular stock crítico total (SKUs con stock < mínimo en al menos una sucursal o global)
     $skusCriticosTotales = 0;
@@ -203,12 +232,13 @@ try {
 
     jsonResponse(true, [
         'db_connected'     => true,
+        'sesion'           => $perfil,
         'sucursal_filtro'  => $sucursalFiltro,
         'sucursales'       => $sucursales,
         'kpis'             => $kpis,
         'productos'        => $productos,
         'skus_planos'      => $skusPlanos,
-        'inventario_detalle'=> [], // mantenido por compatibilidad
+        'inventario_detalle' => $inventarioDetalle,
         'transferencias'   => $transferencias,
         'ordenes'          => $ordenes,
         'mermas'           => $mermas,

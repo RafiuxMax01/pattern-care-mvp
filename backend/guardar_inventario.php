@@ -4,20 +4,15 @@
  * Endpoint: Catálogo de Productos e Inventario por Sucursal
  */
 
-require_once __DIR__ . '/../conexion.php';
+require_once __DIR__ . '/bootstrap_endpoint.php';
 
-$pdo = getDBConnection();
-if (!$pdo) {
-    jsonResponse(false, null, 'Error de conexión con la base de datos.', 500);
-}
-
-$rawInput = file_get_contents('php://input');
-$data = json_decode($rawInput, true);
-if (!$data) {
-    $data = $_POST;
-}
-
-$action = $data['action'] ?? 'crear';
+// Autorización por acción (SCRUM-20)
+[$pdo, $data, $action, $perfil] = arrancarEndpointJson([
+    'crear'        => 'inventario.editar',
+    'actualizar'   => 'inventario.editar',
+    'eliminar'     => 'inventario.editar',
+    'ajustar_stock'=> 'inventario.ajustar'
+], 'inventario.ver');
 
 try {
     switch ($action) {
@@ -103,6 +98,9 @@ try {
             if ($productoId <= 0 || $sucursalId <= 0) {
                 jsonResponse(false, null, 'Parámetros de producto o sucursal inválidos.', 400);
             }
+
+            // Evita descontar existencias de un punto de venta que no es el suyo
+            requerirSucursal($sucursalId, 'ajustar');
 
             // Verificar si existe registro en inventario_sucursales
             $stmtCheck = $pdo->prepare("SELECT id, stock_actual FROM `inventario_sucursales` WHERE `producto_id` = ? AND `sucursal_id` = ?");

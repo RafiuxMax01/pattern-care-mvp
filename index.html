@@ -80,6 +80,55 @@
 <body class="h-full flex flex-col font-sans bg-gray-50 text-gray-800 selection:bg-bc-blue selection:text-gray-900">
 
     <!-- ============================================================== -->
+    <!-- 0. PANTALLA DE ACCESO Y AVISOS DE SESIÓN (SCRUM-21)            -->
+    <!-- ============================================================== -->
+    <div id="pantalla-acceso" class="hidden fixed inset-0 z-[100] bg-gray-900/70 backdrop-blur-sm items-center justify-center p-4 no-print">
+        <div class="w-full max-w-sm bg-white rounded-2xl shadow-2xl border border-gray-200 overflow-hidden">
+            <div class="px-6 py-5 border-b border-gray-200">
+                <div class="font-heading font-extrabold text-lg tracking-tight text-gray-900">
+                    <span class="text-bc-blue font-black">Pattern Care</span>
+                    <span class="text-gray-400 font-normal">|</span>
+                    <span>Business Central</span>
+                </div>
+                <p class="text-xs text-gray-500 mt-1">Identifícate para operar tus puntos de venta.</p>
+            </div>
+
+            <form id="form-acceso" onsubmit="return enviarFormularioAcceso(event)" class="px-6 py-5 space-y-3">
+                <div>
+                    <label for="acceso-usuario" class="block text-[11px] font-semibold text-gray-600 mb-1">Usuario</label>
+                    <input type="text" id="acceso-usuario" autocomplete="username" required
+                           class="w-full bg-gray-50 border border-gray-300 rounded-lg px-3 py-2 text-xs text-gray-900 focus:outline-none focus:border-bc-blue focus:ring-1 focus:ring-bc-blue"
+                           placeholder="encargada">
+                </div>
+                <div>
+                    <label for="acceso-password" class="block text-[11px] font-semibold text-gray-600 mb-1">Contraseña</label>
+                    <input type="password" id="acceso-password" autocomplete="current-password" required
+                           class="w-full bg-gray-50 border border-gray-300 rounded-lg px-3 py-2 text-xs text-gray-900 focus:outline-none focus:border-bc-blue focus:ring-1 focus:ring-bc-blue"
+                           placeholder="••••••••">
+                </div>
+
+                <div id="acceso-error" class="hidden rounded-lg border border-rose-300 bg-rose-50 px-3 py-2 text-[11px] text-rose-700"></div>
+
+                <button type="submit" id="btn-acceso"
+                        class="w-full bg-bc-blue hover:bg-blue-700 text-white font-semibold rounded-lg px-3 py-2 text-xs transition flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-right-to-bracket text-[11px]"></i>
+                    <span id="btn-acceso-texto">Entrar</span>
+                </button>
+            </form>
+
+            <div class="px-6 py-3 bg-gray-50 border-t border-gray-200 text-[11px] text-gray-500 leading-relaxed">
+                Cuentas sembradas: <span class="font-mono text-gray-700">encargada</span>,
+                <span class="font-mono text-gray-700">administracion</span>,
+                <span class="font-mono text-gray-700">pv.hospital</span><br>
+                Contraseña inicial: <span class="font-mono text-gray-700">PatternCare2026</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Aviso flotante de permisos y sesión -->
+    <div id="aviso-acceso" class="hidden fixed top-4 right-4 z-[110] max-w-sm rounded-lg px-4 py-3 text-xs shadow-lg border no-print"></div>
+
+    <!-- ============================================================== -->
     <!-- 1. BARRA SUPERIOR MICROSOFT Pattern Care APP BAR               -->
     <!-- ============================================================== -->
     <header class="bg-white border-b border-gray-200 sticky top-0 z-50 text-xs shadow-sm">
@@ -979,23 +1028,143 @@
             </div>
         </section>
 
-        <!-- MÓDULO 6: DIRECTORIO DE SUCURSALES -->
-        <section id="modulo-sucursales" class="bc-seccion hidden space-y-6">
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-gray-200 pb-4">
-                <div>
-                    <h2 class="text-lg font-heading font-bold text-gray-900 flex items-center gap-2">
-                        <i class="fa-solid fa-store text-teal-400"></i>
-                        <span>Directorio de Sucursales & Puntos de Distribución</span>
-                    </h2>
-                    <p class="text-xs text-gray-500">Gestión de almacenes, encargados, existencias y canales de venta asociados.</p>
-                </div>
-            </div>
+<!-- MÓDULO 6: DIRECTORIO DE SUCURSALES -->
+<section id="modulo-sucursales" class="bc-seccion hidden space-y-6">
 
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4" id="grid-sucursales-cards">
-                <!-- Inyectado dinámicamente -->
-            </div>
-        </section>
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-gray-200 pb-4">
+    <div>
+      <h2 class="text-lg font-heading font-bold text-gray-900 flex items-center gap-2">
+        <i class="fa-solid fa-store text-teal-400"></i>
+        <span>Administración de Sucursales</span>
+      </h2>
+      <p class="text-xs text-gray-500">
+        Registrar, consultar, editar y dar de baja sucursales.
+      </p>
+    </div>
 
+    <div class="flex gap-2">
+      <button type="button" onclick="cargarSucursalesAdmin()"
+        class="px-4 py-2 rounded-lg border border-gray-300 text-sm font-semibold hover:bg-gray-50">
+        <i class="fa-solid fa-rotate mr-1"></i> Actualizar
+      </button>
+      <button type="button" onclick="nuevaSucursal()"
+        class="px-4 py-2 rounded-lg bg-teal-600 text-white text-sm font-semibold hover:bg-teal-700">
+        <i class="fa-solid fa-plus mr-1"></i> Nueva sucursal
+      </button>
+    </div>
+  </div>
+
+  <div id="sucursales-mensaje" class="hidden rounded-lg p-3 text-sm" role="status"></div>
+
+  <!-- FORMULARIO -->
+  <div class="bg-white rounded-xl border border-gray-200 p-5 shadow-sm">
+    <h3 id="titulo-form-sucursal" class="font-bold text-gray-800 mb-4">
+      Registrar sucursal
+    </h3>
+
+    <form id="form-sucursal-admin" onsubmit="guardarSucursalAdmin(event)"
+      class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+
+      <input type="hidden" id="admin-sucursal-id">
+
+      <div>
+        <label for="admin-sucursal-codigo" class="block text-sm font-medium mb-1">Código *</label>
+        <input id="admin-sucursal-codigo" maxlength="20" required
+          class="w-full rounded-lg border border-gray-300 p-2 text-sm"
+          placeholder="Ej. SUC-005">
+      </div>
+
+      <div>
+        <label for="admin-sucursal-nombre" class="block text-sm font-medium mb-1">Nombre *</label>
+        <input id="admin-sucursal-nombre" maxlength="100" required
+          class="w-full rounded-lg border border-gray-300 p-2 text-sm"
+          placeholder="Nombre de la sucursal">
+      </div>
+
+      <div>
+        <label for="admin-sucursal-tipo" class="block text-sm font-medium mb-1">Tipo de canal *</label>
+        <select id="admin-sucursal-tipo" required
+          class="w-full rounded-lg border border-gray-300 p-2 text-sm">
+          <option value="Planta / Taller Central">Planta / Taller Central</option>
+          <option value="Punto de Venta / Showroom">Punto de Venta / Showroom</option>
+          <option value="Almacén Digital">Almacén Digital</option>
+        </select>
+      </div>
+
+      <div>
+        <label for="admin-sucursal-encargado" class="block text-sm font-medium mb-1">Encargado *</label>
+        <input id="admin-sucursal-encargado" maxlength="100" required
+          class="w-full rounded-lg border border-gray-300 p-2 text-sm"
+          placeholder="Nombre del encargado">
+      </div>
+
+      <div>
+        <label for="admin-sucursal-telefono" class="block text-sm font-medium mb-1">Teléfono</label>
+        <input id="admin-sucursal-telefono" maxlength="50"
+          class="w-full rounded-lg border border-gray-300 p-2 text-sm"
+          placeholder="Teléfono de contacto">
+      </div>
+
+      <div>
+        <label for="admin-sucursal-direccion" class="block text-sm font-medium mb-1">Dirección *</label>
+        <input id="admin-sucursal-direccion" maxlength="200" required
+          class="w-full rounded-lg border border-gray-300 p-2 text-sm"
+          placeholder="Dirección completa">
+      </div>
+
+      <div class="md:col-span-2 lg:col-span-3 flex flex-wrap gap-2 pt-2">
+        <button type="submit"
+          class="px-5 py-2 rounded-lg bg-teal-600 text-white text-sm font-semibold hover:bg-teal-700">
+          <i class="fa-solid fa-floppy-disk mr-1"></i> Guardar sucursal
+        </button>
+        <button type="button" onclick="cancelarEdicionSucursal()"
+          class="px-5 py-2 rounded-lg border border-gray-300 text-sm font-semibold hover:bg-gray-50">
+          Limpiar formulario
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <!-- TABLA DINÁMICA -->
+  <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+    <div class="p-4 border-b border-gray-200">
+      <h3 class="font-bold text-gray-800">Directorio de sucursales</h3>
+      <p class="text-xs text-gray-500 mt-1">La información se consulta desde la API.</p>
+    </div>
+
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm text-left">
+        <thead class="bg-gray-50 text-gray-600 uppercase text-xs">
+          <tr>
+            <th class="p-3">Código / Nombre</th>
+            <th class="p-3">Tipo</th>
+            <th class="p-3">Encargado / Contacto</th>
+            <th class="p-3">Estado</th>
+            <th class="p-3">Acciones</th>
+          </tr>
+        </thead>
+        <tbody id="tabla-sucursales-admin">
+          <tr>
+            <td colspan="5" class="p-5 text-center text-gray-500">
+              Pulsa «Actualizar» para consultar las sucursales.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- TARJETAS EXISTENTES: SE CONSERVAN -->
+  <div>
+    <h3 class="font-bold text-gray-800 mb-3">Resumen de sucursales e inventario</h3>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4"
+      id="grid-sucursales-cards">
+      <!-- Inyectado dinámicamente -->
+    </div>
+  </div>
+
+</section>
+<!-- FIN MÓDULO 6 -->
         <!-- MÓDULO 7: PUNTOS CRÍTICOS -->
         <section id="modulo-diagnostico" class="bc-seccion hidden space-y-6">
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-gray-200 pb-4">
@@ -3155,22 +3324,17 @@
 
             cont.innerHTML = `
                 <div>
-                    <span class="text-[10px] font-mono text-bc-blue font-bold">${p.sku}</span>
-                    <h4 class="font-bold text-gray-900 text-sm mt-0.5">${p.nombre}</h4>
-                    <div class="text-gray-500 text-[11px] mt-0.5">${p.categoria} &bull; ${p.color} (${p.talla})</div>
+                    <h3 class="font-heading font-bold text-gray-900 text-base">Puntos de venta asignados</h3>
+                    <p id="asignacion-subtitulo" class="text-[11px] text-gray-500 mt-0.5"></p>
                 </div>
+                <button onclick="cerrarModalAsignacion()" class="w-7 h-7 rounded hover:bg-gray-100 text-gray-500 flex items-center justify-center transition">
+                    <i class="fa-solid fa-xmark text-xs"></i>
+                </button>
+            </div>
 
-                <div class="pt-2 border-t border-gray-200">
-                    <span class="text-[10px] uppercase font-bold text-gray-500 tracking-wider">Desglose por Sucursales</span>
-                    <div class="space-y-1.5 mt-2">
-                        ${sucursalesRows}
-                    </div>
-                </div>
-
-                <div class="pt-3 border-t border-gray-200 flex items-center justify-between font-bold text-xs">
-                    <span class="text-gray-600">Total en Toda la Red:</span>
-                    <span class="text-base text-emerald-400">${p.stock_total || p.stock_actual} pzas</span>
-                </div>
+            <div id="lista-asignacion-sucursales" class="px-5 py-4 space-y-2 max-h-80 overflow-y-auto text-xs">
+                <!-- Inyectado dinámicamente -->
+            </div>
 
                 <div class="pt-2 space-y-1.5">
                     <button type="button" onclick="iniciarTransferenciaDesdeSKU(null, ${p.id})" class="w-full py-1.5 rounded bg-cyan-600 hover:bg-cyan-500 text-white font-semibold text-xs flex items-center justify-center gap-1.5 transition">

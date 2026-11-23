@@ -4,20 +4,14 @@
  * Endpoint: Órdenes de Transferencia / Traspasos Inter-Sucursal
  */
 
-require_once __DIR__ . '/../conexion.php';
+require_once __DIR__ . '/bootstrap_endpoint.php';
 
-$pdo = getDBConnection();
-if (!$pdo) {
-    jsonResponse(false, null, 'Error de conexión con la base de datos.', 500);
-}
-
-$rawInput = file_get_contents('php://input');
-$data = json_decode($rawInput, true);
-if (!$data) {
-    $data = $_POST;
-}
-
-$action = $data['action'] ?? 'crear';
+// Autorización por acción (SCRUM-20)
+[$pdo, $data, $action, $perfil] = arrancarEndpointJson([
+    'crear'          => 'transferencias.crear',
+    'transferir'     => 'transferencias.crear',
+    'cambiar_estado' => 'transferencias.crear'
+], 'transferencias.ver');
 
 try {
     switch ($action) {
@@ -38,6 +32,9 @@ try {
             if ($origenId === $destinoId) {
                 jsonResponse(false, null, 'La sucursal de origen no puede ser igual a la sucursal de destino.', 400);
             }
+
+            // Solo se puede sacar mercancía de un punto de venta asignado
+            requerirSucursal($origenId, 'ajustar');
 
             // Iniciar transacción atómica en MySQL
             $pdo->beginTransaction();
