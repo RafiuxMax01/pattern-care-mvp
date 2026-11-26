@@ -88,7 +88,7 @@ function _pintarCatalogo() {
                 <i class="fa-solid fa-box-open text-4xl mb-3 text-gray-300"></i>
                 <p class="font-semibold text-sm">Sin productos en el catálogo</p>
                 <p class="text-xs mt-1">Agrega un modelo con el botón "Nuevo Modelo"</p>
-                <button onclick="abrirModalProducto()" class="mt-4 px-4 py-2 rounded-lg bg-violet-600 text-white text-xs font-semibold shadow">
+                <button type="button" onclick="abrirModalProducto()" class="mt-4 px-4 py-2 rounded-lg bg-violet-600 text-white text-xs font-semibold shadow">
                     <i class="fa-solid fa-plus mr-1"></i> Nuevo Modelo
                 </button>
             </div>`;
@@ -143,13 +143,13 @@ function _pintarCatalogo() {
                     <div class="flex items-center justify-between pt-2 border-t border-gray-100">
                         <span class="font-bold text-gray-900 text-sm">$${Number(p.precio_base).toLocaleString('es-MX', {minimumFractionDigits:2})}</span>
                         <div class="flex gap-1 opacity-0 group-hover:opacity-100 transition">
-                            <button onclick="editarProducto(${p.id})" title="Editar" class="p-1.5 rounded bg-gray-100 hover:bg-blue-100 text-gray-500 hover:text-bc-blue transition">
+                            <button type="button" onclick="editarProducto(${p.id})" title="Editar" class="p-1.5 rounded bg-gray-100 hover:bg-blue-100 text-gray-500 hover:text-bc-blue transition">
                                 <i class="fa-solid fa-pen-to-square text-xs"></i>
                             </button>
-                            <button onclick="abrirDetProducto(${p.id})" title="Ver variantes" class="p-1.5 rounded bg-gray-100 hover:bg-violet-100 text-gray-500 hover:text-violet-600 transition">
+                            <button type="button" onclick="abrirDetProducto(${p.id})" title="Ver variantes" class="p-1.5 rounded bg-gray-100 hover:bg-violet-100 text-gray-500 hover:text-violet-600 transition">
                                 <i class="fa-solid fa-eye text-xs"></i>
                             </button>
-                            <button onclick="eliminarProductoCatalogo(${p.id})" title="Eliminar" class="p-1.5 rounded bg-gray-100 hover:bg-rose-100 text-gray-500 hover:text-rose-600 transition">
+                            <button type="button" onclick="eliminarProductoCatalogo(${p.id})" title="Eliminar" class="p-1.5 rounded bg-gray-100 hover:bg-rose-100 text-gray-500 hover:text-rose-600 transition">
                                 <i class="fa-solid fa-trash-can text-xs"></i>
                             </button>
                         </div>
@@ -400,7 +400,7 @@ function _actualizarListaVariantes() {
                 </div>
                 <div class="flex items-center gap-2">
                     <span class="font-mono text-[10px] text-gray-400">${v.sku}</span>
-                    <button onclick="eliminarVarianteLista(${i})" class="text-rose-400 hover:text-rose-600 p-1 rounded hover:bg-rose-50">
+                    <button type="button" onclick="eliminarVarianteLista(${i})" class="text-rose-400 hover:text-rose-600 p-1 rounded hover:bg-rose-50">
                         <i class="fa-solid fa-xmark text-xs"></i>
                     </button>
                 </div>

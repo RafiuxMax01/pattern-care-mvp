@@ -15,6 +15,8 @@ services:
       # index.php solo lee index.html, asi que ambos deben estar montados
       - ./index.php:/var/www/html/index.php
       - ./index.html:/var/www/html/index.html
+      # Pantalla de acceso: index.html redirige aqui cuando no hay sesion
+      - ./login.html:/var/www/html/login.html
       - ./conexion.php:/var/www/html/conexion.php
       # Estilos y JavaScript de la interfaz, referenciados por index.html
       - ./assets:/var/www/html/assets

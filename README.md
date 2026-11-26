@@ -232,7 +232,7 @@ petición antes de tocar la base de datos:
 
 | Situación | Respuesta |
 | --- | --- |
-| Sin sesión iniciada | `401` — el frontend abre la pantalla de acceso |
+| Sin sesión iniciada | `401` — el frontend redirige a `login.html` |
 | Permiso faltante para la acción | `403` + renglón en `bitacora_accesos` |
 | Sucursal no asignada al usuario | `403`, aunque el permiso sí exista |
 
@@ -264,8 +264,13 @@ entornos anteriores a esta historia.
 
 ### Contexto de autenticación en el frontend
 
-`PatternCareAuth` (en `index.html`) guarda la sesión y la expone
-a toda la interfaz:
+El inicio de sesión vive en `login.html`, que llama a `backend/auth_sesion.php`
+y, si las credenciales son válidas, entra a `index.php`. Las cuentas no se
+registran desde ahí: las da de alta la Encargada General en **Usuarios y
+Accesos**.
+
+`PatternCareAuth` (en `assets/js/auth.js`) lee la sesión del servidor al arrancar
+y la expone a toda la interfaz; si no hay sesión, redirige a `login.html`:
 
 | Método | Para qué sirve |
 | --- | --- |
@@ -274,19 +279,27 @@ a toda la interfaz:
 | `puedeEnSucursal(id, 'ajustar')` | Validar la sucursal antes de operar |
 
 Todas las llamadas al backend pasan por `fetchConSesion()`, que envía la cookie
-de sesión y convierte el `401` en la pantalla de acceso y el `403` en un aviso
-visible. Al abrir `index.html` con doble clic no hay backend, así que el
-contexto usa una sesión local de demostración y el MVP sigue navegable.
+de sesión, convierte el `401` en un regreso a `login.html` (con el aviso de
+sesión expirada) y el `403` en un aviso visible. Al abrir `index.html` con doble
+clic no hay backend, así que el contexto usa una sesión local de demostración y
+el MVP sigue navegable.
 
 
 ### Protección de rutas
 
-Cada botón del ribbon declara el permiso que exige en `data-permiso`:
+El permiso que exige cada módulo se declara una sola vez, en
+`PERMISO_POR_MODULO` (`assets/js/accesos.js`). Un módulo que no aparece en ese
+mapa no se abre para nadie.
 
-- `aplicarProteccionDeRutas()` oculta los módulos que el rol no puede abrir y,
-  si el módulo activo deja de estar permitido, mueve al usuario al primero que sí.
-- `cambiarModulo()` repite la comprobación, así que ni la búsqueda global ni un
-  enlace directo saltan la regla.
+- `aplicarProteccionDeRutas()` oculta, en la barra, los menús desplegables y el
+  cajón "Explorar", los módulos que el rol no puede abrir (y el menú o la
+  categoría completa si se queda vacía). Si el módulo activo deja de estar
+  permitido, mueve al usuario al primero que sí.
+- `cambiarModulo()` repite la comprobación, así que ni la búsqueda global, ni
+  las alertas, ni un enlace directo saltan la regla.
+- Ventas, clientes, compras, proveedores, finanzas, tesorería y catálogo de
+  cuentas todavía son maquetas sin backend ni permiso propio; mientras tanto se
+  acotan a `reportes.ver` (Dueña y Administración).
 - El selector de sucursales solo lista los puntos de venta asignados; la vista
   consolidada de todas es exclusiva del alcance global.
 

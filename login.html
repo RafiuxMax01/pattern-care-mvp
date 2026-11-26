@@ -238,6 +238,12 @@
       border: 1px solid #55a855;
     }
 
+    .alert-box.info {
+      background: var(--bc-blue-lt);
+      color: var(--bc-blue-dk);
+      border: 1px solid var(--bc-blue);
+    }
+
     .alert-box.show { display: flex; align-items: center; gap: 8px; }
 
     /* ── Submit button ─────────────────────────────────── */
@@ -297,57 +303,8 @@
       text-decoration: underline;
     }
 
-    /* ── Tab switcher (Login / Register) ───────────────── */
-    .tab-row {
-      display: flex;
-      border-bottom: 2px solid var(--border);
-      background: var(--input-bg);
-    }
-
-    .tab-btn {
-      flex: 1;
-      padding: 12px 8px;
-      background: none;
-      border: 0;
-      font-family: var(--font);
-      font-size: .88rem;
-      font-weight: 500;
-      color: var(--text-muted);
-      cursor: pointer;
-      border-bottom: 2px solid transparent;
-      margin-bottom: -2px;
-      transition: color .15s, border-color .15s;
-    }
-
-    .tab-btn.active {
-      color: var(--bc-blue);
-      border-bottom-color: var(--bc-blue);
-      font-weight: 600;
-    }
-
-    .tab-btn:hover:not(.active) { color: var(--text-main); }
-
-    /* Panels */
-    .tab-panel { display: none; }
-    .tab-panel.active { display: flex; flex-direction: column; }
-
-    /* ── Rol selector ──────────────────────────────────── */
-    .rol-select {
-      appearance: none;
-      background: none;
-      border: 0;
-      outline: 0;
-      height: 44px;
-      width: 100%;
-      border-bottom: 1px solid var(--border);
-      font-size: .9rem;
-      font-family: var(--font);
-      padding: 10px 16px;
-      color: var(--text-main);
-      cursor: pointer;
-    }
-
-    .rol-select:focus { background: var(--bc-blue-lt); }
+    /* Panel */
+    .tab-panel { display: flex; flex-direction: column; }
 
     /* ── BC-style top bar (decorative) ────────────────── */
     .bc-topbar {
@@ -459,19 +416,8 @@
     <main class="auth-panel" role="main">
       <div class="form-box" role="region" aria-label="Formulario de autenticación">
 
-        <!-- Tab switcher -->
-        <div class="tab-row" role="tablist" aria-label="Modo de autenticación">
-          <button class="tab-btn active" role="tab" aria-selected="true"
-                  aria-controls="panel-login" id="tab-login"
-                  onclick="switchTab('login')">Iniciar sesión</button>
-          <button class="tab-btn" role="tab" aria-selected="false"
-                  aria-controls="panel-register" id="tab-register"
-                  onclick="switchTab('register')">Crear cuenta</button>
-        </div>
-
         <!-- ── LOGIN PANEL ─────────────────────────────── -->
-        <div id="panel-login" class="tab-panel active" role="tabpanel"
-             aria-labelledby="tab-login">
+        <div id="panel-login" class="tab-panel">
           <form class="form" id="form-login" novalidate onsubmit="handleLogin(event)">
             <span class="title">Iniciar sesión</span>
             <span class="subtitle">Ingresa tus credenciales para acceder al sistema.</span>
@@ -497,74 +443,23 @@
           </form>
 
           <div class="form-section">
-            <p>¿No tienes cuenta?
-              <a href="#" onclick="switchTab('register'); return false;">Crear cuenta</a>
-            </p>
-          </div>
-        </div>
-
-        <!-- ── REGISTER PANEL ──────────────────────────── -->
-        <div id="panel-register" class="tab-panel" role="tabpanel"
-             aria-labelledby="tab-register">
-          <form class="form" id="form-register" novalidate onsubmit="handleRegister(event)">
-            <span class="title">Crear cuenta</span>
-            <span class="subtitle">Regístrate con tu nombre y correo institucional.</span>
-
-            <div id="register-alert" class="alert-box" role="alert" aria-live="polite"></div>
-
-            <div class="form-container" role="group" aria-label="Datos de registro">
-              <label for="reg-nombre" class="sr-only">Nombre completo</label>
-              <input type="text" id="reg-nombre" name="nombre"
-                     class="input" placeholder="Nombre completo"
-                     autocomplete="name" required aria-required="true" />
-
-              <label for="reg-email" class="sr-only">Correo electrónico</label>
-              <input type="email" id="reg-email" name="email"
-                     class="input" placeholder="Correo electrónico"
-                     autocomplete="email" required aria-required="true" />
-
-              <label for="reg-rol" class="sr-only">Rol en la organización</label>
-              <select id="reg-rol" name="rol" class="rol-select"
-                      required aria-required="true">
-                <option value="" disabled selected>— Selecciona tu rol —</option>
-                <option value="Dueña / Encargada General">Dueña / Encargada General</option>
-                <option value="Área Administrativa">Área Administrativa</option>
-                <option value="Corte y Calidad">Corte y Calidad</option>
-                <option value="Confección">Confección</option>
-              </select>
-
-              <label for="reg-password" class="sr-only">Contraseña</label>
-              <input type="password" id="reg-password" name="password"
-                     class="input" placeholder="Contraseña (mín. 6 caracteres)"
-                     autocomplete="new-password" minlength="6"
-                     required aria-required="true" />
-            </div>
-
-            <button type="submit" id="register-btn">
-              <span class="btn-spinner" id="register-spinner" aria-hidden="true"></span>
-              <span id="register-btn-text">Crear cuenta</span>
-            </button>
-          </form>
-
-          <div class="form-section">
-            <p>¿Ya tienes cuenta?
-              <a href="#" onclick="switchTab('login'); return false;">Iniciar sesión</a>
-            </p>
+            <p>¿No tienes cuenta? Pídesela a la Encargada General: las cuentas
+              se dan de alta en <strong>Usuarios y Accesos</strong>.</p>
           </div>
         </div>
 
       </div><!-- /.form-box -->
 
-      <!-- Dev helper: show preset users -->
+      <!-- Cuentas sembradas por database_master.sql (solo MVP) -->
       <details class="users-hint">
-        <summary><strong>👤 Usuarios de prueba (MVP)</strong></summary>
-        <table aria-label="Usuarios de prueba">
-          <tr><td>admin</td><td>admin123</td><td>Encargada General</td></tr>
-          <tr><td>admin2</td><td>admin456</td><td>Área Administrativa</td></tr>
-          <tr><td>corte1</td><td>corte123</td><td>Corte y Calidad</td></tr>
-          <tr><td>corte2</td><td>corte456</td><td>Corte y Calidad</td></tr>
-          <tr><td>conf1</td><td>conf123</td><td>Confección</td></tr>
-          <tr><td>conf2</td><td>conf456</td><td>Confección</td></tr>
+        <summary><strong>👤 Cuentas de prueba (MVP)</strong></summary>
+        <p>Contraseña inicial de todas: <b>PatternCare2026</b></p>
+        <table aria-label="Cuentas de prueba">
+          <tr><td>encargada</td><td>Dueña / Encargada General</td></tr>
+          <tr><td>administracion</td><td>Área Administrativa</td></tr>
+          <tr><td>corte1, corte2</td><td>Corte y Calidad</td></tr>
+          <tr><td>confeccion1, confeccion2</td><td>Confección</td></tr>
+          <tr><td>pv.hospital</td><td>Punto de Venta</td></tr>
         </table>
       </details>
 
@@ -577,38 +472,19 @@
   <script>
     'use strict';
 
-    /* ── Preset users (MVP — replace with real API when backend is ready) ── */
-    const USUARIOS = [
-      { usuario: 'admin',  password: 'admin123', nombre: 'Encargada General',   rol: 'Dueña / Encargada General', sucursal: 'Matriz Planta' },
-      { usuario: 'admin2', password: 'admin456', nombre: 'Administración',       rol: 'Área Administrativa',       sucursal: 'Matriz Planta' },
-      { usuario: 'corte1', password: 'corte123', nombre: 'Corte y Calidad 1',   rol: 'Corte y Calidad',           sucursal: 'Matriz Planta' },
-      { usuario: 'corte2', password: 'corte456', nombre: 'Corte y Calidad 2',   rol: 'Corte y Calidad',           sucursal: 'Sucursal Hospital' },
-      { usuario: 'conf1',  password: 'conf123',  nombre: 'Confección 1',         rol: 'Confección',                sucursal: 'Sucursal Zona Norte' },
-      { usuario: 'conf2',  password: 'conf456',  nombre: 'Confección 2',         rol: 'Confección',                sucursal: 'Almacén Digital' },
-    ];
+    /*
+     * Inicio de sesión contra backend/auth_sesion.php.
+     * El servidor guarda la sesión en su cookie; index.php la lee con
+     * PatternCareAuth.inicializar() y redirige aquí si no existe.
+     *
+     * Abierto con doble clic (file://) no hay servidor: se pasa directo a
+     * index.html, que arranca en modo standalone con la sesión de demostración.
+     */
+    const API_SESION = 'backend/auth_sesion.php';
+    const DESTINO = './';
 
-    /* ── Registered users (persist in localStorage for MVP) ── */
-    function loadRegistered() {
-      try { return JSON.parse(localStorage.getItem('pc_registered_users') || '[]'); }
-      catch { return []; }
-    }
-
-    function saveRegistered(users) {
-      localStorage.setItem('pc_registered_users', JSON.stringify(users));
-    }
-
-    /* ── Tab switcher ──────────────────────────────────────── */
-    function switchTab(tab) {
-      ['login', 'register'].forEach(t => {
-        const btn = document.getElementById('tab-' + t);
-        const panel = document.getElementById('panel-' + t);
-        const isActive = t === tab;
-        btn.classList.toggle('active', isActive);
-        btn.setAttribute('aria-selected', isActive);
-        panel.classList.toggle('active', isActive);
-      });
-      hideAlert('login-alert');
-      hideAlert('register-alert');
+    if (window.location.protocol === 'file:') {
+      window.location.replace('index.html');
     }
 
     /* ── Alert helpers ─────────────────────────────────────── */
@@ -624,17 +500,14 @@
     }
 
     /* ── Spinner helpers ───────────────────────────────────── */
-    function setLoading(prefix, loading) {
-      const btn = document.getElementById(prefix + '-btn');
-      const spinner = document.getElementById(prefix + '-spinner');
-      const txt = document.getElementById(prefix + '-btn-text');
-      btn.disabled = loading;
-      spinner.classList.toggle('show', loading);
-      txt.textContent = loading ? 'Por favor espera…' : (prefix === 'login' ? 'Iniciar sesión' : 'Crear cuenta');
+    function setLoading(loading) {
+      document.getElementById('login-btn').disabled = loading;
+      document.getElementById('login-spinner').classList.toggle('show', loading);
+      document.getElementById('login-btn-text').textContent = loading ? 'Verificando…' : 'Iniciar sesión';
     }
 
     /* ── Login handler ─────────────────────────────────────── */
-    function handleLogin(e) {
+    async function handleLogin(e) {
       e.preventDefault();
       hideAlert('login-alert');
 
@@ -646,96 +519,52 @@
         return;
       }
 
-      setLoading('login', true);
+      setLoading(true);
 
-      /* Simulate async (replace with fetch('/api/login') when backend ready) */
-      setTimeout(() => {
-        setLoading('login', false);
+      try {
+        const res = await fetch(API_SESION, {
+          method: 'POST',
+          credentials: 'same-origin',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'login', usuario: usuario, password: password })
+        });
+        const json = await res.json();
 
-        const allUsers = [...USUARIOS, ...loadRegistered()];
-        const found = allUsers.find(u => u.usuario === usuario && u.password === password);
-
-        if (!found) {
-          showAlert('login-alert', '❌ Usuario o contraseña incorrectos.');
+        if (!json.success) {
+          setLoading(false);
+          showAlert('login-alert', '❌ ' + (json.message || 'No fue posible iniciar sesión.'));
           document.getElementById('login-password').value = '';
           return;
         }
 
-        /* Save session */
-        const session = {
-          usuario:   found.usuario,
-          nombre:    found.nombre,
-          rol:       found.rol,
-          sucursal:  found.sucursal || 'Matriz Planta',
-          loginAt:   new Date().toISOString(),
-        };
-        sessionStorage.setItem('pc_user', JSON.stringify(session));
-
-        showAlert('login-alert', '✅ Acceso concedido. Redirigiendo…', 'success');
-
-        /* Redirect to ERP */
-        setTimeout(() => {
-          window.location.href = 'index.html';
-        }, 900);
-      }, 700);
+        showAlert('login-alert', '✅ ' + (json.message || 'Acceso concedido.') + ' Redirigiendo…', 'success');
+        window.location.replace(DESTINO);
+      } catch (err) {
+        setLoading(false);
+        showAlert('login-alert', '❌ No fue posible contactar al servidor de sesión.');
+      }
     }
 
-    /* ── Register handler ──────────────────────────────────── */
-    function handleRegister(e) {
-      e.preventDefault();
-      hideAlert('register-alert');
+    /* ── Al cargar: si ya hay sesión, entra directo; si no, explica por qué volvió ── */
+    (async function revisarSesion() {
+      if (window.location.protocol === 'file:') return;
 
-      const nombre   = document.getElementById('reg-nombre').value.trim();
-      const email    = document.getElementById('reg-email').value.trim();
-      const rol      = document.getElementById('reg-rol').value;
-      const password = document.getElementById('reg-password').value;
-
-      if (!nombre || !email || !rol || !password) {
-        showAlert('register-alert', '⚠️ Por favor completa todos los campos.');
-        return;
+      const motivo = new URLSearchParams(window.location.search).get('motivo');
+      if (motivo === 'expirada') {
+        showAlert('login-alert', 'Tu sesión terminó. Vuelve a identificarte.', 'info');
       }
 
-      if (password.length < 6) {
-        showAlert('register-alert', '⚠️ La contraseña debe tener al menos 6 caracteres.');
-        return;
-      }
-
-      /* Generate username from email prefix */
-      const usuario = email.split('@')[0].toLowerCase().replace(/[^a-z0-9]/g, '');
-
-      const allUsers = [...USUARIOS, ...loadRegistered()];
-      if (allUsers.find(u => u.usuario === usuario || u.email === email)) {
-        showAlert('register-alert', '⚠️ Este correo o nombre de usuario ya está registrado.');
-        return;
-      }
-
-      setLoading('register', true);
-
-      setTimeout(() => {
-        setLoading('register', false);
-
-        const registered = loadRegistered();
-        registered.push({ usuario, password, nombre, rol, email, sucursal: 'Matriz Planta' });
-        saveRegistered(registered);
-
-        showAlert('register-alert', `✅ Cuenta creada. Usuario: <strong>${usuario}</strong>`, 'success');
-        document.getElementById('form-register').reset();
-
-        setTimeout(() => switchTab('login'), 1800);
-      }, 700);
-    }
-
-    /* ── Auto-redirect if already logged in ───────────────── */
-    (function checkSession() {
       try {
-        const session = sessionStorage.getItem('pc_user');
-        if (session) {
-          const data = JSON.parse(session);
-          if (data && data.usuario) {
-            window.location.href = 'index.html';
-          }
+        const res = await fetch(API_SESION + '?action=sesion', { credentials: 'same-origin', cache: 'no-store' });
+        const json = await res.json();
+        if (json.success && json.data) {
+          window.location.replace(DESTINO);
+          return;
         }
-      } catch { /* ignore */ }
+      } catch (err) {
+        // Sin respuesta del servidor: se queda en el formulario
+      }
+      document.getElementById('login-usuario').focus();
     })();
   </script>
 </body>

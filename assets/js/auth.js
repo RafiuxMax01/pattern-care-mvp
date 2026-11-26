@@ -83,34 +83,12 @@ const PatternCareAuth = {
         }
         authState.cargando = false;
 
-        if (authState.sesion) {
-            ocultarPantallaAcceso();
-        } else {
-            mostrarPantallaAcceso();
+        if (!authState.sesion) {
+            irAPantallaAcceso();
+            return null;
         }
         notificarCambioDeSesion();
         return authState.sesion;
-    },
-
-    /** Inicia sesión con usuario y contraseña */
-    async iniciarSesion(usuario, password) {
-        const res = await fetch('backend/auth_sesion.php', {
-            method: 'POST',
-            credentials: 'same-origin',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ action: 'login', usuario: usuario, password: password })
-        });
-        const json = await res.json();
-
-        if (!json.success) {
-            return { ok: false, mensaje: json.message || 'No fue posible iniciar sesión.' };
-        }
-
-        authState.modo = 'servidor';
-        authState.sesion = json.data;
-        ocultarPantallaAcceso();
-        notificarCambioDeSesion();
-        return { ok: true, mensaje: json.message };
     },
 
     /** Cierra la sesión y devuelve al usuario a la pantalla de acceso */
@@ -128,66 +106,22 @@ const PatternCareAuth = {
             }
         }
         authState.sesion = null;
-        mostrarPantallaAcceso();
-        notificarCambioDeSesion();
+        irAPantallaAcceso();
     }
 };
 
 // ─────────────────────────────────────────────────────────
 // PANTALLA DE ACCESO
+// El inicio de sesión vive en login.html, que llama a
+// backend/auth_sesion.php. Esta página solo redirige allí.
 // ─────────────────────────────────────────────────────────
-function mostrarPantallaAcceso() {
-    const caja = document.getElementById('pantalla-acceso');
-    if (!caja) return;
-    caja.classList.remove('hidden');
-    caja.classList.add('flex');
+let _redirigiendoAlAcceso = false;
 
-    const usuario = document.getElementById('acceso-usuario');
-    if (usuario) setTimeout(() => usuario.focus(), 60);
-}
-
-function ocultarPantallaAcceso() {
-    const caja = document.getElementById('pantalla-acceso');
-    if (!caja) return;
-    caja.classList.add('hidden');
-    caja.classList.remove('flex');
-
-    const error = document.getElementById('acceso-error');
-    if (error) error.classList.add('hidden');
-    const password = document.getElementById('acceso-password');
-    if (password) password.value = '';
-}
-
-async function enviarFormularioAcceso(evento) {
-    evento.preventDefault();
-
-    const usuario  = document.getElementById('acceso-usuario').value.trim();
-    const password = document.getElementById('acceso-password').value;
-    const error    = document.getElementById('acceso-error');
-    const boton    = document.getElementById('btn-acceso');
-    const texto    = document.getElementById('btn-acceso-texto');
-
-    error.classList.add('hidden');
-    boton.disabled = true;
-    texto.innerText = 'Verificando...';
-
-    try {
-        const resultado = await PatternCareAuth.iniciarSesion(usuario, password);
-        if (!resultado.ok) {
-            error.innerText = resultado.mensaje;
-            error.classList.remove('hidden');
-        } else {
-            mostrarAvisoAcceso(resultado.mensaje, 'ok');
-            sincronizarDatos();
-        }
-    } catch (err) {
-        error.innerText = 'No fue posible contactar al servidor de sesión.';
-        error.classList.remove('hidden');
-    }
-
-    boton.disabled = false;
-    texto.innerText = 'Entrar';
-    return false;
+/** motivo: 'expirada' para que login.html explique por qué volvió a pedir acceso */
+function irAPantallaAcceso(motivo) {
+    if (_redirigiendoAlAcceso) return;
+    _redirigiendoAlAcceso = true;
+    window.location.replace('login.html' + (motivo ? '?motivo=' + encodeURIComponent(motivo) : ''));
 }
 
 // ─────────────────────────────────────────────────────────
@@ -263,9 +197,7 @@ async function fetchConSesion(url, opciones = {}) {
 
     if (res.status === 401) {
         authState.sesion = null;
-        mostrarPantallaAcceso();
-        notificarCambioDeSesion();
-        mostrarAvisoAcceso('Tu sesión terminó. Vuelve a identificarte.', 'info');
+        irAPantallaAcceso('expirada');
     } else if (res.status === 403) {
         let mensaje = 'No tienes permiso para esa operación.';
         try {
