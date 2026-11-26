@@ -358,7 +358,7 @@
                         bcState.alertasCriticas = json.data.alertas_criticas || [];
                         prepararStockDesdeServidor();
 
-                        badgeDiv.className = 'flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-300';
+                        badgeDiv.className = 'hidden md:flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-300';
                         badgeDiv.innerHTML = '<span class="w-2 h-2 rounded-full bg-emerald-400"></span><span class="hidden sm:inline">Conectado</span>';
 
                         renderizarTodo();
@@ -371,7 +371,7 @@
                 // Con sesión real no se sustituyen los datos por los de ejemplo:
                 // se avisa y se conservan los últimos datos cargados del servidor.
                 if (PatternCareAuth.modo === 'servidor') {
-                    badgeDiv.className = 'flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-rose-50 text-rose-700 border border-rose-300';
+                    badgeDiv.className = 'hidden md:flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-rose-50 text-rose-700 border border-rose-300';
                     badgeDiv.title = 'No se pudieron cargar los datos del servidor. Pulsa sincronizar para reintentar.';
                     badgeDiv.onclick = null;
                     badgeDiv.innerHTML = '<span class="w-2 h-2 rounded-full bg-rose-500"></span><span class="hidden sm:inline">Sin conexión con la base de datos</span>';
@@ -383,7 +383,7 @@
                 bcState.modoBackend = 'local_storage';
                 cargarDesdeLocalStorage();
 
-                badgeDiv.className = 'flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-300 cursor-pointer';
+                badgeDiv.className = 'hidden md:flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-300 cursor-pointer';
                 badgeDiv.title = 'Haz clic para inicializar MySQL cuando el servicio esté activo';
                 badgeDiv.onclick = instalarBaseDatos;
                 badgeDiv.innerHTML = '<span class="w-2 h-2 rounded-full bg-amber-400"></span><span class="hidden sm:inline">Modo demostración</span>';
