@@ -98,18 +98,236 @@
             ]
         };
 
+        // ── Event Listener Centralizado (Modern Web Guidance / CSP-compliant) ──
+        function initEventListeners() {
+            document.addEventListener('click', (e) => {
+                // Dropdown menus por categoría (Comercial, Abastecimiento, Operaciones, Finanzas)
+                const dropdownBtn = e.target.closest('[data-dropdown]');
+                if (dropdownBtn) {
+                    const panelId = dropdownBtn.dataset.dropdown;
+                    const panel = document.getElementById(panelId);
+                    const isVisible = panel && !panel.classList.contains('hidden');
+
+                    // Cerrar todos los demás paneles primero
+                    document.querySelectorAll('.bc-dropdown-panel').forEach(p => p.classList.add('hidden'));
+                    document.querySelectorAll('[data-dropdown]').forEach(b => b.setAttribute('aria-expanded', 'false'));
+
+                    if (panel && !isVisible) {
+                        panel.classList.remove('hidden');
+                        dropdownBtn.setAttribute('aria-expanded', 'true');
+                    }
+                    return;
+                }
+
+                // Clic fuera de los paneles dropdown los cierra automáticamente
+                if (!e.target.closest('.bc-dropdown-panel') && !e.target.closest('[data-dropdown]')) {
+                    document.querySelectorAll('.bc-dropdown-panel').forEach(p => p.classList.add('hidden'));
+                    document.querySelectorAll('[data-dropdown]').forEach(b => b.setAttribute('aria-expanded', 'false'));
+                }
+
+                // Clic fuera del buscador global cierra los resultados flotantes
+                if (!e.target.closest('#bc-search-wrapper')) {
+                    cerrarMenuBusqueda();
+                }
+
+                // Clic fuera del panel de notificaciones cierra el panel
+                if (!e.target.closest('#bc-notif-wrapper')) {
+                    cerrarPanelNotificaciones();
+                }
+
+                // 1. Navegación por pestañas Ribbon
+                const tabBtn = e.target.closest('.bc-tab-btn');
+                if (tabBtn && tabBtn.dataset.target) {
+                    const moduloKey = tabBtn.dataset.target.replace('modulo-', '');
+                    cambiarModulo(moduloKey);
+                    return;
+                }
+
+                // 2. Acciones declarativas mediante data-action
+                const actionBtn = e.target.closest('[data-action]');
+                if (!actionBtn) return;
+
+                const action = actionBtn.dataset.action;
+                switch (action) {
+                    case 'toggle-panel-notificaciones':
+                        togglePanelNotificaciones();
+                        break;
+                    case 'marcar-todas-leidas':
+                        marcarTodasAlertasLeidas();
+                        break;
+                    case 'atender-alerta':
+                        if (actionBtn.dataset.id) atenderAlerta(actionBtn.dataset.id);
+                        break;
+                    case 'toggle-leida-alerta':
+                        if (actionBtn.dataset.id) marcarAlertaLeida(actionBtn.dataset.id);
+                        break;
+                    case 'ver-panel-alertas-dashboard': {
+                        cerrarPanelNotificaciones();
+                        cambiarModulo('rolecenter');
+                        const pnl = document.getElementById('dashboard-alertas-panel');
+                        if (pnl) pnl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        break;
+                    }
+
+                    case 'seleccionar-busqueda': {
+                        const row = actionBtn.closest('.bc-search-row') || actionBtn;
+                        const tipo = row.dataset.tipo;
+                        const tgt = row.dataset.target;
+                        const param = row.dataset.param;
+                        ejecutarAccionBusqueda(tipo, tgt, param);
+                        break;
+                    }
+
+                    case 'toggle-dropdown-sucursal':
+                        toggleDropdownSucursal();
+                        break;
+                    case 'alerta-criticos':
+                        cambiarModulo('inventario');
+                        if (typeof filtrarTablaPorCriticos === 'function') {
+                            filtrarTablaPorCriticos();
+                        }
+                        break;
+                    case 'sincronizar-datos':
+                        sincronizarDatos();
+                        break;
+                    case 'abrir-modal-sku':
+                        abrirModalSKU();
+                        break;
+                    case 'abrir-modal-producto':
+                        abrirModalProducto();
+                        break;
+                    case 'abrir-modal-transferencia':
+                        abrirModalTransferencia();
+                        break;
+                    case 'abrir-modal-orden':
+                        abrirModalOrden();
+                        break;
+                    case 'abrir-modal-merma':
+                        abrirModalMerma();
+                        break;
+                    case 'cerrar-modal': {
+                        const modalEl = actionBtn.closest('[role="dialog"], .fixed');
+                        if (modalEl) {
+                            modalEl.classList.add('hidden');
+                            document.body.style.overflow = '';
+                        }
+                        break;
+                    }
+                    case 'solicitar-numero-pieza':
+                        if (typeof solicitarNumeroPieza === 'function') solicitarNumeroPieza();
+                        break;
+                    case 'agregar-variante':
+                        if (typeof agregarVarianteLista === 'function') agregarVarianteLista();
+                        break;
+                    case 'set-color-rapido':
+                        if (typeof setColorRapido === 'function' && actionBtn.dataset.color) {
+                            setColorRapido(actionBtn.dataset.color);
+                        }
+                        break;
+                    case 'trigger-foto-input': {
+                        const fileInput = document.getElementById('foto-input');
+                        if (fileInput) fileInput.click();
+                        break;
+                    }
+                    case 'limpiar-foto':
+                        if (typeof limpiarFoto === 'function') limpiarFoto();
+                        break;
+                    case 'cambiar-paso':
+                        if (typeof cambiarPasoProducto === 'function' && actionBtn.dataset.step) {
+                            cambiarPasoProducto(parseInt(actionBtn.dataset.step, 10));
+                        }
+                        break;
+                    case 'guardar-producto':
+                        if (typeof guardarProducto === 'function') guardarProducto();
+                        break;
+                    case 'cambiar-modulo':
+                        if (actionBtn.dataset.module) {
+                            cambiarModulo(actionBtn.dataset.module);
+                            document.querySelectorAll('.bc-dropdown-panel').forEach(p => p.classList.add('hidden'));
+                            document.querySelectorAll('[data-dropdown]').forEach(b => b.setAttribute('aria-expanded', 'false'));
+                        }
+                        break;
+                    case 'seleccionar-flujo':
+                        if (actionBtn.dataset.flujo) seleccionarFlujoTipo(actionBtn.dataset.flujo);
+                        break;
+                    case 'ver-fase':
+                        if (actionBtn.dataset.fase) verDetalleFase(parseInt(actionBtn.dataset.fase, 10));
+                        break;
+                    case 'guardar-rendimiento':
+                        if (typeof guardarRendimiento === 'function') guardarRendimiento();
+                        break;
+                    case 'generar-plan-accion':
+                        if (typeof generarPlanAccion === 'function') generarPlanAccion();
+                        break;
+                    case 'imprimir':
+                        window.print();
+                        break;
+                    case 'instalar-bd':
+                        if (typeof instalarBaseDatos === 'function') instalarBaseDatos();
+                        break;
+                    case 'toggle-drawer': {
+                        const drawer = document.getElementById('drawer-explorar');
+                        if (drawer) drawer.classList.toggle('hidden');
+                        break;
+                    }
+                    case 'cerrar-drawer': {
+                        const drawer = document.getElementById('drawer-explorar');
+                        if (drawer) drawer.classList.add('hidden');
+                        break;
+                    }
+                    case 'cambiar-modulo-drawer': {
+                        if (actionBtn.dataset.module) {
+                            cambiarModulo(actionBtn.dataset.module);
+                            const drawer = document.getElementById('drawer-explorar');
+                            if (drawer) drawer.classList.add('hidden');
+                        }
+                        break;
+                    }
+                }
+            });
+
+            // Accesibilidad de teclado (WCAG 2.1) para elementos interactivos role="button"
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    const roleBtn = e.target.closest('[role="button"][tabindex="0"]');
+                    if (roleBtn) {
+                        e.preventDefault();
+                        roleBtn.click();
+                    }
+                }
+
+                // Escape cierra menús, cajón y modal abiertos (WCAG 2.1)
+                if (e.key === 'Escape') {
+                    document.querySelectorAll('.bc-dropdown-panel').forEach(p => p.classList.add('hidden'));
+                    document.querySelectorAll('[data-dropdown]').forEach(b => b.setAttribute('aria-expanded', 'false'));
+                    const drawer = document.getElementById('drawer-explorar');
+                    if (drawer) drawer.classList.add('hidden');
+
+                    ['modal-sku', 'modal-transferencia', 'modal-orden', 'modal-merma', 'modal-producto', 'modal-asignacion']
+                        .forEach(id => {
+                            const modal = document.getElementById(id);
+                            if (modal && !modal.classList.contains('hidden')) {
+                                modal.classList.add('hidden');
+                                document.body.style.overflow = '';
+                            }
+                        });
+                }
+            });
+        }
+
         document.addEventListener('DOMContentLoaded', async () => {
             // El contexto de autenticación decide qué se puede pedir y mostrar
-            await PatternCareAuth.inicializar();
+            // Sin sesión, auth.js ya redirigió a login.html: no se pide nada más
+            if (!await PatternCareAuth.inicializar()) return;
 
+            initEventListeners();
+            initGlobalSearch();
+            initAlertasERP();
             renderizarDropdownSucursales();
             cargarSucursalesAdmin();
             verDetalleFase(1);
             calcularRendimientoEnVivo();
-
-            if (PatternCareAuth.autenticado()) {
-                sincronizarDatos();
-            }
+            sincronizarDatos();
         });
 
         async function sincronizarDatos() {
@@ -138,6 +356,7 @@
                         bcState.rendimientos = json.data.rendimientos || [];
                         bcState.kpis = json.data.kpis || {};
                         bcState.alertasCriticas = json.data.alertas_criticas || [];
+                        prepararStockDesdeServidor();
 
                         badgeDiv.className = 'flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-300';
                         badgeDiv.innerHTML = '<span class="w-2 h-2 rounded-full bg-emerald-400"></span><span class="hidden sm:inline">MySQL Conectado (IIS/PDO)</span>';
@@ -167,7 +386,7 @@
             const raw = localStorage.getItem('pattern_care_bc_data');
             if (raw) {
                 try {
-                    const parsed = JSON.parse(raw);
+                    let parsed; try { parsed = JSON.parse(raw); } catch(e) { parsed = null; }
                     bcState.sucursales = parsed.sucursales || DATOS_SEMILLA_BC.sucursales || bcState.sucursales;
                     bcState.productos = parsed.productos || DATOS_SEMILLA_BC.productos;
                     bcState.inventarioDetalle = parsed.inventarioDetalle || DATOS_SEMILLA_BC.inventarioDetalle;
@@ -206,6 +425,51 @@
                 rendimientos: bcState.rendimientos
             }));
             procesarDatosLocales();
+        }
+
+        /**
+         * Completa los SKUs que llegan de obtener_datos.php con los campos que pinta
+         * la interfaz, igual que procesarDatosLocales() en el modo standalone:
+         *   stock_actual / stock_minimo / es_critico  de la sucursal activa
+         *   desglose_sucursales                       como mapa por sucursal_id
+         * En la vista consolidada se respeta el es_critico del servidor (crítico
+         * si falta en al menos una sucursal).
+         */
+        function prepararStockDesdeServidor() {
+            const sucursalActiva = bcState.sucursalActivaId;
+            let criticos = 0;
+
+            bcState.productos.forEach(p => {
+                const desglose = {};
+                (Array.isArray(p.desglose_sucursales) ? p.desglose_sucursales : Object.values(p.desglose_sucursales || {}))
+                    .forEach(fila => {
+                        desglose[fila.sucursal_id] = {
+                            sucursal_id: parseInt(fila.sucursal_id, 10),
+                            stock_actual: parseInt(fila.stock_actual, 10) || 0,
+                            stock_minimo: parseInt(fila.stock_minimo, 10) || parseInt(p.stock_minimo_general, 10) || 6
+                        };
+                    });
+                p.desglose_sucursales = desglose;
+                p.stock_total = parseInt(p.stock_total, 10) || 0;
+
+                if (sucursalActiva !== null) {
+                    const suc = desglose[sucursalActiva];
+                    p.stock_actual = suc ? suc.stock_actual : 0;
+                    p.stock_minimo = suc ? suc.stock_minimo : (parseInt(p.stock_minimo_general, 10) || 6);
+                    p.es_critico = p.stock_actual < p.stock_minimo;
+                } else {
+                    p.stock_actual = p.stock_total;
+                    p.stock_minimo = parseInt(p.stock_minimo_general, 10) || 6;
+                    p.es_critico = !!p.es_critico;
+                }
+                if (p.es_critico) criticos++;
+            });
+
+            // Con una sucursal activa, los indicadores cuentan lo que muestra la tabla
+            if (sucursalActiva !== null) {
+                bcState.kpis.skus_bajo_minimo = criticos;
+                bcState.kpis.stock_total_piezas = bcState.productos.reduce((s, p) => s + p.stock_actual, 0);
+            }
         }
 
         function procesarDatosLocales() {
@@ -530,11 +794,21 @@ async function cambiarEstadoSucursalAdmin(id, estado) {
             if (!h) return;
             const criticos = bcState.kpis.skus_bajo_minimo || 0;
             const trf = bcState.kpis.transferencias_transito || 0;
-            const sucTxt = bcState.sucursalActivaId 
-                ? `en ${obtenerNombreSucursal(bcState.sucursalActivaId)}` 
-                : 'en la red de 4 sucursales';
+            const sucTxt = bcState.sucursalActivaId
+                ? `en ${obtenerNombreSucursal(bcState.sucursalActivaId)}`
+                : `en la red de ${bcState.sucursales.length} sucursales`;
 
-            h.innerText = `Buenos días, Encargada General. Hay ${criticos} productos con stock crítico (< 6 pzas) ${sucTxt} y ${trf} traspasos en tránsito.`;
+            const pillCriticos = document.getElementById('pill-skus-criticos');
+            if (pillCriticos) pillCriticos.innerText = `${criticos} ${criticos === 1 ? 'SKU' : 'SKUs'} bajo su stock mínimo`;
+            const pillTrf = document.getElementById('pill-transferencias');
+            if (pillTrf) pillTrf.innerText = `${trf} ${trf === 1 ? 'transferencia' : 'transferencias'} en tránsito`;
+
+            const hora = new Date().getHours();
+            const saludo = hora < 12 ? 'Buenos días' : hora < 19 ? 'Buenas tardes' : 'Buenas noches';
+            const sesion = PatternCareAuth.usuario;
+            const nombre = sesion ? sesion.nombre_completo : 'Encargada General';
+
+            h.innerText = `${saludo}, ${nombre}. Hay ${criticos} productos con stock crítico (< 6 pzas) ${sucTxt} y ${trf} traspasos en tránsito.`;
         }
 
         function renderizarCues() {
@@ -546,7 +820,8 @@ async function cambiarEstadoSucursalAdmin(id, estado) {
             document.getElementById('cue-mermas-conteo').innerText = `${bcState.mermas.length} registros en bitácora`;
 
             const notif = document.getElementById('badge-notif-count');
-            if (notif) notif.innerText = kpis.skus_bajo_minimo || 0;
+            // Respetar contador de alertas no leídas del ERP
+            if (typeof renderizarAlertasERP === 'function') renderizarAlertasERP();
 
             const lblContexto = document.getElementById('lbl-cues-contexto');
             if (lblContexto) {
@@ -661,7 +936,7 @@ async function cambiarEstadoSucursalAdmin(id, estado) {
 
             // La vista consolidada de todas las sucursales es exclusiva del alcance global
             let html = permitidas !== null ? '' : `
-                <button onclick="seleccionarSucursalGlobal(null)" class="w-full text-left px-2.5 py-1.5 rounded hover:bg-gray-100 transition flex items-center justify-between ${bcState.sucursalActivaId === null ? 'bg-blue-50 text-bc-blue font-bold' : 'text-gray-600'}">
+                <button type="button" onclick="seleccionarSucursalGlobal(null)" class="w-full text-left px-2.5 py-1.5 rounded hover:bg-gray-100 transition flex items-center justify-between ${bcState.sucursalActivaId === null ? 'bg-blue-50 text-bc-blue font-bold' : 'text-gray-600'}">
                     <span class="flex items-center gap-2">
                         <i class="fa-solid fa-globe text-xs"></i>
                         <span>Todas las Sucursales (Consolidado)</span>
@@ -673,7 +948,7 @@ async function cambiarEstadoSucursalAdmin(id, estado) {
             sucursalesVisibles.forEach(s => {
                 const activo = bcState.sucursalActivaId == s.id;
                 html += `
-                    <button onclick="seleccionarSucursalGlobal(${s.id})" class="w-full text-left px-2.5 py-1.5 rounded hover:bg-gray-100 transition flex items-center justify-between ${activo ? 'bg-blue-50 text-bc-blue font-bold' : 'text-gray-600'}">
+                    <button type="button" onclick="seleccionarSucursalGlobal(${s.id})" class="w-full text-left px-2.5 py-1.5 rounded hover:bg-gray-100 transition flex items-center justify-between ${activo ? 'bg-blue-50 text-bc-blue font-bold' : 'text-gray-600'}">
                         <span class="flex items-center gap-2">
                             <i class="fa-solid fa-building text-xs text-teal-400"></i>
                             <span class="truncate">${s.nombre}</span>
@@ -704,18 +979,7 @@ async function cambiarEstadoSucursalAdmin(id, estado) {
 
             bcState.sucursalActivaId = sucursalId;
             toggleDropdownSucursal();
-
-            const txt = document.getElementById('txt-sucursal-actual');
-            const lblVista = document.getElementById('lbl-vista-activa');
-
-            if (sucursalId === null) {
-                txt.innerText = 'Todas las Sucursales';
-                lblVista.innerText = 'Consolidada';
-            } else {
-                const nombre = obtenerNombreSucursal(sucursalId);
-                txt.innerText = nombre;
-                lblVista.innerText = nombre;
-            }
+            actualizarEtiquetasSucursal(sucursalId);
 
             renderizarDropdownSucursales();
             sincronizarDatos();
@@ -769,22 +1033,22 @@ async function cambiarEstadoSucursalAdmin(id, estado) {
                         <td class="p-3"><span class="text-gray-900">${p.color}</span> / <span class="text-gray-500">${p.talla}</span></td>
                         <td class="p-3 text-center">
                             <div class="inline-flex items-center gap-1.5">
-                                <button onclick="ajustarStockRapido(event, ${p.id}, -1)" class="w-5 h-5 rounded bg-gray-100 hover:bg-gray-200 text-gray-600 font-bold">-</button>
+                                <button type="button" onclick="ajustarStockRapido(event, ${p.id}, -1)" class="w-5 h-5 rounded bg-gray-100 hover:bg-gray-200 text-gray-600 font-bold">-</button>
                                 <span class="font-bold text-sm ${p.es_critico ? 'text-rose-400' : 'text-gray-900'}">${p.stock_actual}</span>
-                                <button onclick="ajustarStockRapido(event, ${p.id}, 1)" class="w-5 h-5 rounded bg-gray-100 hover:bg-gray-200 text-gray-600 font-bold">+</button>
+                                <button type="button" onclick="ajustarStockRapido(event, ${p.id}, 1)" class="w-5 h-5 rounded bg-gray-100 hover:bg-gray-200 text-gray-600 font-bold">+</button>
                             </div>
                         </td>
                         <td class="p-3 text-center font-bold text-gray-700">${p.stock_total || p.stock_actual}</td>
                         <td class="p-3 text-center text-gray-500 font-semibold">${p.stock_minimo}</td>
                         <td class="p-3 text-center">${badge}</td>
                         <td class="p-3 text-right space-x-1 whitespace-nowrap">
-                            <button onclick="iniciarTransferenciaDesdeSKU(event, ${p.id})" title="Transferir a otra sucursal" class="p-1.5 rounded bg-gray-100 hover:bg-cyan-50 text-cyan-400 transition">
+                            <button type="button" onclick="iniciarTransferenciaDesdeSKU(event, ${p.id})" title="Transferir a otra sucursal" class="p-1.5 rounded bg-gray-100 hover:bg-cyan-50 text-cyan-400 transition">
                                 <i class="fa-solid fa-truck-ramp-box"></i>
                             </button>
-                            <button onclick="editarSKU(event, ${p.id})" title="Editar Ficha" class="p-1.5 rounded bg-gray-100 hover:bg-gray-200 text-gray-600 transition">
+                            <button type="button" onclick="editarSKU(event, ${p.id})" title="Editar Ficha" class="p-1.5 rounded bg-gray-100 hover:bg-gray-200 text-gray-600 transition">
                                 <i class="fa-solid fa-pen-to-square"></i>
                             </button>
-                            <button onclick="eliminarSKU(event, ${p.id})" title="Eliminar" class="p-1.5 rounded bg-gray-100 hover:bg-rose-50 text-rose-400 transition">
+                            <button type="button" onclick="eliminarSKU(event, ${p.id})" title="Eliminar" class="p-1.5 rounded bg-gray-100 hover:bg-rose-50 text-rose-400 transition">
                                 <i class="fa-solid fa-trash-can"></i>
                             </button>
                         </td>
@@ -864,11 +1128,11 @@ async function cambiarEstadoSucursalAdmin(id, estado) {
                 </div>
 
                 <div class="pt-2 space-y-1.5">
-                    <button onclick="iniciarTransferenciaDesdeSKU(null, ${p.id})" class="w-full py-1.5 rounded bg-cyan-600 hover:bg-cyan-500 text-white font-semibold text-xs flex items-center justify-center gap-1.5 transition">
+                    <button type="button" onclick="iniciarTransferenciaDesdeSKU(null, ${p.id})" class="w-full py-1.5 rounded bg-cyan-600 hover:bg-cyan-500 text-white font-semibold text-xs flex items-center justify-center gap-1.5 transition">
                         <i class="fa-solid fa-truck-ramp-box"></i>
                         <span>Transferir este Producto</span>
                     </button>
-                    <button onclick="editarSKU(null, ${p.id})" class="w-full py-1.5 rounded bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold text-xs flex items-center justify-center gap-1.5 border border-gray-300 transition">
+                    <button type="button" onclick="editarSKU(null, ${p.id})" class="w-full py-1.5 rounded bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold text-xs flex items-center justify-center gap-1.5 border border-gray-300 transition">
                         <i class="fa-solid fa-pen-to-square"></i>
                         <span>Editar Ficha de SKU</span>
                     </button>
@@ -1107,10 +1371,10 @@ async function cambiarEstadoSucursalAdmin(id, estado) {
                         </div>
 
                         <div class="mt-4 pt-3 border-t border-gray-200 flex items-center justify-between">
-                            <button onclick="seleccionarSucursalGlobal(${s.id}); cambiarModulo('inventario');" class="text-xs text-bc-blue hover:underline font-semibold">
+                            <button type="button" onclick="seleccionarSucursalGlobal(${s.id}); cambiarModulo('inventario');" class="text-xs text-bc-blue hover:underline font-semibold">
                                 Ver Inventario &rarr;
                             </button>
-                            <button onclick="abrirModalTransferenciaHacia(${s.id})" class="text-[11px] px-2 py-1 rounded bg-gray-100 hover:bg-gray-200 text-gray-600">
+                            <button type="button" onclick="abrirModalTransferenciaHacia(${s.id})" class="text-[11px] px-2 py-1 rounded bg-gray-100 hover:bg-gray-200 text-gray-600">
                                 Reabastecer
                             </button>
                         </div>
@@ -1450,12 +1714,12 @@ async function cambiarEstadoSucursalAdmin(id, estado) {
 
                         <div class="mt-3 pt-2.5 border-t border-gray-200 flex items-center justify-between">
                             ${nextFase ? `
-                                <button onclick="avanzarFaseOrden(${o.id}, '${nextFase}')" class="px-2.5 py-1 rounded bg-teal-600/80 hover:bg-teal-500 text-white text-xs font-semibold flex items-center gap-1">
+                                <button type="button" onclick="avanzarFaseOrden(${o.id}, '${nextFase}')" class="px-2.5 py-1 rounded bg-teal-600/80 hover:bg-teal-500 text-white text-xs font-semibold flex items-center gap-1">
                                     <span>Avanzar a ${nextFase}</span>
                                     <i class="fa-solid fa-arrow-right text-[10px]"></i>
                                 </button>
                             ` : `<span class="text-xs text-emerald-400 font-semibold"><i class="fa-solid fa-check"></i> Completada</span>`}
-                            <button onclick="toggleAlertaOrden(${o.id})" class="p-1.5 rounded bg-gray-100 text-amber-400 hover:bg-gray-200" title="Alternar Alerta">
+                            <button type="button" onclick="toggleAlertaOrden(${o.id})" class="p-1.5 rounded bg-gray-100 text-amber-400 hover:bg-gray-200" title="Alternar Alerta">
                                 <i class="fa-solid fa-flag"></i>
                             </button>
                         </div>
@@ -1594,7 +1858,7 @@ async function cambiarEstadoSucursalAdmin(id, estado) {
                         <td class="p-3 font-mono text-gray-500">${m.lote_afectado || 'N/A'}</td>
                         <td class="p-3 text-gray-500">${m.registrado_por}</td>
                         <td class="p-3 text-right">
-                            <button onclick="eliminarMerma(${m.id})" class="p-1 rounded text-rose-400 hover:bg-rose-50">
+                            <button type="button" onclick="eliminarMerma(${m.id})" class="p-1 rounded text-rose-400 hover:bg-rose-50">
                                 <i class="fa-solid fa-trash-can"></i>
                             </button>
                         </td>
@@ -1704,37 +1968,856 @@ async function cambiarEstadoSucursalAdmin(id, estado) {
             }
         }
 
-        function buscarEnBusinessCentral(e) {
-            const q = e.target.value.toLowerCase().trim();
-            if (e.key === 'Enter') {
-                if (q.includes('transf') || q.includes('traspas')) {
-                    cambiarModulo('transferencias');
-                } else if (q.includes('inv') || q.includes('prod') || q.includes('sku')) {
+        /* ── MOTOR DE BÚSQUEDA GLOBAL UNIFICADO (Paso 4.2 - Modern Web Guidance) ── */
+        let bcSearchDebounceTimer = null;
+        let bcSearchActiveIndex = -1;
+
+        // Directorio de Páginas y Tareas / Tell Me
+        const BC_PAGINAS_SISTEMA = [
+            { id: 'rolecenter', titulo: 'Inicio & Role Center', subtitulo: 'Métricas clave, KPIs comerciales y resumen general', icono: 'fa-house', tipo: 'modulo' },
+            { id: 'ventas', titulo: 'Ventas & Facturación', subtitulo: 'Cotizaciones, pedidos confirmados y facturas médicas', icono: 'fa-receipt', tipo: 'modulo' },
+            { id: 'clientes', titulo: 'Directorio de Clientes Hospitalarios', subtitulo: 'Hospitales privados, clínicas y médicos particulares', icono: 'fa-hospital-user', tipo: 'modulo' },
+            { id: 'compras', titulo: 'Órdenes de Compra & Insumos', subtitulo: 'Abastecimiento de rollos de tela SRA/CRO y avíos', icono: 'fa-cart-shopping', tipo: 'modulo' },
+            { id: 'proveedores', titulo: 'Directorio de Proveedores', subtitulo: 'Fabricantes de telas y talleres de sublimado externo', icono: 'fa-truck-field', tipo: 'modulo' },
+            { id: 'catalogo', titulo: 'Catálogo Maestro de Productos', subtitulo: 'Modelos base, número de pieza, fotos y variantes', icono: 'fa-layer-group', tipo: 'modulo' },
+            { id: 'inventario', titulo: 'Inventario General Multialmacén', subtitulo: 'Existencias por sucursal, SKUs y stock mínimo', icono: 'fa-boxes-stacked', tipo: 'modulo' },
+            { id: 'transferencias', titulo: 'Transferencias entre Sucursales', subtitulo: 'Solicitudes y traspasos de stock entre almacenes', icono: 'fa-arrow-right-arrow-left', tipo: 'modulo' },
+            { id: 'produccion', titulo: 'Planificación de Confección', subtitulo: 'Órdenes de corte, costura y fases de confección', icono: 'fa-industry', tipo: 'modulo' },
+            { id: 'finanzas', titulo: 'Finanzas Empresariales', subtitulo: 'Balance general, ingresos y cuentas por cobrar', icono: 'fa-coins', tipo: 'modulo' },
+            { id: 'tesoreria', titulo: 'Tesorería & Cuentas Bancarias', subtitulo: 'Flujo de caja, cuentas Banorte/BBVA y dispersiones', icono: 'fa-building-columns', tipo: 'modulo' },
+            { id: 'cuentas-contables', titulo: 'Catálogo de Cuentas Contables', subtitulo: 'Estructura contable SAT y pólizas de diario', icono: 'fa-book', tipo: 'modulo' },
+            { id: 'mermas', titulo: 'Control de Mermas y Desperdicios', subtitulo: 'Registro de fallas de costura y mermas de tela', icono: 'fa-triangle-exclamation', tipo: 'modulo' },
+            { id: 'rendimiento', titulo: 'Calculadora de Rendimiento Textil', subtitulo: 'Metros por rollo, gorros estimados y tela CRO/SRA', icono: 'fa-calculator', tipo: 'modulo' },
+            { id: 'sucursales', titulo: 'Red de Sucursales & Almacenes', subtitulo: 'Planta Matriz, Hospital General y Zona Norte', icono: 'fa-store', tipo: 'modulo' },
+            { id: 'diagnostico', titulo: 'Diagnóstico de Stock Crítico', subtitulo: 'Auditoría de desabasto y alertas de inventario < 6', icono: 'fa-stethoscope', tipo: 'modulo' },
+            { id: 'reportes', titulo: 'Informes & Reportes Ejecutivos', subtitulo: 'Exportación a Excel y descarga de balances', icono: 'fa-file-lines', tipo: 'modulo' }
+        ];
+
+        const BC_ACCIONES_RAPIDAS = [
+            { accion: 'nuevo-producto', titulo: '+ Nuevo Producto / Modelo (Catálogo)', subtitulo: 'Crear modelo multi-paso con variantes y tela', icono: 'fa-plus-circle', tipo: 'accion' },
+            { accion: 'asignar-sku', titulo: '+ Asignar SKU y Stock Inicial', subtitulo: 'Registrar nuevo SKU y sucursal de destino', icono: 'fa-barcode', tipo: 'accion' },
+            { accion: 'nueva-transferencia', titulo: '+ Nueva Solicitud de Traspaso', subtitulo: 'Mover stock entre almacenes hospitalarios', icono: 'fa-truck-fast', tipo: 'accion' },
+            { accion: 'nueva-orden', titulo: '+ Nueva Orden de Confección', subtitulo: 'Lanzar lote a taller de corte y costura', icono: 'fa-scissors', tipo: 'accion' },
+            { accion: 'registrar-merma', titulo: '+ Registrar Merma o Desperdicio', subtitulo: 'Reportar tela dañada o falla de confección', icono: 'fa-scissors', tipo: 'accion' },
+            { accion: 'ir-ventas', titulo: '+ Nueva Cotización de Venta', subtitulo: 'Crear cotización para hospital o clínica', icono: 'fa-receipt', tipo: 'modulo', target: 'ventas' },
+            { accion: 'ir-compras', titulo: '+ Nuevo Pedido de Compra', subtitulo: 'Adquirir tela o avíos de costura', icono: 'fa-cart-shopping', tipo: 'modulo', target: 'compras' }
+        ];
+
+        const BC_CLIENTES_DATA = [
+            { codigo: 'CLI-001', nombre: 'Hospital Ángeles Quirófano', tipo: 'Hospital Privado', contacto: 'Lic. M. Arreola', telefono: '55-2345-6789', saldo: '$0.00 MXN', sucursal: 'Sucursal Hospital General' },
+            { codigo: 'CLI-002', nombre: 'Hospital General de Zona (IMSS)', tipo: 'Sector Salud Público', contacto: 'Dr. Fernando Téllez', telefono: '55-8765-4321', saldo: '$14,200.00 MXN', sucursal: 'Matriz Planta de Confección' },
+            { codigo: 'CLI-003', nombre: 'Clínica Dental OdontoSmile', tipo: 'Clínica Especializada', contacto: 'Dra. Sofía Valdés', telefono: '55-3344-5566', saldo: '$0.00 MXN', sucursal: 'Sucursal Zona Norte' },
+            { codigo: 'CLI-004', nombre: 'Instituto Médico Especializado', tipo: 'Consorcio Médico', contacto: 'Lic. Roberto Peña', telefono: '55-9988-7766', saldo: 'Cotización Activa', sucursal: 'Matriz Planta de Confección' },
+            { codigo: 'CLI-005', nombre: 'Patricia Morales R. (Venta Online)', tipo: 'Médico Particular', contacto: 'Dra. Patricia M.', telefono: '55-1122-3344', saldo: '$0.00 MXN', sucursal: 'Almacén Digital' }
+        ];
+
+        const BC_PROVEEDORES_DATA = [
+            { codigo: 'PRV-001', nombre: 'Textiles del Centro S.A.', rubro: 'Telas Médicas Antifluido (SRA)', condiciones: 'Entrega 2-3 días • Crédito 30 días', rating: '4.9/5' },
+            { codigo: 'PRV-002', nombre: 'Proveedora Textil del Norte', rubro: 'Telas Médicas Repelentes (CRO)', condiciones: 'Entrega 4 días • Pago contra entrega', rating: '4.6/5' },
+            { codigo: 'PRV-003', nombre: 'Taller de Sublimado Exprés', rubro: 'Servicio de Estampado e Impresión', condiciones: 'Taller externo sublimado gorros', rating: '4.8/5' },
+            { codigo: 'PRV-004', nombre: 'Avíos y Elásticos de México', rubro: 'Cierres médicos, elásticos y bies', condiciones: 'Entrega semanal garantizada', rating: '4.7/5' }
+        ];
+
+        const BC_VENTAS_DATA = [
+            { folio: 'VTA-2026-081', cliente: 'Hospital Ángeles Quirófano', detalle: '150 Gorros Antifluido + 40 Chamarras', total: '$24,800.00 MXN', estado: 'Facturado', fecha: '12 Oct 2026' },
+            { folio: 'VTA-2026-082', cliente: 'Hospital General de Zona (IMSS)', detalle: '200 Gorros Azul Cielo Tela SRA', total: '$18,000.00 MXN', estado: 'En Confección', fecha: '13 Oct 2026' },
+            { folio: 'VTA-2026-083', cliente: 'Clínica Dental OdontoSmile', detalle: '50 Cubrepolvos Clínicos CRO', total: '$6,250.00 MXN', estado: 'Confirmado', fecha: '13 Oct 2026' },
+            { folio: 'VTA-2026-084', cliente: 'Instituto Médico Especializado', detalle: '80 Chamarras Médicas Antifluido', total: '$31,200.00 MXN', estado: 'Cotización', fecha: '14 Oct 2026' },
+            { folio: 'VTA-2026-085', cliente: 'Venta Online Directa (Dra. Patricia M.)', detalle: '6 Gorros Quirúrgicos Estampados', total: '$1,080.00 MXN', estado: 'Enviado', fecha: '14 Oct 2026' }
+        ];
+
+        const BC_COMPRAS_DATA = [
+            { folio: 'OC-2026-041', proveedor: 'Textiles del Centro S.A.', detalle: '300m Tela SRA Antifluido Azul/Blanco', total: '$18,000.00 MXN', estado: 'Recibido en Planta', fecha: '10 Oct 2026' },
+            { folio: 'OC-2026-042', proveedor: 'Proveedora Textil del Norte', detalle: '150m Tela CRO Repelente Negro/Marino', total: '$14,250.00 MXN', estado: 'En Tránsito', fecha: '12 Oct 2026' },
+            { folio: 'OC-2026-043', proveedor: 'Taller de Sublimado Exprés', detalle: 'Servicio Impresión 450 gorros OdontoSmile', total: '$7,650.00 MXN', estado: 'En Taller Externo', fecha: '13 Oct 2026' }
+        ];
+
+        function resaltarTextoBusqueda(texto, query) {
+            if (!texto) return '';
+            if (!query) return String(texto);
+            const safe = query.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&');
+            const regex = new RegExp(`(${safe})`, 'gi');
+            return String(texto).replace(regex, '<mark class="bg-amber-100 text-amber-900 font-semibold px-0.5 rounded">$1</mark>');
+        }
+
+        function initGlobalSearch() {
+            const input = document.getElementById('bc-search-input');
+            const results = document.getElementById('bc-search-results');
+            if (!input || !results) return;
+
+            // Debounce nativo 160ms al escribir
+            input.addEventListener('input', (e) => {
+                const query = e.target.value.trim();
+                clearTimeout(bcSearchDebounceTimer);
+                bcSearchDebounceTimer = setTimeout(() => {
+                    if (query.length === 0) {
+                        mostrarSugerenciasIniciales();
+                    } else {
+                        ejecutarBusquedaGlobal(query);
+                    }
+                }, 160);
+            });
+
+            // Al hacer focus o clic en el input
+            input.addEventListener('focus', () => {
+                const query = input.value.trim();
+                if (query.length === 0) {
+                    mostrarSugerenciasIniciales();
+                } else {
+                    ejecutarBusquedaGlobal(query);
+                }
+            });
+
+            // Navegación por teclado (Flechas, Enter, Escape)
+            input.addEventListener('keydown', (e) => {
+                const rows = results.querySelectorAll('.bc-search-row');
+                if (results.classList.contains('hidden') || rows.length === 0) {
+                    if (e.key === 'Escape') {
+                        cerrarMenuBusqueda();
+                    }
+                    return;
+                }
+
+                if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    bcSearchActiveIndex = (bcSearchActiveIndex + 1) % rows.length;
+                    actualizarFilaActiva(rows);
+                } else if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    bcSearchActiveIndex = (bcSearchActiveIndex - 1 + rows.length) % rows.length;
+                    actualizarFilaActiva(rows);
+                } else if (e.key === 'Enter') {
+                    e.preventDefault();
+                    const targetRow = bcSearchActiveIndex >= 0 ? rows[bcSearchActiveIndex] : rows[0];
+                    if (targetRow) {
+                        targetRow.click();
+                    }
+                } else if (e.key === 'Escape') {
+                    e.preventDefault();
+                    cerrarMenuBusqueda();
+                }
+            });
+
+            // Atajo global Alt+Q
+            window.addEventListener('keydown', (e) => {
+                if (e.altKey && (e.key === 'q' || e.key === 'Q')) {
+                    e.preventDefault();
+                    input.focus();
+                    input.select();
+                }
+            });
+        }
+
+        function actualizarFilaActiva(rows) {
+            rows.forEach((r, idx) => {
+                if (idx === bcSearchActiveIndex) {
+                    r.classList.add('bg-blue-50', 'ring-1', 'ring-inset', 'ring-bc-blue/30');
+                    r.setAttribute('aria-selected', 'true');
+                    r.scrollIntoView({ block: 'nearest' });
+                } else {
+                    r.classList.remove('bg-blue-50', 'ring-1', 'ring-inset', 'ring-bc-blue/30');
+                    r.setAttribute('aria-selected', 'false');
+                }
+            });
+        }
+
+        function cerrarMenuBusqueda() {
+            const results = document.getElementById('bc-search-results');
+            const input = document.getElementById('bc-search-input');
+            if (results) {
+                results.classList.add('hidden');
+                results.innerHTML = '';
+            }
+            if (input) {
+                input.setAttribute('aria-expanded', 'false');
+            }
+            bcSearchActiveIndex = -1;
+        }
+
+        function mostrarSugerenciasIniciales() {
+            const results = document.getElementById('bc-search-results');
+            const input = document.getElementById('bc-search-input');
+            if (!results || !input) return;
+
+            bcSearchActiveIndex = -1;
+            let html = `
+                <div class="p-2.5 bg-gray-50 border-b border-gray-100 flex items-center justify-between text-[11px] font-bold text-gray-700">
+                    <span class="flex items-center gap-1.5"><i class="fa-solid fa-bolt text-amber-500"></i> Acciones Frecuentes & Tell Me</span>
+                    <span class="text-[10px] text-gray-400 font-normal">Sugerencias rápidas</span>
+                </div>
+                <div class="py-1">
+            `;
+
+            BC_ACCIONES_RAPIDAS.slice(0, 5).forEach(acc => {
+                html += `
+                    <div class="bc-search-row px-3 py-2 hover:bg-blue-50 transition cursor-pointer flex items-center justify-between gap-2"
+                         role="option" aria-selected="false"
+                         data-action="seleccionar-busqueda"
+                         data-tipo="${acc.tipo}"
+                         data-target="${acc.target || acc.accion}"
+                         data-param="">
+                        <div class="flex items-center gap-2.5 min-w-0">
+                            <span class="w-6 h-6 rounded-md bg-blue-50 text-bc-blue flex items-center justify-center shrink-0 text-xs">
+                                <i class="fa-solid ${acc.icono}"></i>
+                            </span>
+                            <div class="min-w-0">
+                                <div class="font-semibold text-gray-900 text-xs truncate">${acc.titulo}</div>
+                                <div class="text-[10px] text-gray-500 truncate">${acc.subtitulo}</div>
+                            </div>
+                        </div>
+                        <i class="fa-solid fa-chevron-right text-[10px] text-gray-300"></i>
+                    </div>
+                `;
+            });
+
+            html += `
+                </div>
+                <div class="px-3 py-1.5 bg-gray-50 border-t border-gray-100 flex items-center justify-between text-[10px] text-gray-500">
+                    <span>Escriba para buscar Clientes, Proveedores, SKUs, Ventas o Compras</span>
+                    <span class="font-mono">Alt+Q</span>
+                </div>
+            `;
+
+            results.innerHTML = html;
+            results.classList.remove('hidden');
+            input.setAttribute('aria-expanded', 'true');
+        }
+
+        function ejecutarBusquedaGlobal(query) {
+            const results = document.getElementById('bc-search-results');
+            const input = document.getElementById('bc-search-input');
+            if (!results || !input) return;
+
+            const q = query.toLowerCase();
+            bcSearchActiveIndex = -1;
+
+            // 1. Categoría: Páginas y Tareas
+            const paginasMatch = BC_PAGINAS_SISTEMA.filter(p =>
+                p.titulo.toLowerCase().includes(q) ||
+                p.subtitulo.toLowerCase().includes(q) ||
+                p.id.toLowerCase().includes(q)
+            ).map(p => ({
+                titulo: p.titulo,
+                subtitulo: p.subtitulo,
+                tipo: 'modulo',
+                target: p.id,
+                param: '',
+                icono: p.icono,
+                badge: 'PÁGINA'
+            }));
+
+            const accionesMatch = BC_ACCIONES_RAPIDAS.filter(a =>
+                a.titulo.toLowerCase().includes(q) ||
+                a.subtitulo.toLowerCase().includes(q) ||
+                a.accion.toLowerCase().includes(q)
+            ).map(a => ({
+                titulo: a.titulo,
+                subtitulo: a.subtitulo,
+                tipo: a.tipo,
+                target: a.target || a.accion,
+                param: '',
+                icono: a.icono,
+                badge: 'ACCIÓN'
+            }));
+
+            const grupoPaginas = [...paginasMatch, ...accionesMatch];
+
+            // 2. Categoría: Clientes
+            const grupoClientes = BC_CLIENTES_DATA.filter(c =>
+                c.nombre.toLowerCase().includes(q) ||
+                c.codigo.toLowerCase().includes(q) ||
+                c.contacto.toLowerCase().includes(q) ||
+                c.telefono.includes(q) ||
+                c.tipo.toLowerCase().includes(q)
+            ).map(c => ({
+                titulo: c.nombre,
+                subtitulo: `${c.codigo} • ${c.tipo} • Saldo: ${c.saldo} • Tel: ${c.telefono}`,
+                tipo: 'cliente',
+                target: 'clientes',
+                param: c.codigo,
+                icono: 'fa-hospital-user',
+                badge: c.codigo,
+                tag: c.tipo,
+                tagClass: 'bg-cyan-50 text-cyan-700'
+            }));
+
+            // 3. Categoría: Proveedores
+            const grupoProveedores = BC_PROVEEDORES_DATA.filter(p =>
+                p.nombre.toLowerCase().includes(q) ||
+                p.codigo.toLowerCase().includes(q) ||
+                p.rubro.toLowerCase().includes(q) ||
+                p.condiciones.toLowerCase().includes(q)
+            ).map(p => ({
+                titulo: p.nombre,
+                subtitulo: `${p.codigo} • ${p.rubro} • ${p.condiciones}`,
+                tipo: 'proveedor',
+                target: 'proveedores',
+                param: p.codigo,
+                icono: 'fa-truck-field',
+                badge: p.codigo,
+                tag: p.rating,
+                tagClass: 'bg-teal-50 text-teal-700'
+            }));
+
+            // 4. Categoría: Productos e Inventario
+            const productosFuente = (bcState && bcState.productos && bcState.productos.length > 0)
+                ? bcState.productos
+                : (DATOS_SEMILLA_BC ? DATOS_SEMILLA_BC.productos : []);
+
+            const productosMatch = productosFuente.filter(p =>
+                p.sku.toLowerCase().includes(q) ||
+                p.nombre.toLowerCase().includes(q) ||
+                (p.color && p.color.toLowerCase().includes(q)) ||
+                (p.talla && p.talla.toLowerCase().includes(q)) ||
+                (p.categoria && p.categoria.toLowerCase().includes(q))
+            ).map(p => ({
+                titulo: p.nombre,
+                subtitulo: `SKU: ${p.sku} • Color: ${p.color || 'N/A'} • Talla: ${p.talla || 'U'} • Precio: $${(p.precio_unitario || 0).toFixed(2)} MXN`,
+                tipo: 'producto',
+                target: 'inventario',
+                param: p.sku,
+                icono: 'fa-boxes-stacked',
+                badge: p.sku,
+                tag: p.categoria,
+                tagClass: 'bg-indigo-50 text-indigo-700'
+            }));
+
+            // Variantes de Catálogo
+            let catalogoMatch = [];
+            if (catalogoState && catalogoState.productos) {
+                catalogoState.productos.forEach(catProd => {
+                    const matchBase = (catProd.nombre && catProd.nombre.toLowerCase().includes(q)) ||
+                                      (catProd.numero_pieza && catProd.numero_pieza.toLowerCase().includes(q)) ||
+                                      (catProd.categoria && catProd.categoria.toLowerCase().includes(q));
+                    if (matchBase) {
+                        catalogoMatch.push({
+                            titulo: catProd.nombre,
+                            subtitulo: `Pieza: ${catProd.numero_pieza} • Tela: ${catProd.tipo_tela || 'SRA'} • ${(catProd.variantes || []).length} variantes registradas`,
+                            tipo: 'catalogo',
+                            target: 'catalogo',
+                            param: catProd.numero_pieza,
+                            icono: 'fa-layer-group',
+                            badge: catProd.numero_pieza,
+                            tag: 'Catálogo',
+                            tagClass: 'bg-purple-50 text-purple-700'
+                        });
+                    }
+                });
+            }
+
+            const grupoProductos = [...productosMatch, ...catalogoMatch];
+
+            // 5. Categoría: Ventas
+            const grupoVentas = BC_VENTAS_DATA.filter(v =>
+                v.folio.toLowerCase().includes(q) ||
+                v.cliente.toLowerCase().includes(q) ||
+                v.detalle.toLowerCase().includes(q) ||
+                v.estado.toLowerCase().includes(q)
+            ).map(v => ({
+                titulo: `${v.folio} — ${v.cliente}`,
+                subtitulo: `${v.detalle} • Total: ${v.total} • Fecha: ${v.fecha}`,
+                tipo: 'venta',
+                target: 'ventas',
+                param: v.folio,
+                icono: 'fa-receipt',
+                badge: v.folio,
+                tag: v.estado,
+                tagClass: v.estado === 'Facturado' ? 'bg-emerald-50 text-emerald-700' : 'bg-blue-50 text-blue-700'
+            }));
+
+            // 6. Categoría: Compras
+            const grupoCompras = BC_COMPRAS_DATA.filter(c =>
+                c.folio.toLowerCase().includes(q) ||
+                c.proveedor.toLowerCase().includes(q) ||
+                c.detalle.toLowerCase().includes(q) ||
+                c.estado.toLowerCase().includes(q)
+            ).map(c => ({
+                titulo: `${c.folio} — ${c.proveedor}`,
+                subtitulo: `${c.detalle} • Total: ${c.total} • Fecha: ${c.fecha}`,
+                tipo: 'compra',
+                target: 'compras',
+                param: c.folio,
+                icono: 'fa-cart-shopping',
+                badge: c.folio,
+                tag: c.estado,
+                tagClass: 'bg-emerald-50 text-emerald-700'
+            }));
+
+            // Agrupación final con conteo
+            const grupos = [
+                { nombre: 'Páginas y Tareas', icono: 'fa-compass', items: grupoPaginas },
+                { nombre: 'Clientes Hospitalarios', icono: 'fa-hospital-user', items: grupoClientes },
+                { nombre: 'Proveedores & Cadena', icono: 'fa-truck-field', items: grupoProveedores },
+                { nombre: 'Productos & Inventario', icono: 'fa-boxes-stacked', items: grupoProductos },
+                { nombre: 'Gestión Comercial & Ventas', icono: 'fa-receipt', items: grupoVentas },
+                { nombre: 'Órdenes de Compra', icono: 'fa-cart-shopping', items: grupoCompras }
+            ].filter(g => g.items.length > 0);
+
+            const totalResultados = grupos.reduce((acc, g) => acc + g.items.length, 0);
+
+            if (totalResultados === 0) {
+                results.innerHTML = `
+                    <div class="p-6 text-center text-gray-500 space-y-2">
+                        <i class="fa-solid fa-magnifying-glass text-gray-300 text-2xl mb-1"></i>
+                        <p class="font-medium text-gray-800 text-xs">No se encontraron resultados para <span class="font-bold text-gray-900">"${query}"</span></p>
+                        <p class="text-[11px] text-gray-400">Pruebe buscando por SKU (ej. GQ-AZC-U), cliente (Ángeles, IMSS), proveedor (Textiles), o escriba "ventas", "compras", "stock".</p>
+                    </div>
+                `;
+                results.classList.remove('hidden');
+                input.setAttribute('aria-expanded', 'true');
+                return;
+            }
+
+            let html = '';
+            grupos.forEach(grupo => {
+                html += `
+                    <div class="px-3 py-1.5 bg-gray-50/90 border-y border-gray-100 flex items-center justify-between text-[10px] font-bold text-gray-600 uppercase tracking-wider sticky top-0 backdrop-blur-xs">
+                        <span class="flex items-center gap-1.5">
+                            <i class="fa-solid ${grupo.icono} text-gray-400 text-[10px]"></i>
+                            <span>${grupo.nombre}</span>
+                        </span>
+                        <span class="font-mono text-gray-400 font-normal">${grupo.items.length}</span>
+                    </div>
+                `;
+
+                grupo.items.forEach(item => {
+                    html += `
+                        <div class="bc-search-row px-3 py-2 hover:bg-blue-50/70 transition cursor-pointer flex items-center justify-between gap-3 text-left"
+                             role="option"
+                             aria-selected="false"
+                             data-action="seleccionar-busqueda"
+                             data-tipo="${item.tipo}"
+                             data-target="${item.target || ''}"
+                             data-param="${item.param || ''}">
+                            <div class="min-w-0 flex-1">
+                                <div class="font-semibold text-gray-900 text-xs truncate flex items-center gap-1.5">
+                                    ${item.badge ? `<span class="px-1.5 py-0.5 rounded text-[10px] font-mono font-medium bg-gray-100 text-gray-600">${resaltarTextoBusqueda(item.badge, query)}</span>` : ''}
+                                    <span>${resaltarTextoBusqueda(item.titulo, query)}</span>
+                                </div>
+                                <div class="text-[11px] text-gray-500 truncate mt-0.5">${resaltarTextoBusqueda(item.subtitulo, query)}</div>
+                            </div>
+                            <div class="flex items-center gap-2 shrink-0">
+                                ${item.tag ? `<span class="text-[10px] px-2 py-0.5 rounded-full font-medium ${item.tagClass || 'bg-gray-100 text-gray-600'}">${item.tag}</span>` : ''}
+                                <i class="fa-solid fa-arrow-right text-[10px] text-gray-300"></i>
+                            </div>
+                        </div>
+                    `;
+                });
+            });
+
+            html += `
+                <div class="px-3 py-2 bg-gray-50 border-t border-gray-100 flex items-center justify-between text-[10px] text-gray-500 sticky bottom-0">
+                    <div class="flex items-center gap-2">
+                        <span><kbd class="px-1 py-0.5 bg-white border border-gray-200 rounded font-mono text-[9px] shadow-2xs">↑</kbd><kbd class="px-1 py-0.5 bg-white border border-gray-200 rounded font-mono text-[9px] shadow-2xs ml-0.5">↓</kbd> Navegar</span>
+                        <span><kbd class="px-1 py-0.5 bg-white border border-gray-200 rounded font-mono text-[9px] shadow-2xs">Enter</kbd> Seleccionar</span>
+                        <span><kbd class="px-1 py-0.5 bg-white border border-gray-200 rounded font-mono text-[9px] shadow-2xs">Esc</kbd> Salir</span>
+                    </div>
+                    <span class="font-semibold text-bc-blue font-mono">${totalResultados} ${totalResultados === 1 ? 'coincidencia' : 'coincidencias'}</span>
+                </div>
+            `;
+
+            results.innerHTML = html;
+            results.classList.remove('hidden');
+            input.setAttribute('aria-expanded', 'true');
+        }
+
+        function ejecutarAccionBusqueda(tipo, target, param) {
+            cerrarMenuBusqueda();
+            const input = document.getElementById('bc-search-input');
+            if (input) input.blur();
+
+            if (tipo === 'modulo') {
+                cambiarModulo(target);
+            } else if (tipo === 'accion') {
+                switch (target) {
+                    case 'nuevo-producto':
+                        if (typeof abrirModalProducto === 'function') abrirModalProducto();
+                        break;
+                    case 'asignar-sku':
+                        if (typeof abrirModalSKU === 'function') abrirModalSKU();
+                        break;
+                    case 'nueva-transferencia':
+                        if (typeof abrirModalTransferencia === 'function') abrirModalTransferencia();
+                        break;
+                    case 'nueva-orden':
+                        if (typeof abrirModalOrden === 'function') abrirModalOrden();
+                        break;
+                    case 'registrar-merma':
+                        if (typeof abrirModalMerma === 'function') abrirModalMerma();
+                        break;
+                    default:
+                        break;
+                }
+            } else if (tipo === 'producto') {
+                cambiarModulo('inventario');
+                const filtroInput = document.getElementById('filtro-sku-busqueda');
+                if (filtroInput && param) {
+                    filtroInput.value = param;
+                    if (typeof filtrarTablaInventario === 'function') {
+                        filtrarTablaInventario();
+                    }
+                }
+            } else if (tipo === 'catalogo') {
+                cambiarModulo('catalogo');
+                const catInput = document.getElementById('filtro-catalogo-busqueda');
+                if (catInput && param) {
+                    catInput.value = param;
+                    if (typeof filtrarCatalogo === 'function') {
+                        filtrarCatalogo();
+                    }
+                }
+            } else if (tipo === 'cliente') {
+                cambiarModulo('clientes');
+            } else if (tipo === 'proveedor') {
+                cambiarModulo('proveedores');
+            } else if (tipo === 'venta') {
+                cambiarModulo('ventas');
+            } else if (tipo === 'compra') {
+                cambiarModulo('compras');
+            }
+        }
+
+        /* ── CENTRO DE ALERTAS Y NOTIFICACIONES DEL SISTEMA ERP (Paso 4.3 - Modern Web Guidance) ── */
+        const ALERTAS_SEMILLA_ERP = [
+            {
+                id: 'alt-001',
+                tipo: 'critica',
+                categoria: 'stock',
+                titulo: 'Stock Crítico: Chamarra Médica Antifluido',
+                mensaje: 'Quedan 3 piezas de Chamarra Médica Stretch (CH-BLA-M) en Almacén Matriz (mínimo: 6). Desabasto inminente.',
+                modulo: 'inventario',
+                param: 'CH-BLA-M',
+                accionTexto: 'Reabastecer / Traspaso',
+                icono: 'fa-triangle-exclamation',
+                iconoColor: 'text-rose-600 bg-rose-50',
+                badge: 'CRÍTICA',
+                badgeColor: 'bg-rose-100 text-rose-800',
+                fecha: 'Hace 10 min',
+                leida: false
+            },
+            {
+                id: 'alt-002',
+                tipo: 'advertencia',
+                categoria: 'finanzas',
+                titulo: 'Factura por Vencer: Hospital IMSS',
+                mensaje: 'Factura comercial VTA-2026-082 por $14,200.00 MXN vence en 3 días. Programar cobranza.',
+                modulo: 'ventas',
+                param: 'VTA-2026-082',
+                accionTexto: 'Ver en Ventas',
+                icono: 'fa-file-invoice-dollar',
+                iconoColor: 'text-amber-600 bg-amber-50',
+                badge: 'COBRANZA',
+                badgeColor: 'bg-amber-100 text-amber-800',
+                fecha: 'Hace 45 min',
+                leida: false
+            },
+            {
+                id: 'alt-003',
+                tipo: 'advertencia',
+                categoria: 'finanzas',
+                titulo: 'Pago Pendiente: Textiles del Centro',
+                mensaje: 'Orden de Compra OC-2026-041 por $18,000.00 MXN (300m Tela SRA) programada para liquidación.',
+                modulo: 'compras',
+                param: 'OC-2026-041',
+                accionTexto: 'Ver en Compras',
+                icono: 'fa-credit-card',
+                iconoColor: 'text-blue-600 bg-blue-50',
+                badge: 'PAGO PROV',
+                badgeColor: 'bg-blue-100 text-blue-800',
+                fecha: 'Hace 2 horas',
+                leida: false
+            },
+            {
+                id: 'alt-004',
+                tipo: 'info',
+                categoria: 'finanzas',
+                titulo: 'Dispersión de Nómina y Tesorería',
+                mensaje: 'Dispersión bancaria por $28,500.00 MXN desde BBVA Bancomer aplicada exitosamente a costura.',
+                modulo: 'tesoreria',
+                param: '',
+                accionTexto: 'Ver Tesorería',
+                icono: 'fa-building-columns',
+                iconoColor: 'text-emerald-600 bg-emerald-50',
+                badge: 'TESORERÍA',
+                badgeColor: 'bg-emerald-100 text-emerald-800',
+                fecha: 'Hace 3 horas',
+                leida: false
+            },
+            {
+                id: 'alt-005',
+                tipo: 'info',
+                categoria: 'stock',
+                titulo: 'Lote OdontoSmile Terminado en Sublimado',
+                mensaje: 'Taller de Sublimado Exprés reportó listos los 450 gorros estampados para recolección.',
+                modulo: 'produccion',
+                param: '',
+                accionTexto: 'Ver Producción',
+                icono: 'fa-scissors',
+                iconoColor: 'text-purple-600 bg-purple-50',
+                badge: 'TALLER',
+                badgeColor: 'bg-purple-100 text-purple-800',
+                fecha: 'Hace 5 horas',
+                leida: true
+            }
+        ];
+
+        let alertasERPState = [];
+        let filtroActivoAlertas = 'todas';
+
+        function cargarAlertasERP() {
+            const raw = localStorage.getItem('pattern_care_alertas_erp');
+            if (raw) {
+                try {
+                    const parsed = JSON.parse(raw);
+                    if (Array.isArray(parsed) && parsed.length > 0) {
+                        alertasERPState = parsed;
+                        return;
+                    }
+                } catch(e) {
+                    console.warn('Error leyendo pattern_care_alertas_erp de localStorage:', e);
+                }
+            }
+            alertasERPState = JSON.parse(JSON.stringify(ALERTAS_SEMILLA_ERP));
+            guardarAlertasERP();
+        }
+
+        function guardarAlertasERP() {
+            try {
+                localStorage.setItem('pattern_care_alertas_erp', JSON.stringify(alertasERPState));
+            } catch(e) {
+                console.warn('Error guardando pattern_care_alertas_erp:', e);
+            }
+        }
+
+        function initAlertasERP() {
+            cargarAlertasERP();
+            renderizarAlertasERP();
+
+            // Event listeners de filtros dentro del dropdown
+            const filterContainer = document.getElementById('filtros-alertas-dropdown');
+            if (filterContainer) {
+                filterContainer.querySelectorAll('.btn-filtro-alerta').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        filterContainer.querySelectorAll('.btn-filtro-alerta').forEach(b => {
+                            b.classList.remove('active', 'font-semibold', 'text-bc-blue', 'bg-white', 'shadow-2xs', 'border', 'border-gray-200');
+                            b.classList.add('text-gray-500');
+                        });
+                        btn.classList.add('active', 'font-semibold', 'text-bc-blue', 'bg-white', 'shadow-2xs', 'border', 'border-gray-200');
+                        btn.classList.remove('text-gray-500');
+                        filtroActivoAlertas = btn.dataset.filtro || 'todas';
+                        renderizarListaDropdownAlertas();
+                    });
+                });
+            }
+        }
+
+        function togglePanelNotificaciones() {
+            const panel = document.getElementById('bc-panel-notificaciones');
+            const btn = document.getElementById('btn-campana-notif');
+            if (!panel) return;
+
+            const isHidden = panel.classList.contains('hidden');
+            if (isHidden) {
+                // Cerrar otros dropdowns si estuvieran abiertos
+                document.querySelectorAll('.bc-dropdown-panel').forEach(p => p.classList.add('hidden'));
+                cerrarMenuBusqueda();
+                panel.classList.remove('hidden');
+                if (btn) btn.setAttribute('aria-expanded', 'true');
+                renderizarListaDropdownAlertas();
+            } else {
+                cerrarPanelNotificaciones();
+            }
+        }
+
+        function cerrarPanelNotificaciones() {
+            const panel = document.getElementById('bc-panel-notificaciones');
+            const btn = document.getElementById('btn-campana-notif');
+            if (panel) panel.classList.add('hidden');
+            if (btn) btn.setAttribute('aria-expanded', 'false');
+        }
+
+        function marcarAlertaLeida(id) {
+            const alerta = alertasERPState.find(a => a.id === id);
+            if (alerta) {
+                alerta.leida = !alerta.leida;
+                guardarAlertasERP();
+                renderizarAlertasERP();
+            }
+        }
+
+        function marcarTodasAlertasLeidas() {
+            alertasERPState.forEach(a => a.leida = true);
+            guardarAlertasERP();
+            renderizarAlertasERP();
+        }
+
+        function atenderAlerta(id) {
+            const alerta = alertasERPState.find(a => a.id === id);
+            if (alerta) {
+                alerta.leida = true;
+                guardarAlertasERP();
+                renderizarAlertasERP();
+                cerrarPanelNotificaciones();
+
+                if (alerta.modulo === 'inventario') {
                     cambiarModulo('inventario');
-                } else if (q.includes('tela') || q.includes('calc') || q.includes('rend')) {
-                    cambiarModulo('rendimiento');
-                } else if (q.includes('merm') || q.includes('error')) {
-                    cambiarModulo('mermas');
-                } else if (q.includes('sucurs') || q.includes('almacen')) {
-                    cambiarModulo('sucursales');
-                } else if (q.includes('diag') || q.includes('critico')) {
-                    cambiarModulo('diagnostico');
-                } else if (q.includes('conf') || q.includes('orden') || q.includes('fase')) {
+                    if (alerta.param) {
+                        const inp = document.getElementById('filtro-sku-busqueda');
+                        if (inp) {
+                            inp.value = alerta.param;
+                            if (typeof filtrarTablaInventario === 'function') filtrarTablaInventario();
+                        }
+                    } else if (typeof filtrarTablaPorCriticos === 'function') {
+                        filtrarTablaPorCriticos();
+                    }
+                } else if (alerta.modulo === 'ventas') {
+                    cambiarModulo('ventas');
+                } else if (alerta.modulo === 'compras') {
+                    cambiarModulo('compras');
+                } else if (alerta.modulo === 'tesoreria') {
+                    cambiarModulo('tesoreria');
+                } else if (alerta.modulo === 'produccion') {
                     cambiarModulo('produccion');
                 }
             }
         }
 
-        window.addEventListener('keydown', (e) => {
-            if (e.altKey && (e.key === 'q' || e.key === 'Q')) {
-                e.preventDefault();
-                const inp = document.getElementById('bc-search-input');
-                if (inp) {
-                    inp.focus();
-                    inp.select();
+        function renderizarAlertasERP() {
+            const noLeidas = alertasERPState.filter(a => !a.leida);
+            const count = noLeidas.length;
+
+            // 1. Actualizar Badge Campana Cabecera
+            const badgeCount = document.getElementById('badge-notif-count');
+            if (badgeCount) {
+                badgeCount.innerText = count;
+                if (count > 0) {
+                    badgeCount.classList.remove('hidden', 'bg-gray-400');
+                    badgeCount.classList.add('bg-rose-600', 'animate-pulse');
+                } else {
+                    badgeCount.classList.remove('bg-rose-600', 'animate-pulse');
+                    badgeCount.classList.add('bg-gray-400');
                 }
             }
-        });
+
+            // 2. Actualizar Badge en panel dropdown
+            const panelBadge = document.getElementById('panel-notif-badge');
+            if (panelBadge) {
+                panelBadge.innerText = count === 1 ? '1 nueva' : `${count} nuevas`;
+                panelBadge.className = count > 0
+                    ? 'px-1.5 py-0.2 rounded-full text-[10px] font-bold bg-rose-100 text-rose-700'
+                    : 'px-1.5 py-0.2 rounded-full text-[10px] font-medium bg-gray-100 text-gray-600';
+            }
+
+            // 3. Actualizar Badge en dashboard Role Center
+            const dashBadge = document.getElementById('dash-alertas-badge');
+            if (dashBadge) {
+                dashBadge.innerText = count === 1 ? '1 pendiente' : `${count} pendientes`;
+                dashBadge.className = count > 0
+                    ? 'px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 text-rose-800 font-mono'
+                    : 'px-2 py-0.5 rounded-full text-[10px] font-medium bg-emerald-100 text-emerald-800 font-mono';
+            }
+
+            // 4. Renderizar lista en Dropdown y en Dashboard
+            renderizarListaDropdownAlertas();
+            renderizarDashboardAlertas();
+        }
+
+        function renderizarListaDropdownAlertas() {
+            const container = document.getElementById('lista-notificaciones-dropdown');
+            if (!container) return;
+
+            let filtradas = alertasERPState;
+            if (filtroActivoAlertas === 'stock') {
+                filtradas = alertasERPState.filter(a => a.categoria === 'stock');
+            } else if (filtroActivoAlertas === 'finanzas') {
+                filtradas = alertasERPState.filter(a => a.categoria === 'finanzas');
+            }
+
+            if (filtradas.length === 0) {
+                container.innerHTML = `
+                    <div class="p-6 text-center text-gray-400 text-xs">
+                        <i class="fa-solid fa-bell-slash text-2xl text-gray-300 mb-2"></i>
+                        <p class="font-medium text-gray-600">No hay alertas en esta categoría</p>
+                    </div>
+                `;
+                return;
+            }
+
+            let html = '';
+            filtradas.forEach(a => {
+                html += `
+                    <div class="p-3 hover:bg-gray-50/80 transition flex items-start justify-between gap-3 ${a.leida ? 'bg-gray-50/30 opacity-70' : 'bg-white'}">
+                        <div class="flex items-start gap-2.5 min-w-0">
+                            <span class="w-6 h-6 rounded-md ${a.iconoColor} flex items-center justify-center text-xs shrink-0 mt-0.5 shadow-2xs">
+                                <i class="fa-solid ${a.icono}"></i>
+                            </span>
+                            <div class="min-w-0">
+                                <div class="flex items-center gap-1.5 flex-wrap">
+                                    <span class="px-1.5 py-0.2 rounded text-[9px] font-bold ${a.badgeColor}">${a.badge}</span>
+                                    <span class="font-semibold text-gray-900 text-xs truncate ${a.leida ? 'text-gray-500' : ''}">${a.titulo}</span>
+                                </div>
+                                <p class="text-[11px] text-gray-500 mt-0.5 leading-snug">${a.mensaje}</p>
+                                <div class="mt-2 flex items-center gap-3 text-[11px]">
+                                    <button type="button" data-action="atender-alerta" data-id="${a.id}" class="font-semibold text-bc-blue hover:underline flex items-center gap-1">
+                                        <span>${a.accionTexto}</span>
+                                        <i class="fa-solid fa-chevron-right text-[9px]"></i>
+                                    </button>
+                                    <span class="text-gray-300">&bull;</span>
+                                    <button type="button" data-action="toggle-leida-alerta" data-id="${a.id}" class="text-gray-500 hover:text-gray-800">
+                                        ${a.leida ? 'Marcar no leída' : 'Marcar leída'}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <span class="text-[10px] text-gray-400 shrink-0 font-mono">${a.fecha}</span>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
+        }
+
+        function renderizarDashboardAlertas() {
+            const container = document.getElementById('dashboard-lista-alertas');
+            if (!container) return;
+
+            const alertasActivas = alertasERPState.slice(0, 4);
+
+            let html = '';
+            alertasActivas.forEach(a => {
+                html += `
+                    <div class="p-4 rounded-xl border ${a.leida ? 'bg-gray-50/50 border-gray-200 opacity-75' : 'bg-white border-gray-200 shadow-sm hover:border-bc-blue'} transition flex flex-col justify-between">
+                        <div>
+                            <div class="flex items-center justify-between gap-2 mb-2">
+                                <span class="px-2 py-0.5 rounded text-[10px] font-bold ${a.badgeColor} uppercase tracking-wider">${a.badge}</span>
+                                <span class="text-[10px] text-gray-400 font-mono">${a.fecha}</span>
+                            </div>
+                            <div class="flex items-start gap-2.5">
+                                <span class="w-7 h-7 rounded-lg ${a.iconoColor} flex items-center justify-center text-xs shrink-0 mt-0.5 shadow-2xs">
+                                    <i class="fa-solid ${a.icono}"></i>
+                                </span>
+                                <div class="min-w-0">
+                                    <h4 class="font-bold text-gray-900 text-xs leading-snug ${a.leida ? 'text-gray-500' : ''}">${a.titulo}</h4>
+                                    <p class="text-[11px] text-gray-500 mt-1 leading-relaxed line-clamp-3">${a.mensaje}</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mt-3 pt-2.5 border-t border-gray-100 flex items-center justify-between gap-2">
+                            <button type="button" data-action="atender-alerta" data-id="${a.id}" class="text-xs font-semibold text-bc-blue hover:text-bc-darkBlue hover:underline flex items-center gap-1">
+                                <span>${a.accionTexto}</span>
+                                <i class="fa-solid fa-arrow-right text-[10px]"></i>
+                            </button>
+                            <button type="button" data-action="toggle-leida-alerta" data-id="${a.id}" class="text-[11px] ${a.leida ? 'text-gray-400 hover:text-gray-600' : 'text-gray-500 hover:text-gray-800'} flex items-center gap-1" title="${a.leida ? 'Marcar como no leída' : 'Marcar como leída'}">
+                                <i class="fa-solid ${a.leida ? 'fa-envelope-open' : 'fa-check'} text-[10px]"></i>
+                                <span>${a.leida ? 'Leída' : 'Descartar'}</span>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
+        }
 
         function cambiarModulo(key) {
             // Protección de rutas (SCRUM-22): el rol decide a qué módulos entra

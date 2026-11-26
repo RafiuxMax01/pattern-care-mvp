@@ -6,6 +6,10 @@
 -- Compatible con MySQL 5.7+ / 8.0+ / MariaDB
 -- =====================================================================
 
+-- Archivo en UTF-8: evita que el cliente mysql guarde los acentos doblemente
+-- codificados si su juego de caracteres por defecto es latin1.
+SET NAMES utf8mb4;
+
 USE `pattern_care`;
 
 -- ---------------------------------------------------------------------

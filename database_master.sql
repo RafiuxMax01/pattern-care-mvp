@@ -6,6 +6,11 @@
 -- Compatible con: MySQL 5.7+ / 8.0+ / MariaDB / Servidores IIS + PHP-PDO
 -- =====================================================================
 
+-- Este archivo esta en UTF-8. Sin esta linea, el cliente mysql (el de la
+-- imagen de Docker arranca en latin1) reinterpreta cada acento y lo guarda
+-- doblemente codificado: "Dueña" acaba como "DueÃ±a".
+SET NAMES utf8mb4;
+
 CREATE DATABASE IF NOT EXISTS `pattern_care`
 CHARACTER SET utf8mb4
 COLLATE utf8mb4_unicode_ci;

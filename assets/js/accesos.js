@@ -2,31 +2,73 @@
 
 // ─────────────────────────────────────────────────────────
 // PROTECCIÓN DE RUTAS
-// El permiso de cada módulo se declara en data-permiso, sobre
-// el propio botón del ribbon.
+// Un módulo se abre desde la barra, los menús desplegables, el
+// cajón "Explorar", la búsqueda global o las alertas, así que el
+// permiso se declara aquí, una sola vez por módulo. Un módulo que
+// no aparece en este mapa no se abre para nadie.
+//
+// Ventas, clientes, compras, proveedores y las tres vistas de
+// finanzas todavía son maquetas sin backend ni permiso propio:
+// se acotan a reportes.ver (Dueña y Administración) hasta que lo
+// tengan.
 // ─────────────────────────────────────────────────────────
-function botonDeModulo(key) {
-    return document.querySelector('.bc-tab-btn[data-target="modulo-' + key + '"]');
-}
+const PERMISO_POR_MODULO = {
+    rolecenter:          'rolecenter.ver',
+    inventario:          'inventario.ver',
+    transferencias:      'transferencias.ver',
+    produccion:          'produccion.ver',
+    rendimiento:         'rendimiento.ver',
+    mermas:              'mermas.ver',
+    sucursales:          'sucursales.ver',
+    diagnostico:         'diagnostico.ver',
+    reportes:            'reportes.ver',
+    catalogo:            'catalogo.ver',
+    accesos:             'usuarios.ver',
+    ventas:              'reportes.ver',
+    clientes:            'reportes.ver',
+    compras:             'reportes.ver',
+    proveedores:         'reportes.ver',
+    finanzas:            'reportes.ver',
+    tesoreria:           'reportes.ver',
+    'cuentas-contables': 'reportes.ver'
+};
 
 function moduloPermitido(key) {
-    const boton = botonDeModulo(key);
-    const permiso = boton ? boton.dataset.permiso : null;
-    if (!permiso) return true;
-    return PatternCareAuth.tienePermiso(permiso);
+    const permiso = PERMISO_POR_MODULO[key];
+    return !!permiso && PatternCareAuth.tienePermiso(permiso);
+}
+
+/** Clave del módulo al que lleva un elemento de navegación, o null */
+function moduloDeEnlace(elemento) {
+    if (elemento.dataset.module) return elemento.dataset.module;
+    if (elemento.dataset.target) return elemento.dataset.target.replace('modulo-', '');
+    return null;
 }
 
 function primerModuloPermitido() {
-    const boton = Array.from(document.querySelectorAll('.bc-tab-btn[data-target]'))
-        .find(b => !b.dataset.permiso || PatternCareAuth.tienePermiso(b.dataset.permiso));
-    return boton ? boton.dataset.target.replace('modulo-', '') : null;
+    return Object.keys(PERMISO_POR_MODULO).find(moduloPermitido) || null;
 }
 
 function aplicarProteccionDeRutas() {
-    document.querySelectorAll('.bc-tab-btn[data-target]').forEach(boton => {
-        const permiso = boton.dataset.permiso;
-        const permitido = !permiso || PatternCareAuth.tienePermiso(permiso);
-        boton.classList.toggle('hidden', !permitido);
+    const enlaces = document.querySelectorAll(
+        '.bc-tab-btn[data-target], button[data-action="cambiar-modulo"][data-module], button[data-action="cambiar-modulo-drawer"][data-module]'
+    );
+    enlaces.forEach(enlace => {
+        const key = moduloDeEnlace(enlace);
+        enlace.classList.toggle('hidden', !!key && !moduloPermitido(key));
+    });
+
+    // Un menú desplegable o una categoría del cajón sin ninguna opción
+    // visible se ocultan enteros
+    document.querySelectorAll('[data-dropdown]').forEach(boton => {
+        const panel = document.getElementById(boton.dataset.dropdown);
+        if (!panel) return;
+        const visibles = panel.querySelectorAll('[data-module]:not(.hidden)').length;
+        boton.parentElement.classList.toggle('hidden', visibles === 0);
+    });
+    document.querySelectorAll('[data-grupo-nav]').forEach(grupo => {
+        const visibles = grupo.querySelectorAll('[data-module]:not(.hidden)').length;
+        grupo.classList.toggle('hidden', visibles === 0);
     });
 
     if (!PatternCareAuth.autenticado()) return;
