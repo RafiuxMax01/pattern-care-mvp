@@ -370,18 +370,28 @@ function eliminarVarianteLista(idx) {
     _actualizarListaVariantes();
 }
 
+// El aviso "Sin variantes aún" vive dentro de #variantes-lista, así que al
+// pintar variantes con innerHTML sale del DOM. Se guarda la referencia la
+// primera vez para poder volver a insertarlo; buscarlo por id después devolvía
+// null y appendChild(null) lanzaba, con lo que "Nuevo Modelo" no se abría.
+let _avisoSinVariantes = null;
+
 function _actualizarListaVariantes() {
     const lista  = document.getElementById('variantes-lista');
-    const vacio  = document.getElementById('variantes-vacio');
+    _avisoSinVariantes = _avisoSinVariantes || document.getElementById('variantes-vacio');
+    const vacio  = _avisoSinVariantes;
     const count  = document.getElementById('variantes-count');
     const activas = catalogoState.variantes.filter(v => v.activo !== 0);
 
     if (count) count.textContent = activas.length;
 
     if (activas.length === 0) {
-        lista.innerHTML = '';
-        lista.appendChild(document.getElementById('variantes-vacio'));
-        vacio?.classList.remove('hidden');
+        if (vacio) {
+            lista.replaceChildren(vacio);
+            vacio.classList.remove('hidden');
+        } else {
+            lista.innerHTML = '';
+        }
         return;
     }
     vacio?.classList.add('hidden');
