@@ -8,9 +8,9 @@
 
 ## 🏗️ Architectural Summary
 
-**Pattern Care ERP** is a Vanilla HTML/CSS/JS + PHP/MySQL application that mimics
-Microsoft Dynamics 365 Business Central's UX for managing a medical-uniform
-manufacturing business across multiple branches.
+**Pattern Care ERP** is a Vanilla HTML/CSS/JS + PHP/MySQL application for managing a
+medical-uniform manufacturing business across multiple branches. It has its own visual
+identity (see "CSS / Tailwind" below); it no longer imitates Microsoft Dynamics 365.
 
 The UI is one page (`index.html`) with no build step: markup in `index.html`, styles
 and scripts in `assets/`, JSON endpoints in `backend/`.
@@ -136,7 +136,21 @@ minimum in at least one branch.
 
 ### CSS / Tailwind
 - Prefer Tailwind utility classes; use custom CSS variables only for design tokens.
-- **BC Color palette:** `--bc-blue: #0078d4` · `--bc-blue-dk: #005a9e` · `--bc-teal: #008575`
+- **Brand color:** `marca` (navy, `marca-700` = `#1f3a5f`) for primary buttons, links and the
+  active state. Neutrals are Tailwind `gray`.
+- **Color means state, never decoration:** `emerald` = OK, `amber` = needs attention,
+  `rose` = critical. Do not color icons, cards or menu items by area; navigation icons are gray.
+  Do not use other families (`blue`, `indigo`, `purple`, `teal`, `cyan`…) or the old Microsoft
+  blue `#0078d4`.
+- **Text contrast ≥ 4.5:1:** on white use `-700` for amber/emerald text, `-600` for rose and
+  `marca-500` or darker. Tones `-400` and lighter are for icons, borders and backgrounds only.
+- **Typography:** Inter only. Minimum size `text-xs` (12 px); no `text-[9px]`/`[10px]`/`[11px]`.
+  Weights: normal, medium, semibold, bold. Uppercase + tracking only in table headers.
+  `font-mono` only for codes (SKU, lot, order, part number) and keys; use `tabular-nums` for figures.
+- **One card style:** `bg-white border border-gray-200 rounded-xl` (+ `shadow-sm`); no colored
+  card borders. Larger shadows only for dropdowns and modals.
+- **No third-party branding or jargon** (Business Central, Microsoft 365, Cues, FactBox,
+  Role Center): this is Pattern Care's own product.
 - Background: `bg-white` / `bg-gray-50`; never `bg-slate-800` or dark backgrounds.
 - Responsive breakpoints: mobile-first (`sm:` `md:` `lg:`).
 - Extract repeated patterns into reusable CSS classes in `assets/estilos.css`, not duplicated Tailwind strings.

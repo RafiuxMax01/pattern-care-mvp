@@ -5,28 +5,30 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Pattern Care — Iniciar sesión</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=Segoe+UI:wght@300;400;600;700&display=swap" rel="stylesheet" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <!-- FontAwesome 6: la misma versión que usa index.html -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
   <style>
     /* ── Reset ─────────────────────────────────────────── */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-    /* ── Root palette (Business Central light) ────────── */
+    /* ── Paleta: la misma de la app (assets/tailwind.config.js) ── */
     :root {
-      --bc-blue:     #0078d4;
-      --bc-blue-dk:  #005a9e;
-      --bc-blue-lt:  #deecf9;
-      --bc-teal:     #008575;
-      --bg-page:     #f3f2f1;
-      --bg-card:     #f1f7fe;
-      --bg-footer:   #e0ecfb;
-      --text-main:   #201f1e;
-      --text-muted:  #605e5c;
-      --border:      #edebe9;
-      --input-bg:    #ffffff;
-      --radius-card: 16px;
-      --radius-btn:  24px;
-      --shadow-card: 0 4px 24px rgba(0,0,0,.10);
-      --font:        'Segoe UI', system-ui, -apple-system, sans-serif;
+      --marca:         #1f3a5f;   /* marca-700 */
+      --marca-oscuro:  #172c48;   /* marca-800 */
+      --marca-claro:   #eef3f9;   /* marca-50  */
+      --bg-page:       #f9fafb;   /* gray-50   */
+      --bg-card:       #ffffff;
+      --bg-footer:     #f9fafb;
+      --text-main:     #111827;   /* gray-900  */
+      --text-muted:    #6b7280;   /* gray-500  */
+      --border:        #e5e7eb;   /* gray-200  */
+      --input-bg:      #ffffff;
+      --radius-card:   12px;
+      --radius-btn:    8px;
+      --shadow-card:   0 1px 3px rgba(17,24,39,.08), 0 8px 24px rgba(17,24,39,.06);
+      --font:          'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
     }
 
     /* ── Page layout ───────────────────────────────────── */
@@ -45,7 +47,7 @@
 
     /* ── Left panel — branding / hero ──────────────────── */
     .hero {
-      background: linear-gradient(145deg, #005a9e 0%, #0078d4 55%, #008575 100%);
+      background: var(--marca);
       display: flex;
       flex-direction: column;
       align-items: flex-start;
@@ -54,15 +56,6 @@
       color: #fff;
       position: relative;
       overflow: hidden;
-    }
-
-    .hero::before {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background:
-        radial-gradient(circle at 20% 80%, rgba(255,255,255,.07) 0%, transparent 50%),
-        radial-gradient(circle at 80% 20%, rgba(255,255,255,.05) 0%, transparent 50%);
     }
 
     .hero-logo {
@@ -100,14 +93,13 @@
     }
 
     .hero h1 {
-      font-size: clamp(2rem, 3vw, 2.8rem);
-      font-weight: 300;
+      font-size: clamp(1.75rem, 2.4vw, 2.25rem);
+      font-weight: 600;
       line-height: 1.25;
       margin-bottom: 16px;
       position: relative;
     }
 
-    .hero h1 strong { font-weight: 700; }
 
     .hero p {
       font-size: 1rem;
@@ -126,6 +118,9 @@
     }
 
     .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
       background: rgba(255,255,255,.15);
       border: 1px solid rgba(255,255,255,.25);
       border-radius: 20px;
@@ -133,6 +128,8 @@
       font-size: .8rem;
       backdrop-filter: blur(6px);
     }
+
+    .hero-badge i { font-size: .85em; opacity: .9; }
 
     /* ── Right panel — auth card ───────────────────────── */
     .auth-panel {
@@ -150,7 +147,7 @@
       position: absolute;
       top: 0; left: 0; right: 0;
       height: 4px;
-      background: linear-gradient(90deg, var(--bc-blue), var(--bc-teal));
+      background: var(--marca);
     }
 
     /* ── Uiverse-inspired form-box ─────────────────────── */
@@ -210,8 +207,8 @@
     .input:last-child { border-bottom: 0; }
 
     .input:focus {
-      background: var(--bc-blue-lt);
-      outline: 2px solid var(--bc-blue);
+      background: var(--marca-claro);
+      outline: 2px solid var(--marca);
       outline-offset: -2px;
     }
 
@@ -239,16 +236,23 @@
     }
 
     .alert-box.info {
-      background: var(--bc-blue-lt);
-      color: var(--bc-blue-dk);
-      border: 1px solid var(--bc-blue);
+      background: var(--marca-claro);
+      color: var(--marca-oscuro);
+      border: 1px solid var(--marca);
     }
 
-    .alert-box.show { display: flex; align-items: center; gap: 8px; }
+    .alert-box.warning {
+      background: #fff4ce;
+      color: #8a5300;
+      border: 1px solid #f2c94c;
+    }
+
+    .alert-box.show { display: flex; align-items: flex-start; gap: 8px; }
+    .alert-box i { margin-top: 2px; flex-shrink: 0; }
 
     /* ── Submit button ─────────────────────────────────── */
     .form button[type="submit"] {
-      background: var(--bc-blue);
+      background: var(--marca);
       color: #fff;
       border: 0;
       border-radius: var(--radius-btn);
@@ -264,7 +268,7 @@
       gap: 8px;
     }
 
-    .form button[type="submit"]:hover { background: var(--bc-blue-dk); }
+    .form button[type="submit"]:hover { background: var(--marca-oscuro); }
     .form button[type="submit"]:active { transform: scale(.98); }
     .form button[type="submit"]:disabled { background: #a19f9d; cursor: not-allowed; }
 
@@ -293,62 +297,48 @@
 
     .form-section a {
       font-weight: 600;
-      color: var(--bc-blue);
+      color: var(--marca);
       text-decoration: none;
       transition: color .2s;
     }
 
     .form-section a:hover {
-      color: var(--bc-blue-dk);
+      color: var(--marca-oscuro);
       text-decoration: underline;
     }
 
     /* Panel */
     .tab-panel { display: flex; flex-direction: column; }
 
-    /* ── BC-style top bar (decorative) ────────────────── */
-    .bc-topbar {
-      position: fixed;
-      top: 0; left: 0; right: 0;
-      height: 48px;
-      background: var(--bc-blue);
-      display: flex;
-      align-items: center;
-      padding: 0 20px;
-      gap: 16px;
-      z-index: 10;
-      box-shadow: 0 2px 4px rgba(0,0,0,.2);
-    }
-
-    .bc-topbar-logo {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      color: #fff;
-      font-size: .9rem;
-      font-weight: 600;
-    }
-
-    .bc-waffle {
-      display: grid;
-      grid-template-columns: repeat(3,6px);
-      gap: 2px;
-    }
-
-    .bc-waffle span {
-      width: 6px; height: 6px;
-      background: rgba(255,255,255,.85);
-      border-radius: 1px;
-    }
-
-    /* push page content below topbar */
-    .page-wrapper { padding-top: 48px; }
-
     /* ── Responsive ────────────────────────────────────── */
     @media (max-width: 768px) {
       .page-wrapper { grid-template-columns: 1fr; }
       .hero { display: none; }
       .auth-panel { padding: 32px 20px; }
+    }
+
+    .marca-movil {
+      display: none;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 24px;
+      font-weight: 700;
+      font-size: 1.05rem;
+      color: var(--text-main);
+    }
+
+    .marca-movil span {
+      width: 32px; height: 32px;
+      border-radius: 8px;
+      background: var(--marca);
+      color: #fff;
+      display: flex; align-items: center; justify-content: center;
+      font-size: .85rem;
+    }
+
+    /* Después de la regla base, para que la anule en pantallas chicas */
+    @media (max-width: 768px) {
+      .marca-movil { display: flex; }
     }
 
     /* ── Users hint (dev helper) ───────────────────────── */
@@ -364,7 +354,15 @@
       line-height: 1.6;
     }
 
-    .users-hint strong { color: #5d4037; display: block; margin-bottom: 4px; }
+    .users-hint summary {
+      cursor: pointer;
+      font-weight: 700;
+      color: #5d4037;
+    }
+
+    .users-hint summary i { margin: 0 4px; }
+
+    .users-hint[open] summary { margin-bottom: 4px; }
 
     .users-hint table { width: 100%; border-collapse: collapse; margin-top: 6px; }
     .users-hint td { padding: 2px 6px; }
@@ -373,47 +371,36 @@
 </head>
 <body>
 
-  <!-- BC-style top navigation bar -->
-  <nav class="bc-topbar" role="banner" aria-label="Barra de navegación principal">
-    <div class="bc-topbar-logo">
-      <div class="bc-waffle" aria-hidden="true">
-        <span></span><span></span><span></span>
-        <span></span><span></span><span></span>
-        <span></span><span></span><span></span>
-      </div>
-      <span>Pattern Care ERP</span>
-    </div>
-  </nav>
-
   <div class="page-wrapper">
 
     <!-- ── Hero / Branding panel ──────────────────────── -->
     <section class="hero" aria-hidden="true">
       <div class="hero-logo">
-        <div class="hero-logo-icon">🧵</div>
+        <div class="hero-logo-icon"><i class="fa-solid fa-scissors" aria-hidden="true"></i></div>
         <div>
           <div class="hero-logo-text">Pattern Care</div>
-          <div class="hero-logo-sub">Sistema de Gestión Operativa</div>
+          <div class="hero-logo-sub">ERP Textil</div>
         </div>
       </div>
 
-      <h1>Bienvenido al<br><strong>Centro de Control</strong></h1>
+      <h1>Producción, inventario y sucursales en un solo lugar</h1>
       <p>
-        Gestiona tu producción de uniformes médicos, inventarios,
-        sucursales y reportes desde un solo lugar.
+        El sistema de gestión del taller de uniformes médicos de Pattern Care.
       </p>
 
       <div class="hero-badges">
-        <span class="hero-badge">🏭 Producción</span>
-        <span class="hero-badge">📦 Inventario</span>
-        <span class="hero-badge">🏥 Canales de venta</span>
-        <span class="hero-badge">📊 Reportes</span>
-        <span class="hero-badge">🏢 Multi-sucursal</span>
+        <!-- Los mismos iconos que representan cada área dentro del ERP -->
+        <span class="hero-badge"><i class="fa-solid fa-industry" aria-hidden="true"></i> Producción</span>
+        <span class="hero-badge"><i class="fa-solid fa-boxes-stacked" aria-hidden="true"></i> Inventario</span>
+        <span class="hero-badge"><i class="fa-solid fa-receipt" aria-hidden="true"></i> Canales de venta</span>
+        <span class="hero-badge"><i class="fa-solid fa-chart-line" aria-hidden="true"></i> Reportes</span>
+        <span class="hero-badge"><i class="fa-solid fa-building" aria-hidden="true"></i> Multi-sucursal</span>
       </div>
     </section>
 
     <!-- ── Auth panel ─────────────────────────────────── -->
     <main class="auth-panel" role="main">
+      <div class="marca-movil"><span aria-hidden="true"><i class="fa-solid fa-scissors"></i></span> Pattern Care</div>
       <div class="form-box" role="region" aria-label="Formulario de autenticación">
 
         <!-- ── LOGIN PANEL ─────────────────────────────── -->
@@ -452,7 +439,7 @@
 
       <!-- Cuentas sembradas por database_master.sql (solo MVP) -->
       <details class="users-hint">
-        <summary><strong>👤 Cuentas de prueba (MVP)</strong></summary>
+        <summary><i class="fa-solid fa-user-group" aria-hidden="true"></i> Cuentas de prueba (MVP)</summary>
         <p>Contraseña inicial de todas: <b>PatternCare2026</b></p>
         <table aria-label="Cuentas de prueba">
           <tr><td>encargada</td><td>Dueña / Encargada General</td></tr>
@@ -488,9 +475,22 @@
     }
 
     /* ── Alert helpers ─────────────────────────────────────── */
+    // El icono lo decide el tipo de aviso, no el texto del mensaje
+    const ICONOS_AVISO = {
+      error:   'fa-circle-xmark',
+      warning: 'fa-triangle-exclamation',
+      success: 'fa-circle-check',
+      info:    'fa-circle-info'
+    };
+
     function showAlert(id, msg, type = 'error') {
       const el = document.getElementById(id);
-      el.textContent = msg;
+      const icono = document.createElement('i');
+      icono.className = 'fa-solid ' + (ICONOS_AVISO[type] || ICONOS_AVISO.error);
+      icono.setAttribute('aria-hidden', 'true');
+      const texto = document.createElement('span');
+      texto.textContent = msg;   // textContent: el mensaje puede venir del servidor
+      el.replaceChildren(icono, texto);
       el.className = 'alert-box show ' + type;
     }
 
@@ -515,7 +515,7 @@
       const password = document.getElementById('login-password').value;
 
       if (!usuario || !password) {
-        showAlert('login-alert', '⚠️ Por favor completa todos los campos.');
+        showAlert('login-alert', 'Por favor completa todos los campos.', 'warning');
         return;
       }
 
@@ -532,16 +532,16 @@
 
         if (!json.success) {
           setLoading(false);
-          showAlert('login-alert', '❌ ' + (json.message || 'No fue posible iniciar sesión.'));
+          showAlert('login-alert', json.message || 'No fue posible iniciar sesión.');
           document.getElementById('login-password').value = '';
           return;
         }
 
-        showAlert('login-alert', '✅ ' + (json.message || 'Acceso concedido.') + ' Redirigiendo…', 'success');
+        showAlert('login-alert', (json.message || 'Acceso concedido.') + ' Redirigiendo…', 'success');
         window.location.replace(DESTINO);
       } catch (err) {
         setLoading(false);
-        showAlert('login-alert', '❌ No fue posible contactar al servidor de sesión.');
+        showAlert('login-alert', 'No fue posible contactar al servidor de sesión.');
       }
     }
 
@@ -553,7 +553,7 @@
       if (motivo === 'expirada') {
         showAlert('login-alert', 'Tu sesión terminó. Vuelve a identificarte.', 'info');
       } else if (motivo === 'sin-servidor') {
-        showAlert('login-alert', '⚠️ No se pudo verificar tu sesión: el servidor o la base de datos no responden. Intenta de nuevo en unos minutos.');
+        showAlert('login-alert', 'No se pudo verificar tu sesión: el servidor o la base de datos no responden. Intenta de nuevo en unos minutos.', 'warning');
       }
 
       try {
@@ -568,7 +568,7 @@
             window.location.replace('index.html');
             return;
           }
-          showAlert('login-alert', '⚠️ El servidor respondió con un error. Intenta de nuevo en unos minutos.');
+          showAlert('login-alert', 'El servidor respondió con un error. Intenta de nuevo en unos minutos.', 'warning');
           return;
         }
         if (json.success && json.data) {
@@ -576,7 +576,7 @@
           return;
         }
         if (!res.ok) {
-          showAlert('login-alert', '⚠️ ' + (json.message || 'El servidor no está disponible en este momento.'));
+          showAlert('login-alert', json.message || 'El servidor no está disponible en este momento.', 'warning');
         }
       } catch (err) {
         // Sin respuesta del servidor: se queda en el formulario
