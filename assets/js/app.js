@@ -358,8 +358,8 @@
                         bcState.alertasCriticas = json.data.alertas_criticas || [];
                         prepararStockDesdeServidor();
 
-                        badgeDiv.className = 'flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-300';
-                        badgeDiv.innerHTML = '<span class="w-2 h-2 rounded-full bg-emerald-400"></span><span class="hidden sm:inline">MySQL Conectado (IIS/PDO)</span>';
+                        badgeDiv.className = 'hidden md:flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-300';
+                        badgeDiv.innerHTML = '<span class="w-2 h-2 rounded-full bg-emerald-400"></span><span class="hidden sm:inline">Conectado</span>';
 
                         renderizarTodo();
                         if (syncIcon) syncIcon.classList.remove('fa-spin');
@@ -368,13 +368,25 @@
                 }
                 throw new Error('Servidor offline');
             } catch (err) {
+                // Con sesión real no se sustituyen los datos por los de ejemplo:
+                // se avisa y se conservan los últimos datos cargados del servidor.
+                if (PatternCareAuth.modo === 'servidor') {
+                    badgeDiv.className = 'hidden md:flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-rose-50 text-rose-700 border border-rose-300';
+                    badgeDiv.title = 'No se pudieron cargar los datos del servidor. Pulsa sincronizar para reintentar.';
+                    badgeDiv.onclick = null;
+                    badgeDiv.innerHTML = '<span class="w-2 h-2 rounded-full bg-rose-500"></span><span class="hidden sm:inline">Sin conexión con la base de datos</span>';
+                    mostrarAvisoAcceso('No se pudieron cargar los datos del servidor. Lo que ves puede no estar actualizado; pulsa sincronizar para reintentar.', 'error');
+                    if (syncIcon) syncIcon.classList.remove('fa-spin');
+                    return;
+                }
+
                 bcState.modoBackend = 'local_storage';
                 cargarDesdeLocalStorage();
 
-                badgeDiv.className = 'flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-amber-50 text-amber-700 border border-amber-300 cursor-pointer';
+                badgeDiv.className = 'hidden md:flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-300 cursor-pointer';
                 badgeDiv.title = 'Haz clic para inicializar MySQL cuando el servicio esté activo';
                 badgeDiv.onclick = instalarBaseDatos;
-                badgeDiv.innerHTML = '<span class="w-2 h-2 rounded-full bg-amber-400"></span><span class="hidden sm:inline">Modo Standalone / Local</span>';
+                badgeDiv.innerHTML = '<span class="w-2 h-2 rounded-full bg-amber-400"></span><span class="hidden sm:inline">Modo demostración</span>';
 
                 renderizarTodo();
             }
@@ -556,7 +568,7 @@ function mostrarMensajeSucursalAdmin(mensaje, error = false) {
 }
 
 async function peticionSucursalAdmin(url, opciones = {}) {
-    const respuesta = await fetch(url, {
+    const respuesta = await fetchConSesion(url, {
         headers: {
             'Accept': 'application/json',
             ...(opciones.body ? { 'Content-Type': 'application/json' } : {})
@@ -796,7 +808,7 @@ async function cambiarEstadoSucursalAdmin(id, estado) {
             const trf = bcState.kpis.transferencias_transito || 0;
             const sucTxt = bcState.sucursalActivaId
                 ? `en ${obtenerNombreSucursal(bcState.sucursalActivaId)}`
-                : `en la red de ${bcState.sucursales.length} sucursales`;
+                : `en las ${bcState.sucursales.length} sucursales`;
 
             const pillCriticos = document.getElementById('pill-skus-criticos');
             if (pillCriticos) pillCriticos.innerText = `${criticos} ${criticos === 1 ? 'SKU' : 'SKUs'} bajo su stock mínimo`;
@@ -808,7 +820,10 @@ async function cambiarEstadoSucursalAdmin(id, estado) {
             const sesion = PatternCareAuth.usuario;
             const nombre = sesion ? sesion.nombre_completo : 'Encargada General';
 
-            h.innerText = `${saludo}, ${nombre}. Hay ${criticos} productos con stock crítico (< 6 pzas) ${sucTxt} y ${trf} traspasos en tránsito.`;
+            // Las cifras ya están en las etiquetas de abajo; el saludo no las repite
+            h.innerText = `${saludo}, ${nombre}`;
+            const contexto = document.getElementById('headline-contexto');
+            if (contexto) contexto.innerText = `Esto es lo que requiere atención hoy ${sucTxt}.`;
         }
 
         function renderizarCues() {
@@ -836,15 +851,15 @@ async function cambiarEstadoSucursalAdmin(id, estado) {
             let html = '';
             (bcState.alertasCriticas || []).slice(0, 3).forEach(a => {
                 const colorBorder = a.severidad === 'critica' ? 'border-rose-300 bg-rose-50' : 'border-amber-300 bg-amber-50';
-                const colorBadge = a.severidad === 'critica' ? 'text-rose-400 bg-rose-50' : 'text-amber-400 bg-amber-50';
+                const colorBadge = a.severidad === 'critica' ? 'text-rose-600 bg-rose-50' : 'text-amber-700 bg-amber-50';
                 html += `
                     <div class="p-3 rounded-lg border ${colorBorder} text-xs">
                         <div class="flex items-center justify-between">
-                            <span class="text-[9px] uppercase font-bold tracking-wider ${colorBadge} px-1.5 py-0.5 rounded">${a.area}</span>
-                            <span class="text-[10px] text-gray-500 uppercase font-semibold">${a.severidad}</span>
+                            <span class="text-xs font-semibold ${colorBadge} px-1.5 py-0.5 rounded">${a.area}</span>
+                            <span class="text-xs text-gray-500 font-medium">${a.severidad}</span>
                         </div>
                         <h4 class="font-semibold text-gray-900 mt-1">${a.titulo}</h4>
-                        <p class="text-[11px] text-gray-600 mt-0.5">${a.descripcion}</p>
+                        <p class="text-xs text-gray-600 mt-0.5">${a.descripcion}</p>
                     </div>
                 `;
             });
@@ -858,9 +873,8 @@ async function cambiarEstadoSucursalAdmin(id, estado) {
             const labels = bcState.productos.map(p => p.sku);
             const dataStock = bcState.productos.map(p => p.stock_actual);
             const dataMinimo = bcState.productos.map(p => p.stock_minimo);
-            const colors = dataStock.map((val, idx) => {
-                return val < dataMinimo[idx] ? 'rgba(244, 63, 94, 0.85)' : 'rgba(0, 120, 212, 0.85)';
-            });
+            // Rojo solo para las barras por debajo de su línea de mínimo; el resto, color de marca
+            const colors = dataStock.map((v, i) => v < dataMinimo[i] ? '#e11d48' : '#1f3a5f');
 
             if (bcState.chartInstance) {
                 bcState.chartInstance.destroy();
@@ -872,20 +886,19 @@ async function cambiarEstadoSucursalAdmin(id, estado) {
                     labels: labels,
                     datasets: [
                         {
-                            label: 'Stock en Sucursal / Vista',
+                            label: 'Existencias',
                             data: dataStock,
                             backgroundColor: colors,
                             borderRadius: 4
                         },
                         {
-                            label: 'Umbral de Seguridad (6 pzas)',
+                            label: 'Stock mínimo',
                             data: dataMinimo,
                             type: 'line',
-                            borderColor: '#f59e0b',
-                            borderWidth: 2,
+                            borderColor: '#6b7280',
+                            borderWidth: 1.5,
                             borderDash: [4, 4],
-                            pointRadius: 3,
-                            pointBackgroundColor: '#f59e0b'
+                            pointRadius: 0
                         }
                     ]
                 },
@@ -894,18 +907,17 @@ async function cambiarEstadoSucursalAdmin(id, estado) {
                     maintainAspectRatio: false,
                     scales: {
                         x: {
-                            grid: { color: 'rgba(229, 231, 235, 0.8)' },
-                            ticks: { color: '#6b7280', font: { size: 10 } }
+                            grid: { display: false },
+                            ticks: { color: '#6b7280', font: { family: 'Inter', size: 12 } }
                         },
                         y: {
-                            grid: { color: 'rgba(229, 231, 235, 0.8)' },
-                            ticks: { color: '#6b7280', font: { size: 10 }, stepSize: 2 }
+                            grid: { color: '#f3f4f6' },
+                            border: { display: false },
+                            ticks: { color: '#6b7280', font: { family: 'Inter', size: 12 }, precision: 0 }
                         }
                     },
                     plugins: {
-                        legend: {
-                            labels: { color: '#374151', font: { size: 11 } }
-                        }
+                        legend: { display: false }
                     }
                 }
             });
@@ -936,7 +948,7 @@ async function cambiarEstadoSucursalAdmin(id, estado) {
 
             // La vista consolidada de todas las sucursales es exclusiva del alcance global
             let html = permitidas !== null ? '' : `
-                <button type="button" onclick="seleccionarSucursalGlobal(null)" class="w-full text-left px-2.5 py-1.5 rounded hover:bg-gray-100 transition flex items-center justify-between ${bcState.sucursalActivaId === null ? 'bg-blue-50 text-bc-blue font-bold' : 'text-gray-600'}">
+                <button type="button" onclick="seleccionarSucursalGlobal(null)" class="w-full text-left px-2.5 py-1.5 rounded hover:bg-gray-100 transition flex items-center justify-between ${bcState.sucursalActivaId === null ? 'bg-marca-50 text-marca-700 font-bold' : 'text-gray-600'}">
                     <span class="flex items-center gap-2">
                         <i class="fa-solid fa-globe text-xs"></i>
                         <span>Todas las Sucursales (Consolidado)</span>
@@ -948,9 +960,9 @@ async function cambiarEstadoSucursalAdmin(id, estado) {
             sucursalesVisibles.forEach(s => {
                 const activo = bcState.sucursalActivaId == s.id;
                 html += `
-                    <button type="button" onclick="seleccionarSucursalGlobal(${s.id})" class="w-full text-left px-2.5 py-1.5 rounded hover:bg-gray-100 transition flex items-center justify-between ${activo ? 'bg-blue-50 text-bc-blue font-bold' : 'text-gray-600'}">
+                    <button type="button" onclick="seleccionarSucursalGlobal(${s.id})" class="w-full text-left px-2.5 py-1.5 rounded hover:bg-gray-100 transition flex items-center justify-between ${activo ? 'bg-marca-50 text-marca-700 font-bold' : 'text-gray-600'}">
                         <span class="flex items-center gap-2">
-                            <i class="fa-solid fa-building text-xs text-teal-400"></i>
+                            <i class="fa-solid fa-building text-xs text-marca-500"></i>
                             <span class="truncate">${s.nombre}</span>
                         </span>
                         ${activo ? '<i class="fa-solid fa-check text-xs"></i>' : ''}
@@ -1017,24 +1029,24 @@ async function cambiarEstadoSucursalAdmin(id, estado) {
             let html = '';
             filtrados.forEach(p => {
                 const badge = p.es_critico
-                    ? `<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-50 text-rose-400 border border-rose-200 flex items-center gap-1 justify-center w-max mx-auto"><span class="w-1.5 h-1.5 rounded-full bg-rose-400 animate-ping"></span>Crítico (&lt;6)</span>`
-                    : `<span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-400 border border-emerald-200 w-max mx-auto">Óptimo</span>`;
+                    ? `<span class="px-2 py-0.5 rounded-full text-xs font-bold bg-rose-50 text-rose-600 border border-rose-200 flex items-center gap-1 justify-center w-max mx-auto"><span class="w-1.5 h-1.5 rounded-full bg-rose-400 animate-ping"></span>Crítico (&lt;6)</span>`
+                    : `<span class="px-2 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 w-max mx-auto">Óptimo</span>`;
 
                 const isSelected = bcState.skuSeleccionadoId == p.id;
 
                 html += `
-                    <tr onclick="mostrarFactBoxProducto(${p.id})" class="cursor-pointer transition hover:bg-gray-100 ${isSelected ? 'bg-blue-50 border-l-4 border-l-bc-blue' : ''} ${p.es_critico ? 'bg-rose-50' : ''}">
+                    <tr onclick="mostrarFactBoxProducto(${p.id})" class="cursor-pointer transition hover:bg-gray-100 ${isSelected ? 'bg-marca-50 border-l-4 border-l-marca-700' : ''} ${p.es_critico ? 'bg-rose-50' : ''}">
                         <td class="p-3 font-mono font-bold text-gray-900">${p.sku}</td>
                         <td class="p-3">
                             <div class="font-medium text-gray-900">${p.nombre}</div>
-                            <div class="text-[11px] text-gray-500">${p.notas || 'Sin notas'}</div>
+                            <div class="text-xs text-gray-500">${p.notas || 'Sin notas'}</div>
                         </td>
                         <td class="p-3 text-gray-600">${p.categoria}</td>
                         <td class="p-3"><span class="text-gray-900">${p.color}</span> / <span class="text-gray-500">${p.talla}</span></td>
                         <td class="p-3 text-center">
                             <div class="inline-flex items-center gap-1.5">
                                 <button type="button" onclick="ajustarStockRapido(event, ${p.id}, -1)" class="w-5 h-5 rounded bg-gray-100 hover:bg-gray-200 text-gray-600 font-bold">-</button>
-                                <span class="font-bold text-sm ${p.es_critico ? 'text-rose-400' : 'text-gray-900'}">${p.stock_actual}</span>
+                                <span class="font-bold text-sm ${p.es_critico ? 'text-rose-600' : 'text-gray-900'}">${p.stock_actual}</span>
                                 <button type="button" onclick="ajustarStockRapido(event, ${p.id}, 1)" class="w-5 h-5 rounded bg-gray-100 hover:bg-gray-200 text-gray-600 font-bold">+</button>
                             </div>
                         </td>
@@ -1042,13 +1054,13 @@ async function cambiarEstadoSucursalAdmin(id, estado) {
                         <td class="p-3 text-center text-gray-500 font-semibold">${p.stock_minimo}</td>
                         <td class="p-3 text-center">${badge}</td>
                         <td class="p-3 text-right space-x-1 whitespace-nowrap">
-                            <button type="button" onclick="iniciarTransferenciaDesdeSKU(event, ${p.id})" title="Transferir a otra sucursal" class="p-1.5 rounded bg-gray-100 hover:bg-cyan-50 text-cyan-400 transition">
+                            <button type="button" onclick="iniciarTransferenciaDesdeSKU(event, ${p.id})" title="Transferir a otra sucursal" class="p-1.5 rounded bg-gray-100 hover:bg-marca-50 text-marca-500 transition">
                                 <i class="fa-solid fa-truck-ramp-box"></i>
                             </button>
                             <button type="button" onclick="editarSKU(event, ${p.id})" title="Editar Ficha" class="p-1.5 rounded bg-gray-100 hover:bg-gray-200 text-gray-600 transition">
                                 <i class="fa-solid fa-pen-to-square"></i>
                             </button>
-                            <button type="button" onclick="eliminarSKU(event, ${p.id})" title="Eliminar" class="p-1.5 rounded bg-gray-100 hover:bg-rose-50 text-rose-400 transition">
+                            <button type="button" onclick="eliminarSKU(event, ${p.id})" title="Eliminar" class="p-1.5 rounded bg-gray-100 hover:bg-rose-50 text-rose-600 transition">
                                 <i class="fa-solid fa-trash-can"></i>
                             </button>
                         </td>
@@ -1076,7 +1088,7 @@ async function cambiarEstadoSucursalAdmin(id, estado) {
             const cont = document.getElementById('factbox-contenido');
             if (!p || !cont) return;
 
-            document.querySelectorAll('#tabla-inventario-body tr').forEach(r => r.classList.remove('bg-blue-50', 'border-l-4', 'border-l-bc-blue'));
+            document.querySelectorAll('#tabla-inventario-body tr').forEach(r => r.classList.remove('bg-marca-50', 'border-l-4', 'border-l-marca-700'));
 
             let sucursalesRows = '';
             bcState.sucursales.forEach(s => {
@@ -1098,11 +1110,11 @@ async function cambiarEstadoSucursalAdmin(id, estado) {
                     <div class="p-2 rounded bg-gray-50 border border-gray-200 flex items-center justify-between text-xs">
                         <div>
                             <div class="font-medium text-gray-700">${s.nombre}</div>
-                            <div class="text-[10px] text-gray-400">${s.codigo} &bull; Mínimo: ${minEnSuc}</div>
+                            <div class="text-xs text-gray-400">${s.codigo} &bull; Mínimo: ${minEnSuc}</div>
                         </div>
                         <div class="text-right">
-                            <span class="font-bold text-sm ${esCritico ? 'text-rose-400 font-extrabold' : 'text-gray-700'}">${stockEnSuc} pzas</span>
-                            ${esCritico ? '<div class="text-[9px] text-rose-400 font-semibold">Alerta &lt;6</div>' : ''}
+                            <span class="font-bold text-sm ${esCritico ? 'text-rose-600 font-bold' : 'text-gray-700'}">${stockEnSuc} pzas</span>
+                            ${esCritico ? '<div class="text-xs text-rose-600 font-semibold">Alerta &lt;6</div>' : ''}
                         </div>
                     </div>
                 `;
@@ -1110,13 +1122,13 @@ async function cambiarEstadoSucursalAdmin(id, estado) {
 
             cont.innerHTML = `
                 <div>
-                    <span class="text-[10px] font-mono text-bc-blue font-bold">${p.sku}</span>
+                    <span class="text-xs font-mono text-marca-700 font-bold">${p.sku}</span>
                     <h4 class="font-bold text-gray-900 text-sm mt-0.5">${p.nombre}</h4>
-                    <div class="text-gray-500 text-[11px] mt-0.5">${p.categoria} &bull; ${p.color} (${p.talla})</div>
+                    <div class="text-gray-500 text-xs mt-0.5">${p.categoria} &bull; ${p.color} (${p.talla})</div>
                 </div>
 
                 <div class="pt-2 border-t border-gray-200">
-                    <span class="text-[10px] uppercase font-bold text-gray-500 tracking-wider">Desglose por Sucursales</span>
+                    <span class="text-xs font-semibold text-gray-500">Desglose por sucursal</span>
                     <div class="space-y-1.5 mt-2">
                         ${sucursalesRows}
                     </div>
@@ -1124,11 +1136,11 @@ async function cambiarEstadoSucursalAdmin(id, estado) {
 
                 <div class="pt-3 border-t border-gray-200 flex items-center justify-between font-bold text-xs">
                     <span class="text-gray-600">Total en Toda la Red:</span>
-                    <span class="text-base text-emerald-400">${p.stock_total || p.stock_actual} pzas</span>
+                    <span class="text-base text-gray-900">${p.stock_total || p.stock_actual} pzas</span>
                 </div>
 
                 <div class="pt-2 space-y-1.5">
-                    <button type="button" onclick="iniciarTransferenciaDesdeSKU(null, ${p.id})" class="w-full py-1.5 rounded bg-cyan-600 hover:bg-cyan-500 text-white font-semibold text-xs flex items-center justify-center gap-1.5 transition">
+                    <button type="button" onclick="iniciarTransferenciaDesdeSKU(null, ${p.id})" class="w-full py-1.5 rounded bg-marca-600 hover:bg-marca-500 text-white font-semibold text-xs flex items-center justify-center gap-1.5 transition">
                         <i class="fa-solid fa-truck-ramp-box"></i>
                         <span>Transferir este Producto</span>
                     </button>
@@ -1144,21 +1156,12 @@ async function cambiarEstadoSucursalAdmin(id, estado) {
             if (e) e.stopPropagation();
             const sucursalId = bcState.sucursalActivaId || 1;
 
-            if (bcState.modoBackend === 'mysql') {
-                try {
-                    const res = await fetchConSesion('backend/guardar_inventario.php', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ action: 'ajustar_stock', id: id, sucursal_id: sucursalId, delta: delta })
-                    });
-                    const json = await res.json();
-                    if (json.success) {
-                        sincronizarDatos();
-                        return;
-                    }
-                } catch(err) {
-                    console.error(err);
-                }
+            if (trabajaConServidor()) {
+                const json = await escribirEnServidor('backend/guardar_inventario.php',
+                    { action: 'ajustar_stock', id: id, sucursal_id: sucursalId, delta: delta },
+                    'No se pudo ajustar el stock.');
+                if (json) sincronizarDatos();
+                return;
             }
 
             let detalle = bcState.inventarioDetalle.find(d => d.producto_id == id && d.sucursal_id == sucursalId);
@@ -1183,18 +1186,18 @@ async function cambiarEstadoSucursalAdmin(id, estado) {
             let html = '';
             bcState.transferencias.forEach(t => {
                 const badge = t.estado === 'En Tránsito'
-                    ? '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-600 border border-amber-200 flex items-center gap-1 w-max mx-auto"><span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-ping"></span>En Tránsito</span>'
-                    : '<span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-400 border border-emerald-200 w-max mx-auto">Recibido</span>';
+                    ? '<span class="px-2 py-0.5 rounded-full text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200 flex items-center gap-1 w-max mx-auto"><span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-ping"></span>En Tránsito</span>'
+                    : '<span class="px-2 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 w-max mx-auto">Recibido</span>';
 
                 html += `
                     <tr class="hover:bg-gray-100">
-                        <td class="p-3 font-mono font-bold text-cyan-400">${t.codigo_transferencia}</td>
+                        <td class="p-3 font-mono font-bold text-marca-500">${t.codigo_transferencia}</td>
                         <td class="p-3 text-gray-500">${t.fecha_transferencia ? t.fecha_transferencia.substring(0, 16) : 'Reciente'}</td>
                         <td class="p-3 font-medium text-gray-700">${t.sucursal_origen || obtenerNombreSucursal(t.sucursal_origen_id)}</td>
-                        <td class="p-3 font-medium text-teal-700">${t.sucursal_destino || obtenerNombreSucursal(t.sucursal_destino_id)}</td>
+                        <td class="p-3 font-medium text-marca-700">${t.sucursal_destino || obtenerNombreSucursal(t.sucursal_destino_id)}</td>
                         <td class="p-3">
                             <span class="font-mono text-gray-900">${t.sku || ''}</span>
-                            <div class="text-[11px] text-gray-500">${t.producto_nombre || ''}</div>
+                            <div class="text-xs text-gray-500">${t.producto_nombre || ''}</div>
                         </td>
                         <td class="p-3 text-center font-bold text-gray-900 text-sm">${t.cantidad} pzas</td>
                         <td class="p-3 text-center">${badge}</td>
@@ -1269,23 +1272,13 @@ async function cambiarEstadoSucursalAdmin(id, estado) {
                 notas: document.getElementById('trf-notas').value.trim()
             };
 
-            if (bcState.modoBackend === 'mysql') {
-                try {
-                    const res = await fetchConSesion('backend/transferir_stock.php', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(payload)
-                    });
-                    const json = await res.json();
-                    if (!json.success) {
-                        Swal.fire('Error', json.message || 'No fue posible transferir.', 'error');
-                        return;
-                    }
-                    cerrarModalTransferencia();
-                    sincronizarDatos();
-                    Swal.fire({ icon: 'success', title: 'Transferencia Procesada', text: 'Stock actualizado en ambas sucursales.', timer: 1500, showConfirmButton: false });
-                    return;
-                } catch(err) { console.error(err); }
+            if (trabajaConServidor()) {
+                const json = await escribirEnServidor('backend/transferir_stock.php', payload, 'No fue posible transferir.');
+                if (!json) return;
+                cerrarModalTransferencia();
+                sincronizarDatos();
+                Swal.fire({ icon: 'success', title: 'Transferencia Procesada', text: 'Stock actualizado en ambas sucursales.', timer: 1500, showConfirmButton: false });
+                return;
             }
 
             let detOrigen = bcState.inventarioDetalle.find(d => d.producto_id == prodId && d.sucursal_id == origenId);
@@ -1351,12 +1344,12 @@ async function cambiarEstadoSucursalAdmin(id, estado) {
                     <div class="bg-white border border-gray-200 rounded-xl p-4 flex flex-col justify-between hover:border-gray-300 transition">
                         <div>
                             <div class="flex items-center justify-between">
-                                <span class="font-mono text-xs font-bold text-teal-400">${s.codigo}</span>
-                                <span class="text-[10px] px-2 py-0.5 rounded bg-gray-100 text-gray-600">${s.tipo}</span>
+                                <span class="font-mono text-xs font-bold text-marca-500">${s.codigo}</span>
+                                <span class="text-xs px-2 py-0.5 rounded bg-gray-100 text-gray-600">${s.tipo}</span>
                             </div>
                             <h4 class="font-bold text-gray-900 text-sm mt-2">${s.nombre}</h4>
-                            <p class="text-[11px] text-gray-500 mt-1"><i class="fa-solid fa-location-dot mr-1"></i>${s.direccion}</p>
-                            <p class="text-[11px] text-gray-500"><i class="fa-solid fa-user mr-1"></i>Encargado: <strong class="text-gray-600">${s.encargado}</strong></p>
+                            <p class="text-xs text-gray-500 mt-1"><i class="fa-solid fa-location-dot mr-1"></i>${s.direccion}</p>
+                            <p class="text-xs text-gray-500"><i class="fa-solid fa-user mr-1"></i>Encargado: <strong class="text-gray-600">${s.encargado}</strong></p>
 
                             <div class="mt-4 p-2.5 bg-gray-50 rounded-lg border border-gray-200 space-y-1 text-xs">
                                 <div class="flex items-center justify-between">
@@ -1365,16 +1358,16 @@ async function cambiarEstadoSucursalAdmin(id, estado) {
                                 </div>
                                 <div class="flex items-center justify-between">
                                     <span class="text-gray-500">Items en Alerta (&lt;6):</span>
-                                    <span class="font-bold ${criticosSuc > 0 ? 'text-rose-400' : 'text-emerald-400'}">${criticosSuc} SKUs</span>
+                                    <span class="font-bold ${criticosSuc > 0 ? 'text-rose-600' : 'text-emerald-700'}">${criticosSuc} SKUs</span>
                                 </div>
                             </div>
                         </div>
 
                         <div class="mt-4 pt-3 border-t border-gray-200 flex items-center justify-between">
-                            <button type="button" onclick="seleccionarSucursalGlobal(${s.id}); cambiarModulo('inventario');" class="text-xs text-bc-blue hover:underline font-semibold">
+                            <button type="button" onclick="seleccionarSucursalGlobal(${s.id}); cambiarModulo('inventario');" class="text-xs text-marca-700 hover:underline font-semibold">
                                 Ver Inventario &rarr;
                             </button>
-                            <button type="button" onclick="abrirModalTransferenciaHacia(${s.id})" class="text-[11px] px-2 py-1 rounded bg-gray-100 hover:bg-gray-200 text-gray-600">
+                            <button type="button" onclick="abrirModalTransferenciaHacia(${s.id})" class="text-xs px-2 py-1 rounded bg-gray-100 hover:bg-gray-200 text-gray-600">
                                 Reabastecer
                             </button>
                         </div>
@@ -1391,6 +1384,19 @@ async function cambiarEstadoSucursalAdmin(id, estado) {
         }
 
         function abrirModalSKU(id = null) {
+            // Con sesión real cada SKU es una variante de un modelo del catálogo
+            // (esquema v2): se crea y se edita allí, que es lo que guarda MySQL.
+            // Este formulario queda para el modo standalone.
+            if (trabajaConServidor()) {
+                if (!id) {
+                    abrirModalProducto();
+                    return;
+                }
+                const sku = bcState.productos.find(x => x.id == id);
+                if (sku && sku.producto_id) abrirModeloDelCatalogo(sku.producto_id);
+                return;
+            }
+
             document.getElementById('form-sku').reset();
             document.getElementById('sku-id').value = '';
             document.getElementById('modal-sku-titulo').innerText = 'Ficha de Producto &bull; Nuevo SKU';
@@ -1443,23 +1449,13 @@ async function cambiarEstadoSucursalAdmin(id, estado) {
                 notas: document.getElementById('sku-notas').value.trim()
             };
 
-            if (bcState.modoBackend === 'mysql') {
-                try {
-                    const res = await fetchConSesion('backend/guardar_inventario.php', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(payload)
-                    });
-                    const json = await res.json();
-                    if (!json.success) {
-                        Swal.fire('Error', json.message, 'error');
-                        return;
-                    }
-                    cerrarModalSKU();
-                    sincronizarDatos();
-                    Swal.fire({ icon: 'success', title: 'Producto Guardado', text: 'Sincronizado en la base de datos de Business Central.', timer: 1500, showConfirmButton: false });
-                    return;
-                } catch(err) { console.error(err); }
+            if (trabajaConServidor()) {
+                const json = await escribirEnServidor('backend/guardar_inventario.php', payload, 'No se pudo guardar el producto.');
+                if (!json) return;
+                cerrarModalSKU();
+                sincronizarDatos();
+                Swal.fire({ icon: 'success', title: 'Producto Guardado', text: 'Guardado en la base de datos.', timer: 1500, showConfirmButton: false });
+                return;
             }
 
             if (id) {
@@ -1492,19 +1488,10 @@ async function cambiarEstadoSucursalAdmin(id, estado) {
             });
             if (!conf.isConfirmed) return;
 
-            if (bcState.modoBackend === 'mysql') {
-                try {
-                    const res = await fetchConSesion('backend/guardar_inventario.php', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ action: 'eliminar', id: id })
-                    });
-                    const json = await res.json();
-                    if (json.success) {
-                        sincronizarDatos();
-                        return;
-                    }
-                } catch(err) { console.error(err); }
+            if (trabajaConServidor()) {
+                const json = await escribirEnServidor('backend/guardar_inventario.php', { action: 'eliminar', id: id }, 'No se pudo eliminar el producto.');
+                if (json) sincronizarDatos();
+                return;
             }
 
             bcState.productos = bcState.productos.filter(p => p.id != id);
@@ -1562,20 +1549,12 @@ async function cambiarEstadoSucursalAdmin(id, estado) {
                 notas: document.getElementById('sim-notas').value.trim()
             };
 
-            if (bcState.modoBackend === 'mysql') {
-                try {
-                    const res = await fetchConSesion('backend/calcular_rendimiento.php', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(payload)
-                    });
-                    const json = await res.json();
-                    if (json.success) {
-                        sincronizarDatos();
-                        Swal.fire({ icon: 'success', title: 'Cálculo Registrado', text: 'Guardado en MySQL.', timer: 1500, showConfirmButton: false });
-                        return;
-                    }
-                } catch(e) { console.error(e); }
+            if (trabajaConServidor()) {
+                const json = await escribirEnServidor('backend/calcular_rendimiento.php', payload, 'No se pudo registrar el cálculo.');
+                if (!json) return;
+                sincronizarDatos();
+                Swal.fire({ icon: 'success', title: 'Cálculo Registrado', text: 'Guardado en MySQL.', timer: 1500, showConfirmButton: false });
+                return;
             }
 
             const pzas = tipo === 'SRA' ? Math.floor(metros * 6) : Math.floor(metros * 4);
@@ -1609,10 +1588,10 @@ async function cambiarEstadoSucursalAdmin(id, estado) {
             bcState.rendimientos.slice(0, 8).forEach(r => {
                 html += `
                     <tr class="hover:bg-gray-100">
-                        <td class="p-2.5 text-gray-500 font-mono">${r.fecha ? r.fecha.substring(0, 16) : 'Reciente'}</td>
-                        <td class="p-2.5 font-bold ${r.tipo_tela === 'SRA' ? 'text-teal-400' : 'text-amber-400'}">${r.tipo_tela}</td>
+                        <td class="p-2.5 text-gray-500 tabular-nums">${r.fecha ? r.fecha.substring(0, 16) : 'Reciente'}</td>
+                        <td class="p-2.5 font-semibold text-gray-900">${r.tipo_tela}</td>
                         <td class="p-2.5 text-gray-900 font-semibold">${r.metros} m</td>
-                        <td class="p-2.5 text-emerald-400 font-bold">${r.piezas_estimadas} pzas</td>
+                        <td class="p-2.5 text-gray-900 font-semibold tabular-nums">${r.piezas_estimadas} pzas</td>
                         <td class="p-2.5 text-gray-600">${r.sobrante_cm} cm</td>
                         <td class="p-2.5 font-mono text-gray-600">${r.lote_referencia || 'N/A'}</td>
                         <td class="p-2.5 text-gray-500">${r.color || ''}</td>
@@ -1629,7 +1608,7 @@ async function cambiarEstadoSucursalAdmin(id, estado) {
             4: { nombre: 'Fase 4: Trazo & Corte de Piezas', responsable: 'Corte y Control de Calidad [2 personas]', tiempo: '2 a 4 hrs por lote de 100', riesgo: 'Desperdicio no controlado en Tela CRO (50 cm sobrante/m).', mitigacion: 'Uso obligatorio del simulador para reutilizar retazos en cintas.' },
             5: { nombre: 'Fase 5: Confección & Ensamble Textil', responsable: 'Confección [2 personas]', tiempo: '15 a 30 min por prenda', riesgo: 'Desajuste de tensión que causa descosidos y retrabajos no contabilizados.', mitigacion: 'Calibración matutina de overlock y registro en bitácora.' },
             6: { nombre: 'Fase 6: Control de Calidad & Empaque', responsable: 'Corte y Control de Calidad [2 personas]', tiempo: '1 hr por lote de 50', riesgo: 'Prendas empacadas con etiquetas de talla cambiadas.', mitigacion: 'Doble chequeo visual con sello de inspector antes del embalaje.' },
-            7: { nombre: 'Fase 7: Distribución & Entrega', responsable: 'Área Administrativa & Logística', tiempo: 'Mismo día a 48 hrs', riesgo: 'Falta de número de rastreo vinculado a sucursales.', mitigacion: 'Traspasos registrados en Business Central con código único.' }
+            7: { nombre: 'Fase 7: Distribución & Entrega', responsable: 'Área Administrativa & Logística', tiempo: 'Mismo día a 48 hrs', riesgo: 'Falta de número de rastreo vinculado a sucursales.', mitigacion: 'Traspasos registrados en el ERP con código único.' }
         };
 
         function verDetalleFase(num) {
@@ -1638,13 +1617,13 @@ async function cambiarEstadoSucursalAdmin(id, estado) {
             const cont = document.getElementById('panel-detalle-fase');
             cont.innerHTML = `
                 <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-gray-200 pb-2 mb-2">
-                    <span class="font-heading font-bold text-sm text-bc-blue">${f.nombre}</span>
+                    <span class="font-heading font-bold text-sm text-marca-700">${f.nombre}</span>
                     <span class="text-gray-500">Responsable: <strong class="text-gray-900">${f.responsable}</strong></span>
                 </div>
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     <div><span class="text-gray-500 font-semibold">Tiempo Estimado:</span><div class="text-gray-700">${f.tiempo}</div></div>
-                    <div><span class="text-gray-500 font-semibold">Punto Crítico:</span><div class="text-amber-400">${f.riesgo}</div></div>
-                    <div><span class="text-gray-500 font-semibold">Plan de Mitigación:</span><div class="text-teal-400">${f.mitigacion}</div></div>
+                    <div><span class="text-gray-500 font-semibold">Punto Crítico:</span><div class="text-amber-700">${f.riesgo}</div></div>
+                    <div><span class="text-gray-500 font-semibold">Plan de Mitigación:</span><div class="text-marca-500">${f.mitigacion}</div></div>
                 </div>
             `;
         }
@@ -1655,12 +1634,12 @@ async function cambiarEstadoSucursalAdmin(id, estado) {
             const nodoFase3 = document.getElementById('nodo-fase-3');
 
             if (tipo === 'gorros') {
-                btnG.className = 'px-3 py-1.5 rounded-lg bg-bc-blue text-white text-xs font-semibold';
+                btnG.className = 'px-3 py-1.5 rounded-lg bg-marca-700 text-white text-xs font-semibold';
                 btnC.className = 'px-3 py-1.5 rounded-lg bg-gray-100 text-gray-600 text-xs font-medium hover:text-gray-900';
                 nodoFase3.classList.remove('opacity-30', 'grayscale');
                 verDetalleFase(3);
             } else {
-                btnC.className = 'px-3 py-1.5 rounded-lg bg-teal-600 text-white text-xs font-semibold';
+                btnC.className = 'px-3 py-1.5 rounded-lg bg-marca-600 text-white text-xs font-semibold';
                 btnG.className = 'px-3 py-1.5 rounded-lg bg-gray-100 text-gray-600 text-xs font-medium hover:text-gray-900';
                 nodoFase3.classList.add('opacity-30', 'grayscale');
                 verDetalleFase(2);
@@ -1680,8 +1659,8 @@ async function cambiarEstadoSucursalAdmin(id, estado) {
             bcState.ordenes.forEach(o => {
                 const esAlerta = o.estado === 'Detenido / Alerta';
                 const badge = esAlerta
-                    ? '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-50 text-rose-400 border border-rose-200 flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-rose-400 animate-ping"></span>Detenido</span>'
-                    : '<span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-blue-50 text-blue-400 border border-blue-200">En Proceso</span>';
+                    ? '<span class="px-2 py-0.5 rounded-full text-xs font-bold bg-rose-50 text-rose-600 border border-rose-200 flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-rose-400 animate-ping"></span>Detenido</span>'
+                    : '<span class="px-2 py-0.5 rounded-full text-xs font-semibold bg-marca-50 text-marca-500 border border-marca-200">En Proceso</span>';
 
                 const fIdx = FASES_PRODUCCION.indexOf(o.fase_actual);
                 const nextFase = fIdx < FASES_PRODUCCION.length - 1 ? FASES_PRODUCCION[fIdx + 1] : null;
@@ -1690,36 +1669,36 @@ async function cambiarEstadoSucursalAdmin(id, estado) {
                     <div class="bg-white border ${esAlerta ? 'border-rose-300' : 'border-gray-200'} rounded-xl p-4 flex flex-col justify-between hover:border-gray-300 transition">
                         <div>
                             <div class="flex items-center justify-between">
-                                <span class="font-mono font-bold text-xs text-bc-blue">${o.codigo_orden}</span>
+                                <span class="font-mono font-bold text-xs text-marca-700">${o.codigo_orden}</span>
                                 ${badge}
                             </div>
                             <h4 class="text-sm font-bold text-gray-900 mt-1.5">${o.producto}</h4>
                             <div class="text-xs text-gray-500 mt-0.5">Lote: <strong class="text-gray-600">${o.lote}</strong> &bull; Cantidad: <strong class="text-gray-900">${o.cantidad} pzas</strong></div>
 
-                            <div class="mt-3 p-2 bg-gray-50 rounded border border-gray-200 text-[11px]">
+                            <div class="mt-3 p-2 bg-gray-50 rounded border border-gray-200 text-xs">
                                 <div class="flex items-center justify-between mb-1">
                                     <span class="text-gray-500">Fase:</span>
-                                    <span class="font-bold text-teal-400">${o.fase_actual}</span>
+                                    <span class="font-bold text-marca-500">${o.fase_actual}</span>
                                 </div>
                                 <div class="w-full bg-gray-100 h-1 rounded-full overflow-hidden">
-                                    <div class="bg-teal-500 h-full" style="width: ${((fIdx + 1) / FASES_PRODUCCION.length) * 100}%"></div>
+                                    <div class="bg-marca-500 h-full" style="width: ${((fIdx + 1) / FASES_PRODUCCION.length) * 100}%"></div>
                                 </div>
-                                <div class="text-[10px] text-gray-400 mt-1 flex justify-between">
+                                <div class="text-xs text-gray-400 mt-1 flex justify-between">
                                     <span>Resp: ${o.responsable}</span>
                                     <span>${fIdx + 1}/7</span>
                                 </div>
                             </div>
-                            ${o.notas ? `<p class="text-[11px] text-gray-600 mt-2 bg-gray-100 p-1.5 rounded">${o.notas}</p>` : ''}
+                            ${o.notas ? `<p class="text-xs text-gray-600 mt-2 bg-gray-100 p-1.5 rounded">${o.notas}</p>` : ''}
                         </div>
 
                         <div class="mt-3 pt-2.5 border-t border-gray-200 flex items-center justify-between">
                             ${nextFase ? `
-                                <button type="button" onclick="avanzarFaseOrden(${o.id}, '${nextFase}')" class="px-2.5 py-1 rounded bg-teal-600/80 hover:bg-teal-500 text-white text-xs font-semibold flex items-center gap-1">
+                                <button type="button" onclick="avanzarFaseOrden(${o.id}, '${nextFase}')" class="px-2.5 py-1 rounded bg-marca-600/80 hover:bg-marca-500 text-white text-xs font-semibold flex items-center gap-1">
                                     <span>Avanzar a ${nextFase}</span>
-                                    <i class="fa-solid fa-arrow-right text-[10px]"></i>
+                                    <i class="fa-solid fa-arrow-right text-xs"></i>
                                 </button>
-                            ` : `<span class="text-xs text-emerald-400 font-semibold"><i class="fa-solid fa-check"></i> Completada</span>`}
-                            <button type="button" onclick="toggleAlertaOrden(${o.id})" class="p-1.5 rounded bg-gray-100 text-amber-400 hover:bg-gray-200" title="Alternar Alerta">
+                            ` : `<span class="text-xs text-emerald-700 font-semibold"><i class="fa-solid fa-check"></i> Completada</span>`}
+                            <button type="button" onclick="toggleAlertaOrden(${o.id})" class="p-1.5 rounded bg-gray-100 text-amber-700 hover:bg-gray-200" title="Alternar Alerta">
                                 <i class="fa-solid fa-flag"></i>
                             </button>
                         </div>
@@ -1752,20 +1731,12 @@ async function cambiarEstadoSucursalAdmin(id, estado) {
                 notas: document.getElementById('orden-notas').value.trim()
             };
 
-            if (bcState.modoBackend === 'mysql') {
-                try {
-                    const res = await fetchConSesion('backend/registrar_produccion.php', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(payload)
-                    });
-                    const json = await res.json();
-                    if (json.success) {
-                        cerrarModalOrden();
-                        sincronizarDatos();
-                        return;
-                    }
-                } catch(e) { console.error(e); }
+            if (trabajaConServidor()) {
+                const json = await escribirEnServidor('backend/registrar_produccion.php', payload, 'No se pudo crear la orden de confección.');
+                if (!json) return;
+                cerrarModalOrden();
+                sincronizarDatos();
+                return;
             }
 
             payload.id = Date.now();
@@ -1776,16 +1747,12 @@ async function cambiarEstadoSucursalAdmin(id, estado) {
         }
 
         async function avanzarFaseOrden(id, nextFase) {
-            if (bcState.modoBackend === 'mysql') {
-                try {
-                    await fetchConSesion('backend/registrar_produccion.php', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ action: 'cambiar_fase', id: id, fase_actual: nextFase })
-                    });
-                    sincronizarDatos();
-                    return;
-                } catch(e) { console.error(e); }
+            if (trabajaConServidor()) {
+                const json = await escribirEnServidor('backend/registrar_produccion.php',
+                    { action: 'cambiar_fase', id: id, fase_actual: nextFase },
+                    'No se pudo avanzar la fase de la orden.');
+                if (json) sincronizarDatos();
+                return;
             }
 
             const o = bcState.ordenes.find(x => x.id == id);
@@ -1802,16 +1769,12 @@ async function cambiarEstadoSucursalAdmin(id, estado) {
             if (!o) return;
             const nuevoEstado = o.estado === 'Detenido / Alerta' ? 'En Proceso' : 'Detenido / Alerta';
 
-            if (bcState.modoBackend === 'mysql') {
-                try {
-                    await fetchConSesion('backend/registrar_produccion.php', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ action: 'cambiar_estado', id: id, estado: nuevoEstado })
-                    });
-                    sincronizarDatos();
-                    return;
-                } catch(e) { console.error(e); }
+            if (trabajaConServidor()) {
+                const json = await escribirEnServidor('backend/registrar_produccion.php',
+                    { action: 'cambiar_estado', id: id, estado: nuevoEstado },
+                    'No se pudo cambiar el estado de la orden.');
+                if (json) sincronizarDatos();
+                return;
             }
 
             o.estado = nuevoEstado;
@@ -1844,21 +1807,21 @@ async function cambiarEstadoSucursalAdmin(id, estado) {
             let html = '';
             bcState.mermas.forEach(m => {
                 const badge = m.tipo === 'Merma'
-                    ? '<span class="px-2 py-0.5 rounded bg-rose-50 text-rose-600 font-semibold text-[10px]">Merma</span>'
-                    : '<span class="px-2 py-0.5 rounded bg-blue-50 text-blue-300 font-semibold text-[10px]">Retrabajo</span>';
+                    ? '<span class="px-2 py-0.5 rounded bg-rose-50 text-rose-600 font-semibold text-xs">Merma</span>'
+                    : '<span class="px-2 py-0.5 rounded bg-marca-50 text-marca-300 font-semibold text-xs">Retrabajo</span>';
 
                 html += `
                     <tr class="hover:bg-gray-100">
-                        <td class="p-3 font-mono text-gray-500">${m.fecha}</td>
+                        <td class="p-3 text-gray-500 tabular-nums">${m.fecha}</td>
                         <td class="p-3">${badge}</td>
                         <td class="p-3 font-semibold text-gray-700">${m.area}</td>
                         <td class="p-3 text-gray-600 max-w-xs">${m.descripcion_error}</td>
-                        <td class="p-3 text-amber-600 font-medium">${m.material_desperdiciado}</td>
-                        <td class="p-3 text-right font-bold text-rose-400 font-mono">$${parseFloat(m.costo_impacto).toFixed(2)}</td>
+                        <td class="p-3 text-gray-700">${m.material_desperdiciado}</td>
+                        <td class="p-3 text-right font-semibold text-rose-600 tabular-nums">$${parseFloat(m.costo_impacto).toFixed(2)}</td>
                         <td class="p-3 font-mono text-gray-500">${m.lote_afectado || 'N/A'}</td>
                         <td class="p-3 text-gray-500">${m.registrado_por}</td>
                         <td class="p-3 text-right">
-                            <button type="button" onclick="eliminarMerma(${m.id})" class="p-1 rounded text-rose-400 hover:bg-rose-50">
+                            <button type="button" onclick="eliminarMerma(${m.id})" class="p-1 rounded text-rose-600 hover:bg-rose-50">
                                 <i class="fa-solid fa-trash-can"></i>
                             </button>
                         </td>
@@ -1891,20 +1854,12 @@ async function cambiarEstadoSucursalAdmin(id, estado) {
                 registrado_por: document.getElementById('merma-responsable').value
             };
 
-            if (bcState.modoBackend === 'mysql') {
-                try {
-                    const res = await fetchConSesion('backend/control_mermas.php', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(payload)
-                    });
-                    const json = await res.json();
-                    if (json.success) {
-                        cerrarModalMerma();
-                        sincronizarDatos();
-                        return;
-                    }
-                } catch(err) { console.error(err); }
+            if (trabajaConServidor()) {
+                const json = await escribirEnServidor('backend/control_mermas.php', payload, 'No se pudo registrar la merma.');
+                if (!json) return;
+                cerrarModalMerma();
+                sincronizarDatos();
+                return;
             }
 
             payload.id = Date.now();
@@ -1915,16 +1870,10 @@ async function cambiarEstadoSucursalAdmin(id, estado) {
         }
 
         async function eliminarMerma(id) {
-            if (bcState.modoBackend === 'mysql') {
-                try {
-                    await fetchConSesion('backend/control_mermas.php', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ action: 'eliminar', id: id })
-                    });
-                    sincronizarDatos();
-                    return;
-                } catch(e) { console.error(e); }
+            if (trabajaConServidor()) {
+                const json = await escribirEnServidor('backend/control_mermas.php', { action: 'eliminar', id: id }, 'No se pudo eliminar la merma.');
+                if (json) sincronizarDatos();
+                return;
             }
 
             bcState.mermas = bcState.mermas.filter(m => m.id != id);
@@ -1937,7 +1886,7 @@ async function cambiarEstadoSucursalAdmin(id, estado) {
                 icon: 'success',
                 title: 'Plan de Acción ERP Generado',
                 text: 'Consolidado con los indicadores de las 4 sucursales, bitácora de mermas y hoja de ruta.',
-                confirmButtonColor: '#0078d4'
+                confirmButtonColor: '#1f3a5f'
             });
         }
 
@@ -1947,7 +1896,7 @@ async function cambiarEstadoSucursalAdmin(id, estado) {
                 text: 'Se ejecutará el instalador con el esquema multi-sucursal y datos semilla.',
                 icon: 'question',
                 showCancelButton: true,
-                confirmButtonColor: '#0078d4',
+                confirmButtonColor: '#1f3a5f',
                 confirmButtonText: 'Sí, inicializar'
             });
             if (!conf.isConfirmed) return;
@@ -1958,7 +1907,7 @@ async function cambiarEstadoSucursalAdmin(id, estado) {
                 const res = await fetchConSesion('backend/instalar_bd.php', { method: 'POST' });
                 const json = await res.json();
                 if (json.success) {
-                    Swal.fire('¡Éxito!', 'Base de datos de Business Central inicializada correctamente.', 'success');
+                    Swal.fire('¡Éxito!', 'Base de datos inicializada correctamente.', 'success');
                     sincronizarDatos();
                 } else {
                     Swal.fire('Atención', json.message || 'Verifica que MySQL esté activo en el puerto 3306.', 'warning');
@@ -1974,7 +1923,7 @@ async function cambiarEstadoSucursalAdmin(id, estado) {
 
         // Directorio de Páginas y Tareas / Tell Me
         const BC_PAGINAS_SISTEMA = [
-            { id: 'rolecenter', titulo: 'Inicio & Role Center', subtitulo: 'Métricas clave, KPIs comerciales y resumen general', icono: 'fa-house', tipo: 'modulo' },
+            { id: 'rolecenter', titulo: 'Inicio', subtitulo: 'Métricas clave, KPIs comerciales y resumen general', icono: 'fa-house', tipo: 'modulo' },
             { id: 'ventas', titulo: 'Ventas & Facturación', subtitulo: 'Cotizaciones, pedidos confirmados y facturas médicas', icono: 'fa-receipt', tipo: 'modulo' },
             { id: 'clientes', titulo: 'Directorio de Clientes Hospitalarios', subtitulo: 'Hospitales privados, clínicas y médicos particulares', icono: 'fa-hospital-user', tipo: 'modulo' },
             { id: 'compras', titulo: 'Órdenes de Compra & Insumos', subtitulo: 'Abastecimiento de rollos de tela SRA/CRO y avíos', icono: 'fa-cart-shopping', tipo: 'modulo' },
@@ -2111,11 +2060,11 @@ async function cambiarEstadoSucursalAdmin(id, estado) {
         function actualizarFilaActiva(rows) {
             rows.forEach((r, idx) => {
                 if (idx === bcSearchActiveIndex) {
-                    r.classList.add('bg-blue-50', 'ring-1', 'ring-inset', 'ring-bc-blue/30');
+                    r.classList.add('bg-marca-50', 'ring-1', 'ring-inset', 'ring-marca-700/30');
                     r.setAttribute('aria-selected', 'true');
                     r.scrollIntoView({ block: 'nearest' });
                 } else {
-                    r.classList.remove('bg-blue-50', 'ring-1', 'ring-inset', 'ring-bc-blue/30');
+                    r.classList.remove('bg-marca-50', 'ring-1', 'ring-inset', 'ring-marca-700/30');
                     r.setAttribute('aria-selected', 'false');
                 }
             });
@@ -2141,38 +2090,38 @@ async function cambiarEstadoSucursalAdmin(id, estado) {
 
             bcSearchActiveIndex = -1;
             let html = `
-                <div class="p-2.5 bg-gray-50 border-b border-gray-100 flex items-center justify-between text-[11px] font-bold text-gray-700">
-                    <span class="flex items-center gap-1.5"><i class="fa-solid fa-bolt text-amber-500"></i> Acciones Frecuentes & Tell Me</span>
-                    <span class="text-[10px] text-gray-400 font-normal">Sugerencias rápidas</span>
+                <div class="p-2.5 bg-gray-50 border-b border-gray-100 flex items-center justify-between text-xs font-bold text-gray-700">
+                    <span class="flex items-center gap-1.5"><i class="fa-solid fa-bolt text-gray-400"></i> Acciones frecuentes</span>
+                    <span class="text-xs text-gray-400 font-normal">Sugerencias rápidas</span>
                 </div>
                 <div class="py-1">
             `;
 
             BC_ACCIONES_RAPIDAS.slice(0, 5).forEach(acc => {
                 html += `
-                    <div class="bc-search-row px-3 py-2 hover:bg-blue-50 transition cursor-pointer flex items-center justify-between gap-2"
+                    <div class="bc-search-row px-3 py-2 hover:bg-marca-50 transition cursor-pointer flex items-center justify-between gap-2"
                          role="option" aria-selected="false"
                          data-action="seleccionar-busqueda"
                          data-tipo="${acc.tipo}"
                          data-target="${acc.target || acc.accion}"
                          data-param="">
                         <div class="flex items-center gap-2.5 min-w-0">
-                            <span class="w-6 h-6 rounded-md bg-blue-50 text-bc-blue flex items-center justify-center shrink-0 text-xs">
+                            <span class="w-6 h-6 rounded-md bg-marca-50 text-marca-700 flex items-center justify-center shrink-0 text-xs">
                                 <i class="fa-solid ${acc.icono}"></i>
                             </span>
                             <div class="min-w-0">
                                 <div class="font-semibold text-gray-900 text-xs truncate">${acc.titulo}</div>
-                                <div class="text-[10px] text-gray-500 truncate">${acc.subtitulo}</div>
+                                <div class="text-xs text-gray-500 truncate">${acc.subtitulo}</div>
                             </div>
                         </div>
-                        <i class="fa-solid fa-chevron-right text-[10px] text-gray-300"></i>
+                        <i class="fa-solid fa-chevron-right text-xs text-gray-300"></i>
                     </div>
                 `;
             });
 
             html += `
                 </div>
-                <div class="px-3 py-1.5 bg-gray-50 border-t border-gray-100 flex items-center justify-between text-[10px] text-gray-500">
+                <div class="px-3 py-1.5 bg-gray-50 border-t border-gray-100 flex items-center justify-between text-xs text-gray-500">
                     <span>Escriba para buscar Clientes, Proveedores, SKUs, Ventas o Compras</span>
                     <span class="font-mono">Alt+Q</span>
                 </div>
@@ -2238,7 +2187,7 @@ async function cambiarEstadoSucursalAdmin(id, estado) {
                 icono: 'fa-hospital-user',
                 badge: c.codigo,
                 tag: c.tipo,
-                tagClass: 'bg-cyan-50 text-cyan-700'
+                tagClass: 'bg-marca-50 text-marca-700'
             }));
 
             // 3. Categoría: Proveedores
@@ -2256,7 +2205,7 @@ async function cambiarEstadoSucursalAdmin(id, estado) {
                 icono: 'fa-truck-field',
                 badge: p.codigo,
                 tag: p.rating,
-                tagClass: 'bg-teal-50 text-teal-700'
+                tagClass: 'bg-marca-50 text-marca-700'
             }));
 
             // 4. Categoría: Productos e Inventario
@@ -2279,7 +2228,7 @@ async function cambiarEstadoSucursalAdmin(id, estado) {
                 icono: 'fa-boxes-stacked',
                 badge: p.sku,
                 tag: p.categoria,
-                tagClass: 'bg-indigo-50 text-indigo-700'
+                tagClass: 'bg-marca-50 text-marca-700'
             }));
 
             // Variantes de Catálogo
@@ -2299,7 +2248,7 @@ async function cambiarEstadoSucursalAdmin(id, estado) {
                             icono: 'fa-layer-group',
                             badge: catProd.numero_pieza,
                             tag: 'Catálogo',
-                            tagClass: 'bg-purple-50 text-purple-700'
+                            tagClass: 'bg-marca-50 text-marca-700'
                         });
                     }
                 });
@@ -2322,7 +2271,7 @@ async function cambiarEstadoSucursalAdmin(id, estado) {
                 icono: 'fa-receipt',
                 badge: v.folio,
                 tag: v.estado,
-                tagClass: v.estado === 'Facturado' ? 'bg-emerald-50 text-emerald-700' : 'bg-blue-50 text-blue-700'
+                tagClass: v.estado === 'Facturado' ? 'bg-emerald-50 text-emerald-700' : 'bg-marca-50 text-marca-700'
             }));
 
             // 6. Categoría: Compras
@@ -2360,7 +2309,7 @@ async function cambiarEstadoSucursalAdmin(id, estado) {
                     <div class="p-6 text-center text-gray-500 space-y-2">
                         <i class="fa-solid fa-magnifying-glass text-gray-300 text-2xl mb-1"></i>
                         <p class="font-medium text-gray-800 text-xs">No se encontraron resultados para <span class="font-bold text-gray-900">"${query}"</span></p>
-                        <p class="text-[11px] text-gray-400">Pruebe buscando por SKU (ej. GQ-AZC-U), cliente (Ángeles, IMSS), proveedor (Textiles), o escriba "ventas", "compras", "stock".</p>
+                        <p class="text-xs text-gray-400">Pruebe buscando por SKU (ej. GQ-AZC-U), cliente (Ángeles, IMSS), proveedor (Textiles), o escriba "ventas", "compras", "stock".</p>
                     </div>
                 `;
                 results.classList.remove('hidden');
@@ -2371,18 +2320,18 @@ async function cambiarEstadoSucursalAdmin(id, estado) {
             let html = '';
             grupos.forEach(grupo => {
                 html += `
-                    <div class="px-3 py-1.5 bg-gray-50/90 border-y border-gray-100 flex items-center justify-between text-[10px] font-bold text-gray-600 uppercase tracking-wider sticky top-0 backdrop-blur-xs">
+                    <div class="px-3 py-1.5 bg-gray-50/90 border-y border-gray-100 flex items-center justify-between text-xs font-semibold text-gray-600 sticky top-0 backdrop-blur-xs">
                         <span class="flex items-center gap-1.5">
-                            <i class="fa-solid ${grupo.icono} text-gray-400 text-[10px]"></i>
+                            <i class="fa-solid ${grupo.icono} text-gray-400 text-xs"></i>
                             <span>${grupo.nombre}</span>
                         </span>
-                        <span class="font-mono text-gray-400 font-normal">${grupo.items.length}</span>
+                        <span class="text-gray-400 font-normal tabular-nums">${grupo.items.length}</span>
                     </div>
                 `;
 
                 grupo.items.forEach(item => {
                     html += `
-                        <div class="bc-search-row px-3 py-2 hover:bg-blue-50/70 transition cursor-pointer flex items-center justify-between gap-3 text-left"
+                        <div class="bc-search-row px-3 py-2 hover:bg-marca-50/70 transition cursor-pointer flex items-center justify-between gap-3 text-left"
                              role="option"
                              aria-selected="false"
                              data-action="seleccionar-busqueda"
@@ -2391,14 +2340,14 @@ async function cambiarEstadoSucursalAdmin(id, estado) {
                              data-param="${item.param || ''}">
                             <div class="min-w-0 flex-1">
                                 <div class="font-semibold text-gray-900 text-xs truncate flex items-center gap-1.5">
-                                    ${item.badge ? `<span class="px-1.5 py-0.5 rounded text-[10px] font-mono font-medium bg-gray-100 text-gray-600">${resaltarTextoBusqueda(item.badge, query)}</span>` : ''}
+                                    ${item.badge ? `<span class="px-1.5 py-0.5 rounded text-xs font-mono font-medium bg-gray-100 text-gray-600">${resaltarTextoBusqueda(item.badge, query)}</span>` : ''}
                                     <span>${resaltarTextoBusqueda(item.titulo, query)}</span>
                                 </div>
-                                <div class="text-[11px] text-gray-500 truncate mt-0.5">${resaltarTextoBusqueda(item.subtitulo, query)}</div>
+                                <div class="text-xs text-gray-500 truncate mt-0.5">${resaltarTextoBusqueda(item.subtitulo, query)}</div>
                             </div>
                             <div class="flex items-center gap-2 shrink-0">
-                                ${item.tag ? `<span class="text-[10px] px-2 py-0.5 rounded-full font-medium ${item.tagClass || 'bg-gray-100 text-gray-600'}">${item.tag}</span>` : ''}
-                                <i class="fa-solid fa-arrow-right text-[10px] text-gray-300"></i>
+                                ${item.tag ? `<span class="text-xs px-2 py-0.5 rounded-full font-medium ${item.tagClass || 'bg-gray-100 text-gray-600'}">${item.tag}</span>` : ''}
+                                <i class="fa-solid fa-arrow-right text-xs text-gray-300"></i>
                             </div>
                         </div>
                     `;
@@ -2406,13 +2355,13 @@ async function cambiarEstadoSucursalAdmin(id, estado) {
             });
 
             html += `
-                <div class="px-3 py-2 bg-gray-50 border-t border-gray-100 flex items-center justify-between text-[10px] text-gray-500 sticky bottom-0">
+                <div class="px-3 py-2 bg-gray-50 border-t border-gray-100 flex items-center justify-between text-xs text-gray-500 sticky bottom-0">
                     <div class="flex items-center gap-2">
-                        <span><kbd class="px-1 py-0.5 bg-white border border-gray-200 rounded font-mono text-[9px] shadow-2xs">↑</kbd><kbd class="px-1 py-0.5 bg-white border border-gray-200 rounded font-mono text-[9px] shadow-2xs ml-0.5">↓</kbd> Navegar</span>
-                        <span><kbd class="px-1 py-0.5 bg-white border border-gray-200 rounded font-mono text-[9px] shadow-2xs">Enter</kbd> Seleccionar</span>
-                        <span><kbd class="px-1 py-0.5 bg-white border border-gray-200 rounded font-mono text-[9px] shadow-2xs">Esc</kbd> Salir</span>
+                        <span><kbd class="px-1 py-0.5 bg-white border border-gray-200 rounded font-mono text-xs shadow-2xs">↑</kbd><kbd class="px-1 py-0.5 bg-white border border-gray-200 rounded font-mono text-xs shadow-2xs ml-0.5">↓</kbd> Navegar</span>
+                        <span><kbd class="px-1 py-0.5 bg-white border border-gray-200 rounded font-mono text-xs shadow-2xs">Enter</kbd> Seleccionar</span>
+                        <span><kbd class="px-1 py-0.5 bg-white border border-gray-200 rounded font-mono text-xs shadow-2xs">Esc</kbd> Salir</span>
                     </div>
-                    <span class="font-semibold text-bc-blue font-mono">${totalResultados} ${totalResultados === 1 ? 'coincidencia' : 'coincidencias'}</span>
+                    <span class="font-semibold text-marca-700 tabular-nums">${totalResultados} ${totalResultados === 1 ? 'coincidencia' : 'coincidencias'}</span>
                 </div>
             `;
 
@@ -2505,7 +2454,7 @@ async function cambiarEstadoSucursalAdmin(id, estado) {
                 param: 'VTA-2026-082',
                 accionTexto: 'Ver en Ventas',
                 icono: 'fa-file-invoice-dollar',
-                iconoColor: 'text-amber-600 bg-amber-50',
+                iconoColor: 'text-amber-700 bg-amber-50',
                 badge: 'COBRANZA',
                 badgeColor: 'bg-amber-100 text-amber-800',
                 fecha: 'Hace 45 min',
@@ -2521,9 +2470,9 @@ async function cambiarEstadoSucursalAdmin(id, estado) {
                 param: 'OC-2026-041',
                 accionTexto: 'Ver en Compras',
                 icono: 'fa-credit-card',
-                iconoColor: 'text-blue-600 bg-blue-50',
+                iconoColor: 'text-marca-600 bg-marca-50',
                 badge: 'PAGO PROV',
-                badgeColor: 'bg-blue-100 text-blue-800',
+                badgeColor: 'bg-marca-100 text-marca-800',
                 fecha: 'Hace 2 horas',
                 leida: false
             },
@@ -2537,7 +2486,7 @@ async function cambiarEstadoSucursalAdmin(id, estado) {
                 param: '',
                 accionTexto: 'Ver Tesorería',
                 icono: 'fa-building-columns',
-                iconoColor: 'text-emerald-600 bg-emerald-50',
+                iconoColor: 'text-emerald-700 bg-emerald-50',
                 badge: 'TESORERÍA',
                 badgeColor: 'bg-emerald-100 text-emerald-800',
                 fecha: 'Hace 3 horas',
@@ -2553,9 +2502,9 @@ async function cambiarEstadoSucursalAdmin(id, estado) {
                 param: '',
                 accionTexto: 'Ver Producción',
                 icono: 'fa-scissors',
-                iconoColor: 'text-purple-600 bg-purple-50',
+                iconoColor: 'text-marca-600 bg-marca-50',
                 badge: 'TALLER',
-                badgeColor: 'bg-purple-100 text-purple-800',
+                badgeColor: 'bg-marca-100 text-marca-800',
                 fecha: 'Hace 5 horas',
                 leida: true
             }
@@ -2599,10 +2548,10 @@ async function cambiarEstadoSucursalAdmin(id, estado) {
                 filterContainer.querySelectorAll('.btn-filtro-alerta').forEach(btn => {
                     btn.addEventListener('click', (e) => {
                         filterContainer.querySelectorAll('.btn-filtro-alerta').forEach(b => {
-                            b.classList.remove('active', 'font-semibold', 'text-bc-blue', 'bg-white', 'shadow-2xs', 'border', 'border-gray-200');
+                            b.classList.remove('active', 'font-semibold', 'text-marca-700', 'bg-white', 'shadow-2xs', 'border', 'border-gray-200');
                             b.classList.add('text-gray-500');
                         });
-                        btn.classList.add('active', 'font-semibold', 'text-bc-blue', 'bg-white', 'shadow-2xs', 'border', 'border-gray-200');
+                        btn.classList.add('active', 'font-semibold', 'text-marca-700', 'bg-white', 'shadow-2xs', 'border', 'border-gray-200');
                         btn.classList.remove('text-gray-500');
                         filtroActivoAlertas = btn.dataset.filtro || 'todas';
                         renderizarListaDropdownAlertas();
@@ -2704,8 +2653,8 @@ async function cambiarEstadoSucursalAdmin(id, estado) {
             if (panelBadge) {
                 panelBadge.innerText = count === 1 ? '1 nueva' : `${count} nuevas`;
                 panelBadge.className = count > 0
-                    ? 'px-1.5 py-0.2 rounded-full text-[10px] font-bold bg-rose-100 text-rose-700'
-                    : 'px-1.5 py-0.2 rounded-full text-[10px] font-medium bg-gray-100 text-gray-600';
+                    ? 'px-1.5 py-0.2 rounded-full text-xs font-bold bg-rose-100 text-rose-700'
+                    : 'px-1.5 py-0.2 rounded-full text-xs font-medium bg-gray-100 text-gray-600';
             }
 
             // 3. Actualizar Badge en dashboard Role Center
@@ -2713,8 +2662,8 @@ async function cambiarEstadoSucursalAdmin(id, estado) {
             if (dashBadge) {
                 dashBadge.innerText = count === 1 ? '1 pendiente' : `${count} pendientes`;
                 dashBadge.className = count > 0
-                    ? 'px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-100 text-rose-800 font-mono'
-                    : 'px-2 py-0.5 rounded-full text-[10px] font-medium bg-emerald-100 text-emerald-800 font-mono';
+                    ? 'px-2 py-0.5 rounded-full text-xs font-semibold bg-rose-50 text-rose-700'
+                    : 'px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-50 text-emerald-700';
             }
 
             // 4. Renderizar lista en Dropdown y en Dashboard
@@ -2753,14 +2702,14 @@ async function cambiarEstadoSucursalAdmin(id, estado) {
                             </span>
                             <div class="min-w-0">
                                 <div class="flex items-center gap-1.5 flex-wrap">
-                                    <span class="px-1.5 py-0.2 rounded text-[9px] font-bold ${a.badgeColor}">${a.badge}</span>
+                                    <span class="px-1.5 py-0.2 rounded text-xs font-bold ${a.badgeColor}">${a.badge}</span>
                                     <span class="font-semibold text-gray-900 text-xs truncate ${a.leida ? 'text-gray-500' : ''}">${a.titulo}</span>
                                 </div>
-                                <p class="text-[11px] text-gray-500 mt-0.5 leading-snug">${a.mensaje}</p>
-                                <div class="mt-2 flex items-center gap-3 text-[11px]">
-                                    <button type="button" data-action="atender-alerta" data-id="${a.id}" class="font-semibold text-bc-blue hover:underline flex items-center gap-1">
+                                <p class="text-xs text-gray-500 mt-0.5 leading-snug">${a.mensaje}</p>
+                                <div class="mt-2 flex items-center gap-3 text-xs">
+                                    <button type="button" data-action="atender-alerta" data-id="${a.id}" class="font-semibold text-marca-700 hover:underline flex items-center gap-1">
                                         <span>${a.accionTexto}</span>
-                                        <i class="fa-solid fa-chevron-right text-[9px]"></i>
+                                        <i class="fa-solid fa-chevron-right text-xs"></i>
                                     </button>
                                     <span class="text-gray-300">&bull;</span>
                                     <button type="button" data-action="toggle-leida-alerta" data-id="${a.id}" class="text-gray-500 hover:text-gray-800">
@@ -2769,7 +2718,7 @@ async function cambiarEstadoSucursalAdmin(id, estado) {
                                 </div>
                             </div>
                         </div>
-                        <span class="text-[10px] text-gray-400 shrink-0 font-mono">${a.fecha}</span>
+                        <span class="text-xs text-gray-400 shrink-0">${a.fecha}</span>
                     </div>
                 `;
             });
@@ -2786,11 +2735,11 @@ async function cambiarEstadoSucursalAdmin(id, estado) {
             let html = '';
             alertasActivas.forEach(a => {
                 html += `
-                    <div class="p-4 rounded-xl border ${a.leida ? 'bg-gray-50/50 border-gray-200 opacity-75' : 'bg-white border-gray-200 shadow-sm hover:border-bc-blue'} transition flex flex-col justify-between">
+                    <div class="p-4 rounded-xl border ${a.leida ? 'bg-gray-50/50 border-gray-200 opacity-75' : 'bg-white border-gray-200 shadow-sm hover:border-marca-700'} transition flex flex-col justify-between">
                         <div>
                             <div class="flex items-center justify-between gap-2 mb-2">
-                                <span class="px-2 py-0.5 rounded text-[10px] font-bold ${a.badgeColor} uppercase tracking-wider">${a.badge}</span>
-                                <span class="text-[10px] text-gray-400 font-mono">${a.fecha}</span>
+                                <span class="px-2 py-0.5 rounded text-xs font-semibold ${a.badgeColor}">${a.badge}</span>
+                                <span class="text-xs text-gray-400">${a.fecha}</span>
                             </div>
                             <div class="flex items-start gap-2.5">
                                 <span class="w-7 h-7 rounded-lg ${a.iconoColor} flex items-center justify-center text-xs shrink-0 mt-0.5 shadow-2xs">
@@ -2798,17 +2747,17 @@ async function cambiarEstadoSucursalAdmin(id, estado) {
                                 </span>
                                 <div class="min-w-0">
                                     <h4 class="font-bold text-gray-900 text-xs leading-snug ${a.leida ? 'text-gray-500' : ''}">${a.titulo}</h4>
-                                    <p class="text-[11px] text-gray-500 mt-1 leading-relaxed line-clamp-3">${a.mensaje}</p>
+                                    <p class="text-xs text-gray-500 mt-1 leading-relaxed line-clamp-3">${a.mensaje}</p>
                                 </div>
                             </div>
                         </div>
                         <div class="mt-3 pt-2.5 border-t border-gray-100 flex items-center justify-between gap-2">
-                            <button type="button" data-action="atender-alerta" data-id="${a.id}" class="text-xs font-semibold text-bc-blue hover:text-bc-darkBlue hover:underline flex items-center gap-1">
+                            <button type="button" data-action="atender-alerta" data-id="${a.id}" class="text-xs font-semibold text-marca-700 hover:text-marca-800 hover:underline flex items-center gap-1">
                                 <span>${a.accionTexto}</span>
-                                <i class="fa-solid fa-arrow-right text-[10px]"></i>
+                                <i class="fa-solid fa-arrow-right text-xs"></i>
                             </button>
-                            <button type="button" data-action="toggle-leida-alerta" data-id="${a.id}" class="text-[11px] ${a.leida ? 'text-gray-400 hover:text-gray-600' : 'text-gray-500 hover:text-gray-800'} flex items-center gap-1" title="${a.leida ? 'Marcar como no leída' : 'Marcar como leída'}">
-                                <i class="fa-solid ${a.leida ? 'fa-envelope-open' : 'fa-check'} text-[10px]"></i>
+                            <button type="button" data-action="toggle-leida-alerta" data-id="${a.id}" class="text-xs ${a.leida ? 'text-gray-400 hover:text-gray-600' : 'text-gray-500 hover:text-gray-800'} flex items-center gap-1" title="${a.leida ? 'Marcar como no leída' : 'Marcar como leída'}">
+                                <i class="fa-solid ${a.leida ? 'fa-envelope-open' : 'fa-check'} text-xs"></i>
                                 <span>${a.leida ? 'Leída' : 'Descartar'}</span>
                             </button>
                         </div>
@@ -2828,7 +2777,7 @@ async function cambiarEstadoSucursalAdmin(id, estado) {
 
             document.querySelectorAll('.bc-seccion').forEach(s => s.classList.add('hidden'));
             document.querySelectorAll('.bc-tab-btn').forEach(b => {
-                b.classList.remove('active', 'text-bc-blue', 'bg-blue-50', 'font-semibold', 'border-b-2', 'border-bc-blue');
+                b.classList.remove('active', 'text-marca-700', 'bg-marca-50', 'font-semibold', 'border-b-2', 'border-marca-700');
                 b.classList.add('text-gray-500');
             });
 
@@ -2838,7 +2787,7 @@ async function cambiarEstadoSucursalAdmin(id, estado) {
 
             const activeBtn = document.querySelector(`.bc-tab-btn[data-target="${targetId}"]`);
             if (activeBtn) {
-                activeBtn.classList.add('active', 'text-bc-blue', 'bg-blue-50', 'font-semibold', 'border-b-2', 'border-bc-blue');
+                activeBtn.classList.add('active', 'text-marca-700', 'bg-marca-50', 'font-semibold', 'border-b-2', 'border-marca-700');
                 activeBtn.classList.remove('text-gray-500');
             }
 

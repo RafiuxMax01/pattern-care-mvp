@@ -40,7 +40,7 @@ Pattern Care/
 ├── README_DOCKER.md             # Guía específica de despliegue con Docker
 └── backend/                     # Endpoints PHP (API AJAX/Fetch)
     ├── obtener_datos.php        # Datos consolidados (KPIs, SKUs, órdenes, mermas, alertas)
-    ├── guardar_inventario.php   # CRUD de inventario y stock por sucursal
+    ├── guardar_inventario.php   # Ajuste de stock por sucursal y baja de variantes
     ├── gestionar_productos.php  # CRUD de productos, variantes, números de pieza, fotos
     ├── gestionar_sucursales.php # CRUD de sucursales y puntos de venta
     ├── registrar_produccion.php # Órdenes de producción y cambio de fases
@@ -128,7 +128,7 @@ Todos los endpoints responden en **JSON** y usan **PDO Prepared Statements** (pr
 | Endpoint | Acción | Descripción |
 |----------|--------|-------------|
 | `obtener_datos.php` | GET | Datos consolidados: sucursales, productos, variantes, inventario, transferencias, órdenes, mermas, rendimientos, KPIs, alertas |
-| `guardar_inventario.php` | POST | Crear, actualizar, ajustar stock (`+/-`) y eliminar productos/inventario por sucursal |
+| `guardar_inventario.php` | POST | Ajustar stock (`+/-`) de una variante en una sucursal y desactivar variantes. Los modelos y variantes se crean y editan en `gestionar_productos.php` |
 | `gestionar_productos.php` | GET/POST | Listar, obtener, crear, actualizar, eliminar productos y variantes; generar número de pieza; verificar nombre duplicado; subir foto (Cloudinary o local) |
 | `registrar_produccion.php` | POST | Crear órdenes, cambiar fase, cambiar estado, eliminar órdenes de producción |
 | `control_mermas.php` | POST | Registrar y eliminar mermas/retrabajos con costo de impacto |
@@ -259,7 +259,10 @@ otro manejo de errores están por separado `atenderPreflightCors()`,
 
 Si la base de datos todavía no tiene instalado el módulo de accesos, el
 middleware deja pasar la petición en **modo compatibilidad** para no romper
-entornos anteriores a esta historia.
+entornos anteriores a esta historia. Ese modo solo se concede cuando se
+comprobó que la tabla no existe: si la base no responde o la comprobación
+falla, la petición se corta con `503` (falla cerrado), nunca con el perfil de
+compatibilidad, que tiene todos los permisos.
 
 
 ### Contexto de autenticación en el frontend
@@ -280,9 +283,21 @@ y la expone a toda la interfaz; si no hay sesión, redirige a `login.html`:
 
 Todas las llamadas al backend pasan por `fetchConSesion()`, que envía la cookie
 de sesión, convierte el `401` en un regreso a `login.html` (con el aviso de
-sesión expirada) y el `403` en un aviso visible. Al abrir `index.html` con doble
-clic no hay backend, así que el contexto usa una sesión local de demostración y
-el MVP sigue navegable.
+sesión expirada), y el `403` y el `503` en un aviso visible.
+
+La sesión local de demostración (todos los permisos, datos de ejemplo) solo se
+usa cuando no hay PHP: `index.html` abierto con doble clic o servido por un
+servidor estático. Si PHP responde con un error, por ejemplo con la base caída,
+la app regresa a `login.html` y explica el motivo; y si la base se cae con la
+sesión abierta, se marca "Sin conexión con la base de datos" en lugar de
+cambiar a los datos de ejemplo.
+
+Con sesión real, toda escritura pasa por `escribirEnServidor()`: si el servidor
+no la confirma (rechazo, `403`, `503` o sin respuesta) se avisa y **no se
+aplica en local**, para no mostrar como guardado algo que no está en la base.
+Solo el modo standalone guarda en `localStorage`. Por la misma razón, con
+sesión real "Nuevo Producto" y "Editar ficha" del inventario abren el catálogo,
+donde se crean los modelos y sus variantes con su número de pieza.
 
 
 ### Protección de rutas

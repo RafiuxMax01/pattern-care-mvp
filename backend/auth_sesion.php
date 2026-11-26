@@ -67,7 +67,7 @@ try {
             if (!$pdo) {
                 jsonResponse(false, null, 'Base de datos no disponible.', 503);
             }
-            if (!accesosInstalados($pdo)) {
+            if (!autorizacionActiva($pdo)) {
                 jsonResponse(true, perfilCompatibilidad(), 'Control de accesos no instalado: modo compatibilidad.');
             }
 

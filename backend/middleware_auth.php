@@ -67,10 +67,25 @@ function perfilCompatibilidad() {
 
 /**
  * Indica si el control de accesos está activo en esta instalación.
+ *
+ * true  → exigir sesión y permisos.
+ * false → la base no tiene el módulo de accesos (comprobado): modo compatibilidad.
+ * Si no se puede comprobar, responde 503 y termina.
  */
 function autorizacionActiva($pdo = null) {
     $pdo = $pdo ?: getDBConnection();
-    return $pdo !== null && accesosInstalados($pdo);
+    $estado = estadoControlAccesos($pdo);
+
+    // Falla cerrado: si no se puede comprobar el esquema no se concede el
+    // perfil de compatibilidad (que tiene todos los permisos); se corta aquí.
+    if ($estado === 'desconocido') {
+        jsonResponse(false, [
+            'autenticado'          => false,
+            'servicio_disponible'  => false
+        ], 'No se pudo verificar la sesión porque la base de datos no está disponible. Intenta de nuevo en unos minutos.', 503);
+    }
+
+    return $estado === 'instalado';
 }
 
 /**

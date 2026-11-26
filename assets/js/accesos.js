@@ -182,16 +182,16 @@ async function cargarAccesos() {
 
 function etiquetasDeSucursales(usuario) {
     if (usuario.alcance_global) {
-        return '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 text-bc-blue border border-blue-200">Todas las sucursales</span>';
+        return '<span class="px-2 py-0.5 rounded-full text-xs font-bold bg-marca-50 text-marca-700 border border-marca-200">Todas las sucursales</span>';
     }
     if (!usuario.sucursales || usuario.sucursales.length === 0) {
-        return '<span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-50 text-rose-600 border border-rose-200">Sin asignación</span>';
+        return '<span class="px-2 py-0.5 rounded-full text-xs font-bold bg-rose-50 text-rose-600 border border-rose-200">Sin asignación</span>';
     }
     return usuario.sucursales.map(s => {
         const marca = s.puede_ajustar_inventario
-            ? '<i class="fa-solid fa-pen-to-square text-[9px] ml-1 text-emerald-600" title="Puede ajustar existencias"></i>'
+            ? '<i class="fa-solid fa-pen-to-square text-xs ml-1 text-emerald-700" title="Puede ajustar existencias"></i>'
             : '';
-        return `<span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-teal-50 text-teal-700 border border-teal-200 mr-1 mb-1">${s.nombre}${marca}</span>`;
+        return `<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-marca-50 text-marca-700 border border-marca-200 mr-1 mb-1">${s.nombre}${marca}</span>`;
     }).join('');
 }
 
@@ -209,28 +209,28 @@ function renderizarTablaAccesos() {
     cuerpo.innerHTML = accesosState.usuarios.map(u => {
         const activo = u.estado === 'Activo';
         const badgeEstado = activo
-            ? '<span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">Activo</span>'
-            : '<span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-gray-100 text-gray-500 border border-gray-300">Inactivo</span>';
+            ? '<span class="px-2 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">Activo</span>'
+            : '<span class="px-2 py-0.5 rounded-full text-xs font-semibold bg-gray-100 text-gray-500 border border-gray-300">Inactivo</span>';
 
         const acciones = puedeEditar
             ? `
-                <button onclick="abrirModalAsignacion(${u.id})" class="px-2 py-1 rounded bg-blue-50 hover:bg-blue-100 text-bc-blue border border-blue-200 font-semibold transition" title="Asignar puntos de venta">
-                    <i class="fa-solid fa-store text-[11px]"></i>
+                <button onclick="abrirModalAsignacion(${u.id})" class="px-2 py-1 rounded bg-marca-50 hover:bg-marca-100 text-marca-700 border border-marca-200 font-semibold transition" title="Asignar puntos de venta">
+                    <i class="fa-solid fa-store text-xs"></i>
                 </button>
                 <button onclick="alternarEstadoUsuario(${u.id}, '${activo ? 'Inactivo' : 'Activo'}')" class="px-2 py-1 rounded bg-gray-50 hover:bg-gray-100 text-gray-600 border border-gray-300 font-semibold transition" title="${activo ? 'Desactivar cuenta' : 'Activar cuenta'}">
-                    <i class="fa-solid ${activo ? 'fa-user-slash' : 'fa-user-check'} text-[11px]"></i>
+                    <i class="fa-solid ${activo ? 'fa-user-slash' : 'fa-user-check'} text-xs"></i>
                 </button>
               `
-            : '<span class="text-[10px] text-gray-400">Solo lectura</span>';
+            : '<span class="text-xs text-gray-400">Solo lectura</span>';
 
         return `
             <tr class="hover:bg-gray-50">
                 <td class="p-3">
                     <div class="flex items-center gap-2">
-                        <div class="w-7 h-7 rounded-full bg-bc-blue text-white flex items-center justify-center font-bold text-[10px]">${(u.nombre_completo || '').substring(0, 2).toUpperCase()}</div>
+                        <div class="w-7 h-7 rounded-full bg-marca-700 text-white flex items-center justify-center font-bold text-xs">${(u.nombre_completo || '').substring(0, 2).toUpperCase()}</div>
                         <div>
                             <div class="font-semibold text-gray-900">${u.nombre_completo}</div>
-                            <div class="text-[10px] text-gray-500 font-mono">@${u.usuario}</div>
+                            <div class="text-xs text-gray-500 font-mono">@${u.usuario}</div>
                         </div>
                     </div>
                 </td>
@@ -259,8 +259,8 @@ async function cargarBitacoraAccesos() {
         }
 
         const iconos = {
-            login_ok:        'fa-right-to-bracket text-emerald-600',
-            login_fallido:   'fa-triangle-exclamation text-amber-600',
+            login_ok:        'fa-right-to-bracket text-emerald-700',
+            login_fallido:   'fa-triangle-exclamation text-amber-700',
             logout:          'fa-right-from-bracket text-gray-500',
             acceso_denegado: 'fa-ban text-rose-600'
         };
@@ -321,19 +321,19 @@ function renderizarListaAsignacion() {
         const activa = !!sel;
 
         return `
-            <div class="rounded-lg border ${activa ? 'border-bc-blue bg-blue-50/40' : 'border-gray-200'} px-3 py-2.5 transition">
+            <div class="rounded-lg border ${activa ? 'border-marca-700 bg-marca-50/40' : 'border-gray-200'} px-3 py-2.5 transition">
                 <label class="flex items-center gap-2 cursor-pointer">
-                    <input type="checkbox" ${activa ? 'checked' : ''} onchange="alternarSucursalAsignacion(${id}, this.checked)" class="rounded border-gray-300 text-bc-blue focus:ring-bc-blue">
+                    <input type="checkbox" ${activa ? 'checked' : ''} onchange="alternarSucursalAsignacion(${id}, this.checked)" class="rounded border-gray-300 text-marca-700 focus:ring-marca-700">
                     <span class="font-semibold text-gray-800">${s.nombre}</span>
-                    <span class="text-[10px] text-gray-500">${s.tipo}</span>
+                    <span class="text-xs text-gray-500">${s.tipo}</span>
                 </label>
                 <div class="flex items-center gap-4 mt-2 ml-6 ${activa ? '' : 'opacity-40 pointer-events-none'}">
-                    <label class="flex items-center gap-1.5 cursor-pointer text-[11px] text-gray-600">
-                        <input type="checkbox" ${activa && sel.puede_vender ? 'checked' : ''} onchange="marcarPermisoAsignacion(${id}, 'puede_vender', this.checked)" class="rounded border-gray-300 text-teal-600 focus:ring-teal-500">
+                    <label class="flex items-center gap-1.5 cursor-pointer text-xs text-gray-600">
+                        <input type="checkbox" ${activa && sel.puede_vender ? 'checked' : ''} onchange="marcarPermisoAsignacion(${id}, 'puede_vender', this.checked)" class="rounded border-gray-300 text-marca-600 focus:ring-marca-500">
                         <span>Puede vender</span>
                     </label>
-                    <label class="flex items-center gap-1.5 cursor-pointer text-[11px] text-gray-600">
-                        <input type="checkbox" ${activa && sel.puede_ajustar_inventario ? 'checked' : ''} onchange="marcarPermisoAsignacion(${id}, 'puede_ajustar_inventario', this.checked)" class="rounded border-gray-300 text-emerald-600 focus:ring-emerald-500">
+                    <label class="flex items-center gap-1.5 cursor-pointer text-xs text-gray-600">
+                        <input type="checkbox" ${activa && sel.puede_ajustar_inventario ? 'checked' : ''} onchange="marcarPermisoAsignacion(${id}, 'puede_ajustar_inventario', this.checked)" class="rounded border-gray-300 text-emerald-700 focus:ring-emerald-500">
                         <span>Puede ajustar existencias</span>
                     </label>
                 </div>

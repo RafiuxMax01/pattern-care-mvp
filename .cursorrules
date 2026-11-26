@@ -8,9 +8,9 @@
 
 ## 🏗️ Architectural Summary
 
-**Pattern Care ERP** is a Vanilla HTML/CSS/JS + PHP/MySQL application that mimics
-Microsoft Dynamics 365 Business Central's UX for managing a medical-uniform
-manufacturing business across multiple branches.
+**Pattern Care ERP** is a Vanilla HTML/CSS/JS + PHP/MySQL application for managing a
+medical-uniform manufacturing business across multiple branches. It has its own visual
+identity (see "CSS / Tailwind" below); it no longer imitates Microsoft Dynamics 365.
 
 The UI is one page (`index.html`) with no build step: markup in `index.html`, styles
 and scripts in `assets/`, JSON endpoints in `backend/`.
@@ -60,8 +60,12 @@ and scripts in `assets/`, JSON endpoints in `backend/`.
 
 ### Two runtime modes
 - **Server** (Apache/IIS + MySQL): real session, data from `backend/obtener_datos.php`.
-- **Standalone** (`index.html` opened with a double click): no backend, demo session with all
-  permissions, data from seed constants + `localStorage`. Keep both modes working.
+- **Standalone** (`index.html` opened with a double click, or served by a static server
+  without PHP): demo session with all permissions, data from seed constants + `localStorage`.
+  Keep both modes working.
+- When PHP answers with an error (e.g. MySQL down) the app must **not** fall back to the demo
+  session or demo data: it returns to `login.html?motivo=sin-servidor`, or shows
+  "Sin conexión con la base de datos" if the session was already open.
 
 ---
 
@@ -105,6 +109,9 @@ minimum in at least one branch.
   `database_master.sql` (table `permisos` + `rol_permisos`).
 - Client-side checks only hide UI. **The server is the authority** — never rely on the
   frontend alone to protect data.
+- **Fail closed.** Compatibility mode (full permissions, for databases without the access
+  module) is granted only when `estadoControlAccesos()` confirms `'no_instalado'`. If the check
+  cannot run (`'desconocido'`), `autorizacionActiva()` answers `503`.
 
 ---
 
@@ -129,7 +136,21 @@ minimum in at least one branch.
 
 ### CSS / Tailwind
 - Prefer Tailwind utility classes; use custom CSS variables only for design tokens.
-- **BC Color palette:** `--bc-blue: #0078d4` · `--bc-blue-dk: #005a9e` · `--bc-teal: #008575`
+- **Brand color:** `marca` (navy, `marca-700` = `#1f3a5f`) for primary buttons, links and the
+  active state. Neutrals are Tailwind `gray`.
+- **Color means state, never decoration:** `emerald` = OK, `amber` = needs attention,
+  `rose` = critical. Do not color icons, cards or menu items by area; navigation icons are gray.
+  Do not use other families (`blue`, `indigo`, `purple`, `teal`, `cyan`…) or the old Microsoft
+  blue `#0078d4`.
+- **Text contrast ≥ 4.5:1:** on white use `-700` for amber/emerald text, `-600` for rose and
+  `marca-500` or darker. Tones `-400` and lighter are for icons, borders and backgrounds only.
+- **Typography:** Inter only. Minimum size `text-xs` (12 px); no `text-[9px]`/`[10px]`/`[11px]`.
+  Weights: normal, medium, semibold, bold. Uppercase + tracking only in table headers.
+  `font-mono` only for codes (SKU, lot, order, part number) and keys; use `tabular-nums` for figures.
+- **One card style:** `bg-white border border-gray-200 rounded-xl` (+ `shadow-sm`); no colored
+  card borders. Larger shadows only for dropdowns and modals.
+- **No third-party branding or jargon** (Business Central, Microsoft 365, Cues, FactBox,
+  Role Center): this is Pattern Care's own product.
 - Background: `bg-white` / `bg-gray-50`; never `bg-slate-800` or dark backgrounds.
 - Responsive breakpoints: mobile-first (`sm:` `md:` `lg:`).
 - Extract repeated patterns into reusable CSS classes in `assets/estilos.css`, not duplicated Tailwind strings.
@@ -141,6 +162,9 @@ minimum in at least one branch.
 - **No `any`-equivalent patterns** — always validate inputs before use.
 - **No `eval()`**, no `innerHTML` with raw user data (use `textContent` or DOM methods).
 - Use `fetchConSesion()` for calls to `backend/`; plain `fetch` only for public resources.
+- Writes go through `escribirEnServidor(url, payload, mensaje)` when `trabajaConServidor()` is
+  true. If it returns `null`, stop: **never apply the change locally** in server mode. Only the
+  standalone mode writes to `localStorage`.
 - Always handle three UI states: **loading · success · error**.
 - Do not derive state inside event handlers — compute it in dedicated functions.
 - Prefer `const` / `let`; never `var`.
@@ -172,6 +196,8 @@ minimum in at least one branch.
 | Markup or logic in `index.php`                 | Edit `index.html`; `index.php` only serves it     |
 | Auth state in `sessionStorage` / `localStorage` | PHP session + `PatternCareAuth`                 |
 | `fetch('backend/...')` without the session wrapper | `fetchConSesion('backend/...')`               |
+| Falling back to local state when a server write fails | Show the error; `escribirEnServidor()` returns `null` |
+| Creating models/SKUs outside the catalog       | `gestionar_productos.php` (part number sequence)  |
 | A new module without an entry in `PERMISO_POR_MODULO` | Add its permission key (it stays closed otherwise) |
 | `innerHTML = userInput`                        | `textContent = userInput` or DOM API              |
 | `var` declarations                             | `const` / `let`                                   |

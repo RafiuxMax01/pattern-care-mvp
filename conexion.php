@@ -19,9 +19,15 @@ define('DB_CHARSET', 'utf8mb4');
  */
 function getDBConnection() {
     static $pdo = null;
+    static $fallo = false;
 
     if ($pdo !== null) {
         return $pdo;
+    }
+    // Si ya falló en esta petición no se reintenta: cada intento contra un
+    // servidor caído puede tardar varios segundos y el resultado sería el mismo.
+    if ($fallo) {
+        return null;
     }
 
     $dsn = "mysql:host=" . DB_HOST . ";port=" . DB_PORT . ";dbname=" . DB_NAME . ";charset=" . DB_CHARSET;
@@ -38,6 +44,7 @@ function getDBConnection() {
         return $pdo;
     } catch (PDOException $e) {
         // En caso de que la base de datos no exista o el servidor MySQL esté apagado
+        $fallo = true;
         return null;
     }
 }

@@ -19,13 +19,14 @@ try {
         case 'transferir':
             $origenId = (int)($data['sucursal_origen_id'] ?? 0);
             $destinoId = (int)($data['sucursal_destino_id'] ?? 0);
-            $productoId = (int)($data['producto_id'] ?? 0);
+            // El frontend envía como producto_id el id de la variante (SKU)
+            $variantId = (int)($data['variant_id'] ?? $data['producto_id'] ?? 0);
             $cantidad = (int)($data['cantidad'] ?? 0);
             $responsable = trim($data['responsable'] ?? 'Área Administrativa');
             $notas = trim($data['notas'] ?? '');
             $estado = in_array($data['estado'] ?? '', ['Pendiente', 'En Tránsito', 'Recibido']) ? $data['estado'] : 'Recibido';
 
-            if ($origenId <= 0 || $destinoId <= 0 || $productoId <= 0 || $cantidad <= 0) {
+            if ($origenId <= 0 || $destinoId <= 0 || $variantId <= 0 || $cantidad <= 0) {
                 jsonResponse(false, null, 'Todos los campos de la transferencia son obligatorios y la cantidad debe ser mayor a 0.', 400);
             }
 
@@ -36,12 +37,18 @@ try {
             // Solo se puede sacar mercancía de un punto de venta asignado
             requerirSucursal($origenId, 'ajustar');
 
+            $stmtVar = $pdo->prepare("SELECT id FROM `product_variants` WHERE `id` = ? AND `activo` = 1");
+            $stmtVar->execute([$variantId]);
+            if (!$stmtVar->fetch()) {
+                jsonResponse(false, null, 'La variante no existe o está desactivada.', 404);
+            }
+
             // Iniciar transacción atómica en MySQL
             $pdo->beginTransaction();
 
             // 1. Verificar stock suficiente en sucursal de origen
-            $stmtStockOrigen = $pdo->prepare("SELECT stock_actual, stock_minimo FROM `inventario_sucursales` WHERE `producto_id` = ? AND `sucursal_id` = ? FOR UPDATE");
-            $stmtStockOrigen->execute([$productoId, $origenId]);
+            $stmtStockOrigen = $pdo->prepare("SELECT stock_actual, stock_minimo FROM `inventario_sucursales` WHERE `variant_id` = ? AND `sucursal_id` = ? FOR UPDATE");
+            $stmtStockOrigen->execute([$variantId, $origenId]);
             $stockOrigen = $stmtStockOrigen->fetch();
 
             $disponibleOrigen = $stockOrigen ? (int)$stockOrigen['stock_actual'] : 0;
@@ -51,29 +58,29 @@ try {
             }
 
             // 2. Descontar stock de origen
-            $stmtDeduct = $pdo->prepare("UPDATE `inventario_sucursales` SET `stock_actual` = `stock_actual` - ? WHERE `producto_id` = ? AND `sucursal_id` = ?");
-            $stmtDeduct->execute([$cantidad, $productoId, $origenId]);
+            $stmtDeduct = $pdo->prepare("UPDATE `inventario_sucursales` SET `stock_actual` = `stock_actual` - ? WHERE `variant_id` = ? AND `sucursal_id` = ?");
+            $stmtDeduct->execute([$cantidad, $variantId, $origenId]);
 
             // 3. Aumentar stock en destino (si ya se marcó como 'Recibido' o dejar en tránsito)
             if ($estado === 'Recibido') {
-                $stmtCheckDest = $pdo->prepare("SELECT id FROM `inventario_sucursales` WHERE `producto_id` = ? AND `sucursal_id` = ?");
-                $stmtCheckDest->execute([$productoId, $destinoId]);
+                $stmtCheckDest = $pdo->prepare("SELECT id FROM `inventario_sucursales` WHERE `variant_id` = ? AND `sucursal_id` = ?");
+                $stmtCheckDest->execute([$variantId, $destinoId]);
                 if ($stmtCheckDest->fetch()) {
-                    $stmtAdd = $pdo->prepare("UPDATE `inventario_sucursales` SET `stock_actual` = `stock_actual` + ? WHERE `producto_id` = ? AND `sucursal_id` = ?");
-                    $stmtAdd->execute([$cantidad, $productoId, $destinoId]);
+                    $stmtAdd = $pdo->prepare("UPDATE `inventario_sucursales` SET `stock_actual` = `stock_actual` + ? WHERE `variant_id` = ? AND `sucursal_id` = ?");
+                    $stmtAdd->execute([$cantidad, $variantId, $destinoId]);
                 } else {
-                    $stmtInsertDest = $pdo->prepare("INSERT INTO `inventario_sucursales` (`producto_id`, `sucursal_id`, `stock_actual`, `stock_minimo`) VALUES (?, ?, ?, 6)");
-                    $stmtInsertDest->execute([$productoId, $destinoId, $cantidad]);
+                    $stmtInsertDest = $pdo->prepare("INSERT INTO `inventario_sucursales` (`variant_id`, `sucursal_id`, `stock_actual`, `stock_minimo`) VALUES (?, ?, ?, 6)");
+                    $stmtInsertDest->execute([$variantId, $destinoId, $cantidad]);
                 }
             }
 
             // 4. Registrar la orden de transferencia
             $codigoTrf = 'TRF-' . date('Y') . '-' . str_pad(rand(10, 999), 3, '0', STR_PAD_LEFT);
             $stmtTrf = $pdo->prepare("
-                INSERT INTO `transferencias_stock` (`codigo_transferencia`, `sucursal_origen_id`, `sucursal_destino_id`, `producto_id`, `cantidad`, `estado`, `responsable`, `notas`) 
+                INSERT INTO `transferencias_stock` (`codigo_transferencia`, `sucursal_origen_id`, `sucursal_destino_id`, `variant_id`, `cantidad`, `estado`, `responsable`, `notas`) 
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)
             ");
-            $stmtTrf->execute([$codigoTrf, $origenId, $destinoId, $productoId, $cantidad, $estado, $responsable, $notas]);
+            $stmtTrf->execute([$codigoTrf, $origenId, $destinoId, $variantId, $cantidad, $estado, $responsable, $notas]);
             $newTrfId = $pdo->lastInsertId();
 
             $pdo->commit();

@@ -21,20 +21,40 @@ define('ACCESOS_PASSWORD_SEMILLA', 'PatternCare2026');
  * Permite que el ERP siga funcionando contra bases creadas antes de SCRUM-19.
  */
 function accesosInstalados($pdo) {
-    static $instalado = null;
-    if ($instalado !== null) {
-        return $instalado;
+    return estadoControlAccesos($pdo) === 'instalado';
+}
+
+/**
+ * Estado del esquema de accesos, distinguiendo "no está" de "no se sabe":
+ *
+ *   'instalado'    → la tabla existe: hay que exigir sesión y permisos.
+ *   'no_instalado' → se comprobó que no existe: base anterior a SCRUM-19.
+ *   'desconocido'  → sin conexión o la comprobación falló.
+ *
+ * Quien decide si concede el modo compatibilidad debe tratar 'desconocido'
+ * como un error y no como 'no_instalado': un fallo pasajero de la base no
+ * puede abrir el ERP con todos los permisos.
+ *
+ * Solo se recuerdan los resultados definitivos.
+ */
+function estadoControlAccesos($pdo) {
+    static $estado = null;
+    if ($estado !== null) {
+        return $estado;
     }
     if (!$pdo) {
-        return $instalado = false;
+        return 'desconocido';
     }
     try {
         $stmt = $pdo->query("SHOW TABLES LIKE 'usuario_sucursales'");
-        $instalado = $stmt && $stmt->fetch() !== false;
+        if (!$stmt) {
+            return 'desconocido';
+        }
+        $estado = $stmt->fetch() !== false ? 'instalado' : 'no_instalado';
     } catch (PDOException $e) {
-        $instalado = false;
+        return 'desconocido';
     }
-    return $instalado;
+    return $estado;
 }
 
 /**
