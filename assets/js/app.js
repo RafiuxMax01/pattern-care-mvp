@@ -568,7 +568,7 @@ function mostrarMensajeSucursalAdmin(mensaje, error = false) {
 }
 
 async function peticionSucursalAdmin(url, opciones = {}) {
-    const respuesta = await fetch(url, {
+    const respuesta = await fetchConSesion(url, {
         headers: {
             'Accept': 'application/json',
             ...(opciones.body ? { 'Content-Type': 'application/json' } : {})
