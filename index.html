@@ -1221,133 +1221,6 @@
         </section>
 
     
-        <!-- ============================================================ -->
-        <!-- DRAWER / SIDEBAR COLAPSABLE: EXPLORAR TODO (BUSINESS CENTRAL) -->
-        <!-- ============================================================ -->
-        <div id="drawer-explorar" class="fixed inset-0 z-50 bg-gray-900/40 backdrop-blur-sm hidden" role="dialog" aria-modal="true" aria-label="Menú de Navegación Empresarial">
-            <div class="fixed inset-y-0 left-0 max-w-xs sm:max-w-sm w-full bg-white shadow-2xl p-5 flex flex-col justify-between overflow-y-auto">
-                <div>
-                    <div class="flex items-center justify-between pb-3 border-b border-gray-200 mb-4">
-                        <!-- Misma marca que el encabezado y login.html -->
-                        <div class="flex items-center gap-2">
-                            <span class="w-7 h-7 rounded-lg bg-marca-700 text-white flex items-center justify-center" aria-hidden="true">
-                                <i class="fa-solid fa-scissors text-xs"></i>
-                            </span>
-                            <span class="text-sm font-bold tracking-tight text-gray-900">
-                                Pattern Care
-                                <span class="text-gray-500 font-medium">· ERP Textil</span>
-                            </span>
-                        </div>
-                        <button type="button" data-action="cerrar-drawer" class="text-gray-400 hover:text-gray-700 p-1 rounded" aria-label="Cerrar menú">
-                            <i class="fa-solid fa-xmark text-lg"></i>
-                        </button>
-                    </div>
-
-                    <div class="space-y-4 text-xs">
-                        <!-- Categoría: Comercial -->
-                        <div data-grupo-nav>
-                            <div class="text-xs font-bold text-gray-500 mb-1 flex items-center gap-1.5">
-                                <i class="fa-solid fa-briefcase"></i> Comercial
-                            </div>
-                            <div class="space-y-0.5 pl-2 border-l-2 border-gray-200">
-                                <button type="button" class="w-full text-left py-1.5 px-2 rounded hover:bg-gray-100 text-gray-700 flex items-center gap-2" data-action="cambiar-modulo-drawer" data-module="ventas">
-                                    <i class="fa-solid fa-receipt text-gray-400 w-3.5"></i> Ventas & Cotizaciones
-                                </button>
-                                <button type="button" class="w-full text-left py-1.5 px-2 rounded hover:bg-gray-100 text-gray-700 flex items-center gap-2" data-action="cambiar-modulo-drawer" data-module="clientes">
-                                    <i class="fa-solid fa-hospital-user text-gray-400 w-3.5"></i> Directorio de Clientes
-                                </button>
-                            </div>
-                        </div>
-
-                        <!-- Categoría: Abastecimiento -->
-                        <div data-grupo-nav>
-                            <div class="text-xs font-bold text-gray-500 mb-1 flex items-center gap-1.5">
-                                <i class="fa-solid fa-boxes-packing"></i> Abastecimiento
-                            </div>
-                            <div class="space-y-0.5 pl-2 border-l-2 border-gray-200">
-                                <button type="button" class="w-full text-left py-1.5 px-2 rounded hover:bg-gray-100 text-gray-700 flex items-center gap-2" data-action="cambiar-modulo-drawer" data-module="compras">
-                                    <i class="fa-solid fa-cart-shopping text-gray-400 w-3.5"></i> Órdenes de Compra (Telas)
-                                </button>
-                                <button type="button" class="w-full text-left py-1.5 px-2 rounded hover:bg-gray-100 text-gray-700 flex items-center gap-2" data-action="cambiar-modulo-drawer" data-module="proveedores">
-                                    <i class="fa-solid fa-truck-field text-gray-400 w-3.5"></i> Proveedores & Talleres
-                                </button>
-                                <button type="button" class="w-full text-left py-1.5 px-2 rounded hover:bg-gray-100 text-gray-700 flex items-center gap-2" data-action="cambiar-modulo-drawer" data-module="catalogo">
-                                    <i class="fa-solid fa-tag text-gray-400 w-3.5"></i> Catálogo de Modelos (Prendas)
-                                </button>
-                                <button type="button" class="w-full text-left py-1.5 px-2 rounded hover:bg-gray-100 text-gray-700 flex items-center gap-2" data-action="cambiar-modulo-drawer" data-module="inventario">
-                                    <i class="fa-solid fa-boxes-stacked text-gray-400 w-3.5"></i> Inventario Multi-Sucursal
-                                </button>
-                                <button type="button" class="w-full text-left py-1.5 px-2 rounded hover:bg-gray-100 text-gray-700 flex items-center gap-2" data-action="cambiar-modulo-drawer" data-module="transferencias">
-                                    <i class="fa-solid fa-truck-ramp-box text-gray-400 w-3.5"></i> Transferencias de Stock
-                                </button>
-                            </div>
-                        </div>
-
-                        <!-- Categoría: Operaciones Textil -->
-                        <div data-grupo-nav>
-                            <div class="text-xs font-bold text-gray-500 mb-1 flex items-center gap-1.5">
-                                <i class="fa-solid fa-scissors"></i> Operaciones Textil
-                            </div>
-                            <div class="space-y-0.5 pl-2 border-l-2 border-gray-200">
-                                <button type="button" class="w-full text-left py-1.5 px-2 rounded hover:bg-gray-100 text-gray-700 flex items-center gap-2" data-action="cambiar-modulo-drawer" data-module="produccion">
-                                    <i class="fa-solid fa-industry text-gray-400 w-3.5"></i> Control de Producción (7 Fases)
-                                </button>
-                                <button type="button" class="w-full text-left py-1.5 px-2 rounded hover:bg-gray-100 text-gray-700 flex items-center gap-2" data-action="cambiar-modulo-drawer" data-module="rendimiento">
-                                    <i class="fa-solid fa-calculator text-gray-400 w-3.5"></i> Cálculo de Tela (SRA/CRO)
-                                </button>
-                                <button type="button" class="w-full text-left py-1.5 px-2 rounded hover:bg-gray-100 text-gray-700 flex items-center gap-2" data-action="cambiar-modulo-drawer" data-module="mermas">
-                                    <i class="fa-solid fa-file-circle-exclamation text-gray-400 w-3.5"></i> Bitácora de Mermas
-                                </button>
-                                <button type="button" class="w-full text-left py-1.5 px-2 rounded hover:bg-gray-100 text-gray-700 flex items-center gap-2" data-action="cambiar-modulo-drawer" data-module="sucursales">
-                                    <i class="fa-solid fa-store text-gray-400 w-3.5"></i> Red de Sucursales
-                                </button>
-                                <button type="button" class="w-full text-left py-1.5 px-2 rounded hover:bg-gray-100 text-gray-700 flex items-center gap-2" data-action="cambiar-modulo-drawer" data-module="diagnostico">
-                                    <i class="fa-solid fa-shield-virus text-gray-400 w-3.5"></i> Puntos Críticos y Mitigación
-                                </button>
-                            </div>
-                        </div>
-
-                        <!-- Categoría: Finanzas & Contabilidad -->
-                        <div data-grupo-nav>
-                            <div class="text-xs font-bold text-gray-500 mb-1 flex items-center gap-1.5">
-                                <i class="fa-solid fa-chart-pie"></i> Finanzas & Contabilidad
-                            </div>
-                            <div class="space-y-0.5 pl-2 border-l-2 border-gray-200">
-                                <button type="button" class="w-full text-left py-1.5 px-2 rounded hover:bg-gray-100 text-gray-700 flex items-center gap-2" data-action="cambiar-modulo-drawer" data-module="finanzas">
-                                    <i class="fa-solid fa-chart-line text-gray-400 w-3.5"></i> Panel Financiero
-                                </button>
-                                <button type="button" class="w-full text-left py-1.5 px-2 rounded hover:bg-gray-100 text-gray-700 flex items-center gap-2" data-action="cambiar-modulo-drawer" data-module="tesoreria">
-                                    <i class="fa-solid fa-building-columns text-gray-400 w-3.5"></i> Tesorería & Cuentas Bancarias
-                                </button>
-                                <button type="button" class="w-full text-left py-1.5 px-2 rounded hover:bg-gray-100 text-gray-700 flex items-center gap-2" data-action="cambiar-modulo-drawer" data-module="cuentas-contables">
-                                    <i class="fa-solid fa-book-bookmark text-gray-400 w-3.5"></i> Catálogo de Cuentas Contables
-                                </button>
-                                <button type="button" class="w-full text-left py-1.5 px-2 rounded hover:bg-gray-100 text-gray-700 flex items-center gap-2" data-action="cambiar-modulo-drawer" data-module="reportes">
-                                    <i class="fa-solid fa-file-contract text-gray-400 w-3.5"></i> Plan de Acción / Informes
-                                </button>
-                            </div>
-                        </div>
-
-                        <!-- Categoría: Administración -->
-                        <div data-grupo-nav>
-                            <div class="text-xs font-bold text-gray-600 mb-1 flex items-center gap-1.5">
-                                <i class="fa-solid fa-user-shield"></i> Administración
-                            </div>
-                            <div class="space-y-0.5 pl-2 border-l-2 border-gray-200">
-                                <button type="button" class="w-full text-left py-1.5 px-2 rounded hover:bg-gray-100 text-gray-700 flex items-center gap-2" data-action="cambiar-modulo-drawer" data-module="accesos">
-                                    <i class="fa-solid fa-users-gear text-gray-400 w-3.5"></i> Usuarios y Accesos
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="pt-3 border-t border-gray-200 text-xs text-gray-400 flex items-center justify-between">
-                    <span>Pattern Care · ERP Textil</span>
-                    <span>v2.4 MVP</span>
-                </div>
-            </div>
-        </div>
 
         <!-- ============================================================ -->
         <!-- NUEVO MÓDULO: VENTAS & COTIZACIONES                          -->
@@ -1957,6 +1830,136 @@
             </div>
         </div>
     </footer>
+
+    <!-- ============================================================ -->
+    <!-- CAJÓN "EXPLORAR": todos los módulos                       -->
+<!-- Fuera de <main>: dentro heredaba el margen de space-y-6 y,  -->
+<!-- siendo fixed, dejaba una franja con el encabezado encima.   -->
+    <!-- ============================================================ -->
+    <div id="drawer-explorar" class="fixed inset-0 z-[60] bg-gray-900/40 backdrop-blur-sm hidden" role="dialog" aria-modal="true" aria-label="Menú de Navegación Empresarial">
+        <div class="fixed inset-y-0 left-0 max-w-xs sm:max-w-sm w-full bg-white shadow-2xl p-5 flex flex-col justify-between overflow-y-auto">
+            <div>
+                <div class="flex items-center justify-between pb-3 border-b border-gray-200 mb-4">
+                    <!-- Misma marca que el encabezado y login.html -->
+                    <div class="flex items-center gap-2">
+                        <span class="w-7 h-7 rounded-lg bg-marca-700 text-white flex items-center justify-center" aria-hidden="true">
+                            <i class="fa-solid fa-scissors text-xs"></i>
+                        </span>
+                        <span class="text-sm font-bold tracking-tight text-gray-900">
+                            Pattern Care
+                            <span class="text-gray-500 font-medium">· ERP Textil</span>
+                        </span>
+                    </div>
+                    <button type="button" data-action="cerrar-drawer" class="text-gray-400 hover:text-gray-700 p-1 rounded" aria-label="Cerrar menú">
+                        <i class="fa-solid fa-xmark text-lg"></i>
+                    </button>
+                </div>
+
+                <div class="space-y-4 text-xs">
+                    <!-- Categoría: Comercial -->
+                    <div data-grupo-nav>
+                        <div class="text-xs font-bold text-gray-500 mb-1 flex items-center gap-1.5">
+                            <i class="fa-solid fa-briefcase"></i> Comercial
+                        </div>
+                        <div class="space-y-0.5 pl-2 border-l-2 border-gray-200">
+                            <button type="button" class="w-full text-left py-1.5 px-2 rounded hover:bg-gray-100 text-gray-700 flex items-center gap-2" data-action="cambiar-modulo-drawer" data-module="ventas">
+                                <i class="fa-solid fa-receipt text-gray-400 w-3.5"></i> Ventas & Cotizaciones
+                            </button>
+                            <button type="button" class="w-full text-left py-1.5 px-2 rounded hover:bg-gray-100 text-gray-700 flex items-center gap-2" data-action="cambiar-modulo-drawer" data-module="clientes">
+                                <i class="fa-solid fa-hospital-user text-gray-400 w-3.5"></i> Directorio de Clientes
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Categoría: Abastecimiento -->
+                    <div data-grupo-nav>
+                        <div class="text-xs font-bold text-gray-500 mb-1 flex items-center gap-1.5">
+                            <i class="fa-solid fa-boxes-packing"></i> Abastecimiento
+                        </div>
+                        <div class="space-y-0.5 pl-2 border-l-2 border-gray-200">
+                            <button type="button" class="w-full text-left py-1.5 px-2 rounded hover:bg-gray-100 text-gray-700 flex items-center gap-2" data-action="cambiar-modulo-drawer" data-module="compras">
+                                <i class="fa-solid fa-cart-shopping text-gray-400 w-3.5"></i> Órdenes de Compra (Telas)
+                            </button>
+                            <button type="button" class="w-full text-left py-1.5 px-2 rounded hover:bg-gray-100 text-gray-700 flex items-center gap-2" data-action="cambiar-modulo-drawer" data-module="proveedores">
+                                <i class="fa-solid fa-truck-field text-gray-400 w-3.5"></i> Proveedores & Talleres
+                            </button>
+                            <button type="button" class="w-full text-left py-1.5 px-2 rounded hover:bg-gray-100 text-gray-700 flex items-center gap-2" data-action="cambiar-modulo-drawer" data-module="catalogo">
+                                <i class="fa-solid fa-tag text-gray-400 w-3.5"></i> Catálogo de Modelos (Prendas)
+                            </button>
+                            <button type="button" class="w-full text-left py-1.5 px-2 rounded hover:bg-gray-100 text-gray-700 flex items-center gap-2" data-action="cambiar-modulo-drawer" data-module="inventario">
+                                <i class="fa-solid fa-boxes-stacked text-gray-400 w-3.5"></i> Inventario Multi-Sucursal
+                            </button>
+                            <button type="button" class="w-full text-left py-1.5 px-2 rounded hover:bg-gray-100 text-gray-700 flex items-center gap-2" data-action="cambiar-modulo-drawer" data-module="transferencias">
+                                <i class="fa-solid fa-truck-ramp-box text-gray-400 w-3.5"></i> Transferencias de Stock
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Categoría: Operaciones Textil -->
+                    <div data-grupo-nav>
+                        <div class="text-xs font-bold text-gray-500 mb-1 flex items-center gap-1.5">
+                            <i class="fa-solid fa-scissors"></i> Operaciones Textil
+                        </div>
+                        <div class="space-y-0.5 pl-2 border-l-2 border-gray-200">
+                            <button type="button" class="w-full text-left py-1.5 px-2 rounded hover:bg-gray-100 text-gray-700 flex items-center gap-2" data-action="cambiar-modulo-drawer" data-module="produccion">
+                                <i class="fa-solid fa-industry text-gray-400 w-3.5"></i> Control de Producción (7 Fases)
+                            </button>
+                            <button type="button" class="w-full text-left py-1.5 px-2 rounded hover:bg-gray-100 text-gray-700 flex items-center gap-2" data-action="cambiar-modulo-drawer" data-module="rendimiento">
+                                <i class="fa-solid fa-calculator text-gray-400 w-3.5"></i> Cálculo de Tela (SRA/CRO)
+                            </button>
+                            <button type="button" class="w-full text-left py-1.5 px-2 rounded hover:bg-gray-100 text-gray-700 flex items-center gap-2" data-action="cambiar-modulo-drawer" data-module="mermas">
+                                <i class="fa-solid fa-file-circle-exclamation text-gray-400 w-3.5"></i> Bitácora de Mermas
+                            </button>
+                            <button type="button" class="w-full text-left py-1.5 px-2 rounded hover:bg-gray-100 text-gray-700 flex items-center gap-2" data-action="cambiar-modulo-drawer" data-module="sucursales">
+                                <i class="fa-solid fa-store text-gray-400 w-3.5"></i> Red de Sucursales
+                            </button>
+                            <button type="button" class="w-full text-left py-1.5 px-2 rounded hover:bg-gray-100 text-gray-700 flex items-center gap-2" data-action="cambiar-modulo-drawer" data-module="diagnostico">
+                                <i class="fa-solid fa-shield-virus text-gray-400 w-3.5"></i> Puntos Críticos y Mitigación
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Categoría: Finanzas & Contabilidad -->
+                    <div data-grupo-nav>
+                        <div class="text-xs font-bold text-gray-500 mb-1 flex items-center gap-1.5">
+                            <i class="fa-solid fa-chart-pie"></i> Finanzas & Contabilidad
+                        </div>
+                        <div class="space-y-0.5 pl-2 border-l-2 border-gray-200">
+                            <button type="button" class="w-full text-left py-1.5 px-2 rounded hover:bg-gray-100 text-gray-700 flex items-center gap-2" data-action="cambiar-modulo-drawer" data-module="finanzas">
+                                <i class="fa-solid fa-chart-line text-gray-400 w-3.5"></i> Panel Financiero
+                            </button>
+                            <button type="button" class="w-full text-left py-1.5 px-2 rounded hover:bg-gray-100 text-gray-700 flex items-center gap-2" data-action="cambiar-modulo-drawer" data-module="tesoreria">
+                                <i class="fa-solid fa-building-columns text-gray-400 w-3.5"></i> Tesorería & Cuentas Bancarias
+                            </button>
+                            <button type="button" class="w-full text-left py-1.5 px-2 rounded hover:bg-gray-100 text-gray-700 flex items-center gap-2" data-action="cambiar-modulo-drawer" data-module="cuentas-contables">
+                                <i class="fa-solid fa-book-bookmark text-gray-400 w-3.5"></i> Catálogo de Cuentas Contables
+                            </button>
+                            <button type="button" class="w-full text-left py-1.5 px-2 rounded hover:bg-gray-100 text-gray-700 flex items-center gap-2" data-action="cambiar-modulo-drawer" data-module="reportes">
+                                <i class="fa-solid fa-file-contract text-gray-400 w-3.5"></i> Plan de Acción / Informes
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Categoría: Administración -->
+                    <div data-grupo-nav>
+                        <div class="text-xs font-bold text-gray-600 mb-1 flex items-center gap-1.5">
+                            <i class="fa-solid fa-user-shield"></i> Administración
+                        </div>
+                        <div class="space-y-0.5 pl-2 border-l-2 border-gray-200">
+                            <button type="button" class="w-full text-left py-1.5 px-2 rounded hover:bg-gray-100 text-gray-700 flex items-center gap-2" data-action="cambiar-modulo-drawer" data-module="accesos">
+                                <i class="fa-solid fa-users-gear text-gray-400 w-3.5"></i> Usuarios y Accesos
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pt-3 border-t border-gray-200 text-xs text-gray-400 flex items-center justify-between">
+                <span>Pattern Care · ERP Textil</span>
+                <span>v2.4 MVP</span>
+            </div>
+        </div>
+    </div>
 
     <!-- MODAL 1: SKU -->
     <div id="modal-sku" class="fixed inset-0 z-50 bg-gray-900/40 backdrop-blur-sm hidden flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-label="Ficha de Producto / SKU">
