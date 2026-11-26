@@ -147,3 +147,9 @@ vite.config.ts.timestamp-*
 
 # Turbo Repo
 .turbo
+
+# Guías para asistentes de IA instaladas con la CLI de skills (npx skills).
+# Cada herramienta guarda su propia copia (.claude/skills, .windsurf/skills,
+# skills/, data/skills, ...); no se versionan. skills-lock.json sí se versiona
+# y permite reinstalarlas.
+skills/
