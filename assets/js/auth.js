@@ -261,3 +261,55 @@ async function fetchConSesion(url, opciones = {}) {
 
     return res;
 }
+
+// ─────────────────────────────────────────────────────────
+// ESCRITURAS CON SESIÓN REAL
+// ─────────────────────────────────────────────────────────
+
+/**
+ * ¿Los cambios se guardan en el servidor? Con sesión real, siempre: aunque la
+ * primera carga de datos haya fallado. Solo el modo standalone guarda en local.
+ */
+function trabajaConServidor() {
+    return authState.modo === 'servidor';
+}
+
+/**
+ * Envía una escritura al backend.
+ *
+ * Devuelve el JSON si el servidor la confirmó. Si la rechazó o no respondió,
+ * avisa y devuelve null: quien llama no debe aplicar el cambio en local, porque
+ * se mostraría como guardado algo que no existe en la base.
+ *
+ * 401 ya redirige a login.html y 403 / 503 ya muestran su aviso (fetchConSesion).
+ */
+async function escribirEnServidor(url, payload, mensajeError = 'No se pudo guardar el cambio.') {
+    let res;
+    try {
+        res = await fetchConSesion(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+    } catch (err) {
+        console.error(err);
+        Swal.fire('Sin conexión', `${mensajeError} No se pudo contactar al servidor; el cambio no se guardó.`, 'error');
+        return null;
+    }
+
+    if (res.status === 401 || res.status === 403 || res.status === 503) {
+        return null;
+    }
+
+    let json = null;
+    try {
+        json = await res.json();
+    } catch (err) {
+        json = null;
+    }
+    if (!json || !json.success) {
+        Swal.fire('Error', (json && json.message) || mensajeError, 'error');
+        return null;
+    }
+    return json;
+}

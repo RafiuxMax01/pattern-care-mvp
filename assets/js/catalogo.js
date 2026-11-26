@@ -39,18 +39,23 @@ const CATALOGO_SEMILLA = [
 // ─────────────────────────────────────────────────────────
 function renderizarCatalogo() {
     // Intentar cargar desde backend; si falla, usar estado local o semilla
-    if (bcState.modoBackend === 'mysql') {
+    if (trabajaConServidor()) {
+        // Con sesión real nunca se muestra el catálogo de ejemplo: si falla la
+        // carga se conserva lo último que llegó del servidor y se avisa.
         fetchConSesion('backend/gestionar_productos.php?action=listar')
             .then(r => r.json())
             .then(j => {
                 if (j.success) {
                     catalogoState.productos = j.data || [];
                 } else {
-                    _cargarCatalogoLocal();
+                    mostrarAvisoAcceso(j.message || 'No se pudo cargar el catálogo.', 'error');
                 }
                 _pintarCatalogo();
             })
-            .catch(() => { _cargarCatalogoLocal(); _pintarCatalogo(); });
+            .catch(() => {
+                mostrarAvisoAcceso('No se pudo cargar el catálogo del servidor. Pulsa sincronizar para reintentar.', 'error');
+                _pintarCatalogo();
+            });
     } else {
         _cargarCatalogoLocal();
         _pintarCatalogo();
@@ -166,6 +171,28 @@ function filtrarCatalogo() {
 // ─────────────────────────────────────────────────────────
 // MODAL MULTI-PASO
 // ─────────────────────────────────────────────────────────
+/**
+ * Abre el editor del catálogo para un modelo, cargándolo del servidor si
+ * todavía no se visitó el módulo de catálogo. Lo usa el inventario: con sesión
+ * real, cada SKU es una variante de un modelo y se edita aquí.
+ */
+async function abrirModeloDelCatalogo(productoId) {
+    if (!catalogoState.productos.some(p => p.id == productoId)) {
+        try {
+            const r = await fetchConSesion('backend/gestionar_productos.php?action=listar');
+            const j = await r.json();
+            if (j.success) catalogoState.productos = j.data || [];
+        } catch (e) {
+            // Se resuelve abajo: sin el modelo no se puede abrir el editor
+        }
+    }
+    if (!catalogoState.productos.some(p => p.id == productoId)) {
+        Swal.fire('Sin conexión', 'No se pudo cargar el modelo del catálogo para editarlo.', 'error');
+        return;
+    }
+    abrirModalProducto(productoId);
+}
+
 function abrirModalProducto(id = null) {
     catalogoState.pasoActual = 1;
     catalogoState.variantes  = [];
@@ -287,14 +314,20 @@ async function solicitarNumeroPieza() {
     const input = document.getElementById('prod-numero-pieza');
     if (input.value.trim()) return; // ya tiene valor
 
-    if (bcState.modoBackend === 'mysql') {
+    if (trabajaConServidor()) {
+        // El número sale de la secuencia del servidor; uno inventado aquí podría
+        // repetirse con el de otro modelo.
         try {
             const r = await fetchConSesion('backend/gestionar_productos.php?action=generar_numero&categoria=' + encodeURIComponent(cat));
             const j = await r.json();
             if (j.success) { input.value = j.data.numero_pieza; return; }
-        } catch(e) {}
+            Swal.fire('Error', j.message || 'No se pudo generar el número de pieza.', 'error');
+        } catch(e) {
+            Swal.fire('Sin conexión', 'No se pudo generar el número de pieza: el servidor no respondió.', 'error');
+        }
+        return;
     }
-    // Offline: generar local
+    // Modo standalone: generar local
     const mapa = { 'Gorros Quirúrgicos':'GQ','Chamarras Médicas':'CH','Cubrepolvos':'CP','Otros':'OT' };
     const cod  = mapa[cat] || 'OT';
     const num  = (catalogoState.productos.filter(p => (p.numero_pieza||'').startsWith(cod)).length + 1);
@@ -325,7 +358,7 @@ function verificarNombreProducto() {
         }
 
         // Si hay backend, verificar también
-        if (bcState.modoBackend === 'mysql') {
+        if (trabajaConServidor()) {
             try {
                 const url = `backend/gestionar_productos.php?action=verificar_nombre&nombre=${encodeURIComponent(nombre)}&excluir_id=${catalogoState.editandoId || 0}`;
                 const r = await fetchConSesion(url);
@@ -370,18 +403,28 @@ function eliminarVarianteLista(idx) {
     _actualizarListaVariantes();
 }
 
+// El aviso "Sin variantes aún" vive dentro de #variantes-lista, así que al
+// pintar variantes con innerHTML sale del DOM. Se guarda la referencia la
+// primera vez para poder volver a insertarlo; buscarlo por id después devolvía
+// null y appendChild(null) lanzaba, con lo que "Nuevo Modelo" no se abría.
+let _avisoSinVariantes = null;
+
 function _actualizarListaVariantes() {
     const lista  = document.getElementById('variantes-lista');
-    const vacio  = document.getElementById('variantes-vacio');
+    _avisoSinVariantes = _avisoSinVariantes || document.getElementById('variantes-vacio');
+    const vacio  = _avisoSinVariantes;
     const count  = document.getElementById('variantes-count');
     const activas = catalogoState.variantes.filter(v => v.activo !== 0);
 
     if (count) count.textContent = activas.length;
 
     if (activas.length === 0) {
-        lista.innerHTML = '';
-        lista.appendChild(document.getElementById('variantes-vacio'));
-        vacio?.classList.remove('hidden');
+        if (vacio) {
+            lista.replaceChildren(vacio);
+            vacio.classList.remove('hidden');
+        } else {
+            lista.innerHTML = '';
+        }
         return;
     }
     vacio?.classList.add('hidden');
@@ -480,26 +523,19 @@ async function guardarProducto() {
     // Determinar foto_url final
     let fotoUrl = catalogoState.fotoUrlManual || null;
 
-    // Si hay base64 e internet, subir a Cloudinary
-    if (catalogoState.fotoBase64 && bcState.modoBackend === 'mysql') {
-        try {
-            const r = await fetchConSesion('backend/gestionar_productos.php', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    action: 'subir_foto',
-                    base64: catalogoState.fotoBase64,
-                    product_id: catalogoState.editandoId || 0,
-                    tipo: document.getElementById('foto-tipo').value,
-                    nombre_archivo: catalogoState.fotoNombre || 'foto'
-                })
-            });
-            const j = await r.json();
-            if (j.success) fotoUrl = j.data.url;
-        } catch(e) {
-            // Guardar base64 localmente si falla el upload
-            fotoUrl = catalogoState.fotoBase64;
-        }
+    // Con sesión real la foto se sube primero (Cloudinary o uploads/). Si no
+    // sube, no se guarda el modelo: guardarlo sin foto, o con la imagen en
+    // base64 dentro de foto_url, pasaría inadvertido.
+    if (catalogoState.fotoBase64 && trabajaConServidor()) {
+        const j = await escribirEnServidor('backend/gestionar_productos.php', {
+            action: 'subir_foto',
+            base64: catalogoState.fotoBase64,
+            product_id: catalogoState.editandoId || 0,
+            tipo: document.getElementById('foto-tipo').value,
+            nombre_archivo: catalogoState.fotoNombre || 'foto'
+        }, 'No se pudo subir la foto, así que el modelo no se guardó.');
+        if (!j) return;
+        fotoUrl = j.data.url;
     } else if (catalogoState.fotoBase64) {
         fotoUrl = catalogoState.fotoBase64; // modo standalone: guardar como data URL
     }
@@ -519,26 +555,17 @@ async function guardarProducto() {
         variantes: catalogoState.variantes.filter(v => v.activo !== 0)
     };
 
-    if (bcState.modoBackend === 'mysql') {
-        try {
-            const r = await fetchConSesion('backend/gestionar_productos.php', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
-            const j = await r.json();
-            if (!j.success) {
-                Swal.fire('Error', j.message || 'No se pudo guardar.', 'error');
-                return;
-            }
-            cerrarModalProducto();
-            renderizarCatalogo();
-            Swal.fire({ icon: 'success', title: '¡Guardado!', text: j.message, timer: 2000, showConfirmButton: false });
-            return;
-        } catch(e) { /* fallthrough a local */ }
+    if (trabajaConServidor()) {
+        const j = await escribirEnServidor('backend/gestionar_productos.php', payload, 'No se pudo guardar el modelo.');
+        if (!j) return;
+        cerrarModalProducto();
+        renderizarCatalogo();
+        sincronizarDatos();   // el inventario lista las variantes de los modelos
+        Swal.fire({ icon: 'success', title: '¡Guardado!', text: j.message, timer: 2000, showConfirmButton: false });
+        return;
     }
 
-    // MODO LOCAL
+    // MODO STANDALONE
     if (catalogoState.editandoId) {
         const idx = catalogoState.productos.findIndex(p => p.id == catalogoState.editandoId);
         if (idx !== -1) {
@@ -623,15 +650,10 @@ async function eliminarProductoCatalogo(id) {
     });
     if (!conf.isConfirmed) return;
 
-    if (bcState.modoBackend === 'mysql') {
-        try {
-            const r = await fetchConSesion('backend/gestionar_productos.php', {
-                method: 'POST', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ action: 'eliminar', id })
-            });
-            const j = await r.json();
-            if (j.success) { renderizarCatalogo(); return; }
-        } catch(e) {}
+    if (trabajaConServidor()) {
+        const j = await escribirEnServidor('backend/gestionar_productos.php', { action: 'eliminar', id }, 'No se pudo eliminar el modelo.');
+        if (j) renderizarCatalogo();
+        return;
     }
 
     catalogoState.productos = catalogoState.productos.filter(p => p.id != id);

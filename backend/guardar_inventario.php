@@ -16,129 +16,75 @@ require_once __DIR__ . '/bootstrap_endpoint.php';
 
 try {
     switch ($action) {
+        // El esquema actual (v2) guarda cada SKU como variante de un modelo
+        // (products + product_variants). Los modelos y sus variantes se crean y
+        // editan en el catálogo (gestionar_productos.php), que asigna el número de
+        // pieza de la secuencia. Estas dos acciones escribían en `productos_sku`,
+        // una tabla del esquema v1 que ya no existe, y nunca funcionaron con MySQL.
         case 'crear':
-            $sku = trim($data['sku'] ?? '');
-            $nombre = trim($data['nombre'] ?? '');
-            $categoria = trim($data['categoria'] ?? 'Gorros Quirúrgicos');
-            $color = trim($data['color'] ?? '');
-            $talla = trim($data['talla'] ?? 'Unitalla');
-            $coleccion = trim($data['coleccion'] ?? '');
-            $stockMinimo = isset($data['stock_minimo']) ? (int)$data['stock_minimo'] : 6;
-            $stockInicial = isset($data['stock_actual']) ? (int)$data['stock_actual'] : 0;
-            $sucursalId = isset($data['sucursal_id']) && (int)$data['sucursal_id'] > 0 ? (int)$data['sucursal_id'] : 1; // Default Matriz
-            $precioUnitario = isset($data['precio_unitario']) ? (float)$data['precio_unitario'] : 0.0;
-            $notas = trim($data['notas'] ?? '');
-
-            if (empty($sku) || empty($nombre) || empty($color)) {
-                jsonResponse(false, null, 'SKU, Nombre y Color son obligatorios.', 400);
-            }
-
-            // Validar SKU duplicado
-            $stmtCheck = $pdo->prepare("SELECT id FROM `productos_sku` WHERE `sku` = ?");
-            $stmtCheck->execute([$sku]);
-            if ($stmtCheck->fetch()) {
-                jsonResponse(false, null, 'El código SKU ' . $sku . ' ya existe en el catálogo.', 400);
-            }
-
-            $pdo->beginTransaction();
-
-            $sql = "INSERT INTO `productos_sku` (`sku`, `nombre`, `categoria`, `color`, `talla`, `coleccion`, `stock_minimo_general`, `precio_unitario`, `notas`) 
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
-            $stmt = $pdo->prepare($sql);
-            $stmt->execute([$sku, $nombre, $categoria, $color, $talla, $coleccion, $stockMinimo, $precioUnitario, $notas]);
-            $newId = $pdo->lastInsertId();
-
-            // Asignar stock en inventario_sucursales para todas las sucursales existentes (con stockInicial en la sucursal elegida)
-            $stmtSucs = $pdo->query("SELECT id FROM `sucursales`");
-            $sucursales = $stmtSucs->fetchAll();
-
-            $stmtInv = $pdo->prepare("INSERT INTO `inventario_sucursales` (`producto_id`, `sucursal_id`, `stock_actual`, `stock_minimo`) VALUES (?, ?, ?, ?)");
-            foreach ($sucursales as $s) {
-                $qty = ($s['id'] == $sucursalId) ? $stockInicial : 0;
-                $stmtInv->execute([$newId, $s['id'], $qty, $stockMinimo]);
-            }
-
-            $pdo->commit();
-
-            jsonResponse(true, [
-                'id' => $newId,
-                'sku' => $sku,
-                'stock_actual' => $stockInicial
-            ], 'Producto registrado e inicializado en todas las sucursales de Business Central.');
-            break;
-
         case 'actualizar':
-            $id = (int)($data['id'] ?? 0);
-            $sku = trim($data['sku'] ?? '');
-            $nombre = trim($data['nombre'] ?? '');
-            $categoria = trim($data['categoria'] ?? 'Gorros Quirúrgicos');
-            $color = trim($data['color'] ?? '');
-            $talla = trim($data['talla'] ?? 'Unitalla');
-            $coleccion = trim($data['coleccion'] ?? '');
-            $stockMinimo = isset($data['stock_minimo']) ? (int)$data['stock_minimo'] : 6;
-            $precioUnitario = isset($data['precio_unitario']) ? (float)$data['precio_unitario'] : 0.0;
-            $notas = trim($data['notas'] ?? '');
-
-            if ($id <= 0 || empty($sku) || empty($nombre)) {
-                jsonResponse(false, null, 'Identificador o campos requeridos faltantes.', 400);
-            }
-
-            $sql = "UPDATE `productos_sku` SET `sku`=?, `nombre`=?, `categoria`=?, `color`=?, `talla`=?, `coleccion`=?, `stock_minimo_general`=?, `precio_unitario`=?, `notas`=? WHERE `id`=?";
-            $stmt = $pdo->prepare($sql);
-            $stmt->execute([$sku, $nombre, $categoria, $color, $talla, $coleccion, $stockMinimo, $precioUnitario, $notas, $id]);
-
-            jsonResponse(true, ['id' => $id, 'sku' => $sku], 'Ficha de producto actualizada en Business Central.');
+            jsonResponse(false, null, 'Los modelos y sus variantes se dan de alta y se editan en Catálogo de Productos.', 410);
             break;
 
         case 'ajustar_stock':
-            $productoId = (int)($data['id'] ?? 0);
+            // `id` es el id de la variante (los SKUs de obtener_datos.php)
+            $variantId  = (int)($data['id'] ?? 0);
             $sucursalId = (int)($data['sucursal_id'] ?? 1); // Por defecto Matriz
             $delta = isset($data['delta']) ? (int)$data['delta'] : 0;
 
-            if ($productoId <= 0 || $sucursalId <= 0) {
+            if ($variantId <= 0 || $sucursalId <= 0) {
                 jsonResponse(false, null, 'Parámetros de producto o sucursal inválidos.', 400);
             }
 
             // Evita descontar existencias de un punto de venta que no es el suyo
             requerirSucursal($sucursalId, 'ajustar');
 
-            // Verificar si existe registro en inventario_sucursales
-            $stmtCheck = $pdo->prepare("SELECT id, stock_actual FROM `inventario_sucursales` WHERE `producto_id` = ? AND `sucursal_id` = ?");
-            $stmtCheck->execute([$productoId, $sucursalId]);
-            $invRow = $stmtCheck->fetch();
+            $stmtVar = $pdo->prepare("SELECT id FROM `product_variants` WHERE `id` = ? AND `activo` = 1");
+            $stmtVar->execute([$variantId]);
+            if (!$stmtVar->fetch()) {
+                jsonResponse(false, null, 'La variante no existe o está desactivada.', 404);
+            }
 
-            if ($invRow) {
-                $stmtUpdate = $pdo->prepare("UPDATE `inventario_sucursales` SET `stock_actual` = GREATEST(0, stock_actual + ?) WHERE `producto_id` = ? AND `sucursal_id` = ?");
-                $stmtUpdate->execute([$delta, $productoId, $sucursalId]);
+            // Verificar si existe registro en inventario_sucursales
+            $stmtCheck = $pdo->prepare("SELECT id FROM `inventario_sucursales` WHERE `variant_id` = ? AND `sucursal_id` = ?");
+            $stmtCheck->execute([$variantId, $sucursalId]);
+
+            if ($stmtCheck->fetch()) {
+                $stmtUpdate = $pdo->prepare("UPDATE `inventario_sucursales` SET `stock_actual` = GREATEST(0, stock_actual + ?) WHERE `variant_id` = ? AND `sucursal_id` = ?");
+                $stmtUpdate->execute([$delta, $variantId, $sucursalId]);
             } else {
-                $nuevoStock = max(0, $delta);
-                $stmtInsert = $pdo->prepare("INSERT INTO `inventario_sucursales` (`producto_id`, `sucursal_id`, `stock_actual`, `stock_minimo`) VALUES (?, ?, ?, 6)");
-                $stmtInsert->execute([$productoId, $sucursalId, $nuevoStock]);
+                $stmtInsert = $pdo->prepare("INSERT INTO `inventario_sucursales` (`variant_id`, `sucursal_id`, `stock_actual`, `stock_minimo`) VALUES (?, ?, ?, 6)");
+                $stmtInsert->execute([$variantId, $sucursalId, max(0, $delta)]);
             }
 
             // Consultar nuevo stock de la sucursal
-            $stmtGet = $pdo->prepare("SELECT stock_actual, stock_minimo FROM `inventario_sucursales` WHERE `producto_id` = ? AND `sucursal_id` = ?");
-            $stmtGet->execute([$productoId, $sucursalId]);
+            $stmtGet = $pdo->prepare("SELECT stock_actual, stock_minimo FROM `inventario_sucursales` WHERE `variant_id` = ? AND `sucursal_id` = ?");
+            $stmtGet->execute([$variantId, $sucursalId]);
             $res = $stmtGet->fetch();
 
             jsonResponse(true, [
-                'producto_id' => $productoId,
-                'sucursal_id' => $sucursalId,
+                'variant_id'   => $variantId,
+                'sucursal_id'  => $sucursalId,
                 'stock_actual' => (int)$res['stock_actual'],
                 'stock_minimo' => (int)$res['stock_minimo']
             ], 'Stock de la sucursal ajustado.');
             break;
 
         case 'eliminar':
-            $id = (int)($data['id'] ?? 0);
-            if ($id <= 0) {
+            // Baja lógica de la variante, como hace el catálogo: el inventario y
+            // las transferencias que la referencian se conservan.
+            $variantId = (int)($data['id'] ?? 0);
+            if ($variantId <= 0) {
                 jsonResponse(false, null, 'ID inválido.', 400);
             }
 
-            $stmt = $pdo->prepare("DELETE FROM `productos_sku` WHERE `id` = ?");
-            $stmt->execute([$id]);
+            $stmt = $pdo->prepare("UPDATE `product_variants` SET `activo` = 0 WHERE `id` = ? AND `activo` = 1");
+            $stmt->execute([$variantId]);
+            if ($stmt->rowCount() === 0) {
+                jsonResponse(false, null, 'La variante no existe o ya estaba desactivada.', 404);
+            }
 
-            jsonResponse(true, ['id' => $id], 'Producto eliminado del catálogo.');
+            jsonResponse(true, ['id' => $variantId], 'Variante desactivada del inventario.');
             break;
 
         default:
