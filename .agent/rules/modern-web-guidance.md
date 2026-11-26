@@ -60,8 +60,12 @@ and scripts in `assets/`, JSON endpoints in `backend/`.
 
 ### Two runtime modes
 - **Server** (Apache/IIS + MySQL): real session, data from `backend/obtener_datos.php`.
-- **Standalone** (`index.html` opened with a double click): no backend, demo session with all
-  permissions, data from seed constants + `localStorage`. Keep both modes working.
+- **Standalone** (`index.html` opened with a double click, or served by a static server
+  without PHP): demo session with all permissions, data from seed constants + `localStorage`.
+  Keep both modes working.
+- When PHP answers with an error (e.g. MySQL down) the app must **not** fall back to the demo
+  session or demo data: it returns to `login.html?motivo=sin-servidor`, or shows
+  "Sin conexión con la base de datos" if the session was already open.
 
 ---
 
@@ -105,6 +109,9 @@ minimum in at least one branch.
   `database_master.sql` (table `permisos` + `rol_permisos`).
 - Client-side checks only hide UI. **The server is the authority** — never rely on the
   frontend alone to protect data.
+- **Fail closed.** Compatibility mode (full permissions, for databases without the access
+  module) is granted only when `estadoControlAccesos()` confirms `'no_instalado'`. If the check
+  cannot run (`'desconocido'`), `autorizacionActiva()` answers `503`.
 
 ---
 

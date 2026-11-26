@@ -328,7 +328,7 @@ function verificarNombreProducto() {
         if (bcState.modoBackend === 'mysql') {
             try {
                 const url = `backend/gestionar_productos.php?action=verificar_nombre&nombre=${encodeURIComponent(nombre)}&excluir_id=${catalogoState.editandoId || 0}`;
-                const r = await fetch(url);
+                const r = await fetchConSesion(url);
                 const j = await r.json();
                 msg.classList.toggle('hidden', j.data?.disponible !== false);
             } catch(e) { msg.classList.add('hidden'); }
