@@ -6,6 +6,8 @@
   <title>Pattern Care — Iniciar sesión</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Segoe+UI:wght@300;400;600;700&display=swap" rel="stylesheet" />
+  <!-- FontAwesome 6: la misma versión que usa index.html -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
   <style>
     /* ── Reset ─────────────────────────────────────────── */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -126,6 +128,9 @@
     }
 
     .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
       background: rgba(255,255,255,.15);
       border: 1px solid rgba(255,255,255,.25);
       border-radius: 20px;
@@ -133,6 +138,8 @@
       font-size: .8rem;
       backdrop-filter: blur(6px);
     }
+
+    .hero-badge i { font-size: .85em; opacity: .9; }
 
     /* ── Right panel — auth card ───────────────────────── */
     .auth-panel {
@@ -244,7 +251,14 @@
       border: 1px solid var(--bc-blue);
     }
 
-    .alert-box.show { display: flex; align-items: center; gap: 8px; }
+    .alert-box.warning {
+      background: #fff4ce;
+      color: #8a5300;
+      border: 1px solid #f2c94c;
+    }
+
+    .alert-box.show { display: flex; align-items: flex-start; gap: 8px; }
+    .alert-box i { margin-top: 2px; flex-shrink: 0; }
 
     /* ── Submit button ─────────────────────────────────── */
     .form button[type="submit"] {
@@ -364,7 +378,15 @@
       line-height: 1.6;
     }
 
-    .users-hint strong { color: #5d4037; display: block; margin-bottom: 4px; }
+    .users-hint summary {
+      cursor: pointer;
+      font-weight: 700;
+      color: #5d4037;
+    }
+
+    .users-hint summary i { margin: 0 4px; }
+
+    .users-hint[open] summary { margin-bottom: 4px; }
 
     .users-hint table { width: 100%; border-collapse: collapse; margin-top: 6px; }
     .users-hint td { padding: 2px 6px; }
@@ -390,7 +412,7 @@
     <!-- ── Hero / Branding panel ──────────────────────── -->
     <section class="hero" aria-hidden="true">
       <div class="hero-logo">
-        <div class="hero-logo-icon">🧵</div>
+        <div class="hero-logo-icon"><i class="fa-solid fa-scissors" aria-hidden="true"></i></div>
         <div>
           <div class="hero-logo-text">Pattern Care</div>
           <div class="hero-logo-sub">Sistema de Gestión Operativa</div>
@@ -404,11 +426,12 @@
       </p>
 
       <div class="hero-badges">
-        <span class="hero-badge">🏭 Producción</span>
-        <span class="hero-badge">📦 Inventario</span>
-        <span class="hero-badge">🏥 Canales de venta</span>
-        <span class="hero-badge">📊 Reportes</span>
-        <span class="hero-badge">🏢 Multi-sucursal</span>
+        <!-- Los mismos iconos que representan cada área dentro del ERP -->
+        <span class="hero-badge"><i class="fa-solid fa-industry" aria-hidden="true"></i> Producción</span>
+        <span class="hero-badge"><i class="fa-solid fa-boxes-stacked" aria-hidden="true"></i> Inventario</span>
+        <span class="hero-badge"><i class="fa-solid fa-receipt" aria-hidden="true"></i> Canales de venta</span>
+        <span class="hero-badge"><i class="fa-solid fa-chart-line" aria-hidden="true"></i> Reportes</span>
+        <span class="hero-badge"><i class="fa-solid fa-building" aria-hidden="true"></i> Multi-sucursal</span>
       </div>
     </section>
 
@@ -452,7 +475,7 @@
 
       <!-- Cuentas sembradas por database_master.sql (solo MVP) -->
       <details class="users-hint">
-        <summary><strong>👤 Cuentas de prueba (MVP)</strong></summary>
+        <summary><i class="fa-solid fa-user-group" aria-hidden="true"></i> Cuentas de prueba (MVP)</summary>
         <p>Contraseña inicial de todas: <b>PatternCare2026</b></p>
         <table aria-label="Cuentas de prueba">
           <tr><td>encargada</td><td>Dueña / Encargada General</td></tr>
@@ -488,9 +511,22 @@
     }
 
     /* ── Alert helpers ─────────────────────────────────────── */
+    // El icono lo decide el tipo de aviso, no el texto del mensaje
+    const ICONOS_AVISO = {
+      error:   'fa-circle-xmark',
+      warning: 'fa-triangle-exclamation',
+      success: 'fa-circle-check',
+      info:    'fa-circle-info'
+    };
+
     function showAlert(id, msg, type = 'error') {
       const el = document.getElementById(id);
-      el.textContent = msg;
+      const icono = document.createElement('i');
+      icono.className = 'fa-solid ' + (ICONOS_AVISO[type] || ICONOS_AVISO.error);
+      icono.setAttribute('aria-hidden', 'true');
+      const texto = document.createElement('span');
+      texto.textContent = msg;   // textContent: el mensaje puede venir del servidor
+      el.replaceChildren(icono, texto);
       el.className = 'alert-box show ' + type;
     }
 
@@ -515,7 +551,7 @@
       const password = document.getElementById('login-password').value;
 
       if (!usuario || !password) {
-        showAlert('login-alert', '⚠️ Por favor completa todos los campos.');
+        showAlert('login-alert', 'Por favor completa todos los campos.', 'warning');
         return;
       }
 
@@ -532,16 +568,16 @@
 
         if (!json.success) {
           setLoading(false);
-          showAlert('login-alert', '❌ ' + (json.message || 'No fue posible iniciar sesión.'));
+          showAlert('login-alert', json.message || 'No fue posible iniciar sesión.');
           document.getElementById('login-password').value = '';
           return;
         }
 
-        showAlert('login-alert', '✅ ' + (json.message || 'Acceso concedido.') + ' Redirigiendo…', 'success');
+        showAlert('login-alert', (json.message || 'Acceso concedido.') + ' Redirigiendo…', 'success');
         window.location.replace(DESTINO);
       } catch (err) {
         setLoading(false);
-        showAlert('login-alert', '❌ No fue posible contactar al servidor de sesión.');
+        showAlert('login-alert', 'No fue posible contactar al servidor de sesión.');
       }
     }
 
@@ -553,7 +589,7 @@
       if (motivo === 'expirada') {
         showAlert('login-alert', 'Tu sesión terminó. Vuelve a identificarte.', 'info');
       } else if (motivo === 'sin-servidor') {
-        showAlert('login-alert', '⚠️ No se pudo verificar tu sesión: el servidor o la base de datos no responden. Intenta de nuevo en unos minutos.');
+        showAlert('login-alert', 'No se pudo verificar tu sesión: el servidor o la base de datos no responden. Intenta de nuevo en unos minutos.', 'warning');
       }
 
       try {
@@ -568,7 +604,7 @@
             window.location.replace('index.html');
             return;
           }
-          showAlert('login-alert', '⚠️ El servidor respondió con un error. Intenta de nuevo en unos minutos.');
+          showAlert('login-alert', 'El servidor respondió con un error. Intenta de nuevo en unos minutos.', 'warning');
           return;
         }
         if (json.success && json.data) {
@@ -576,7 +612,7 @@
           return;
         }
         if (!res.ok) {
-          showAlert('login-alert', '⚠️ ' + (json.message || 'El servidor no está disponible en este momento.'));
+          showAlert('login-alert', json.message || 'El servidor no está disponible en este momento.', 'warning');
         }
       } catch (err) {
         // Sin respuesta del servidor: se queda en el formulario
