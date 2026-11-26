@@ -5,30 +5,30 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Pattern Care — Iniciar sesión</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=Segoe+UI:wght@300;400;600;700&display=swap" rel="stylesheet" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <!-- FontAwesome 6: la misma versión que usa index.html -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
   <style>
     /* ── Reset ─────────────────────────────────────────── */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-    /* ── Root palette (Business Central light) ────────── */
+    /* ── Paleta: la misma de la app (assets/tailwind.config.js) ── */
     :root {
-      --bc-blue:     #0078d4;
-      --bc-blue-dk:  #005a9e;
-      --bc-blue-lt:  #deecf9;
-      --bc-teal:     #008575;
-      --bg-page:     #f3f2f1;
-      --bg-card:     #f1f7fe;
-      --bg-footer:   #e0ecfb;
-      --text-main:   #201f1e;
-      --text-muted:  #605e5c;
-      --border:      #edebe9;
-      --input-bg:    #ffffff;
-      --radius-card: 16px;
-      --radius-btn:  24px;
-      --shadow-card: 0 4px 24px rgba(0,0,0,.10);
-      --font:        'Segoe UI', system-ui, -apple-system, sans-serif;
+      --marca:         #1f3a5f;   /* marca-700 */
+      --marca-oscuro:  #172c48;   /* marca-800 */
+      --marca-claro:   #eef3f9;   /* marca-50  */
+      --bg-page:       #f9fafb;   /* gray-50   */
+      --bg-card:       #ffffff;
+      --bg-footer:     #f9fafb;
+      --text-main:     #111827;   /* gray-900  */
+      --text-muted:    #6b7280;   /* gray-500  */
+      --border:        #e5e7eb;   /* gray-200  */
+      --input-bg:      #ffffff;
+      --radius-card:   12px;
+      --radius-btn:    8px;
+      --shadow-card:   0 1px 3px rgba(17,24,39,.08), 0 8px 24px rgba(17,24,39,.06);
+      --font:          'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
     }
 
     /* ── Page layout ───────────────────────────────────── */
@@ -47,7 +47,7 @@
 
     /* ── Left panel — branding / hero ──────────────────── */
     .hero {
-      background: linear-gradient(145deg, #005a9e 0%, #0078d4 55%, #008575 100%);
+      background: var(--marca);
       display: flex;
       flex-direction: column;
       align-items: flex-start;
@@ -56,15 +56,6 @@
       color: #fff;
       position: relative;
       overflow: hidden;
-    }
-
-    .hero::before {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background:
-        radial-gradient(circle at 20% 80%, rgba(255,255,255,.07) 0%, transparent 50%),
-        radial-gradient(circle at 80% 20%, rgba(255,255,255,.05) 0%, transparent 50%);
     }
 
     .hero-logo {
@@ -102,14 +93,13 @@
     }
 
     .hero h1 {
-      font-size: clamp(2rem, 3vw, 2.8rem);
-      font-weight: 300;
+      font-size: clamp(1.75rem, 2.4vw, 2.25rem);
+      font-weight: 600;
       line-height: 1.25;
       margin-bottom: 16px;
       position: relative;
     }
 
-    .hero h1 strong { font-weight: 700; }
 
     .hero p {
       font-size: 1rem;
@@ -157,7 +147,7 @@
       position: absolute;
       top: 0; left: 0; right: 0;
       height: 4px;
-      background: linear-gradient(90deg, var(--bc-blue), var(--bc-teal));
+      background: var(--marca);
     }
 
     /* ── Uiverse-inspired form-box ─────────────────────── */
@@ -217,8 +207,8 @@
     .input:last-child { border-bottom: 0; }
 
     .input:focus {
-      background: var(--bc-blue-lt);
-      outline: 2px solid var(--bc-blue);
+      background: var(--marca-claro);
+      outline: 2px solid var(--marca);
       outline-offset: -2px;
     }
 
@@ -246,9 +236,9 @@
     }
 
     .alert-box.info {
-      background: var(--bc-blue-lt);
-      color: var(--bc-blue-dk);
-      border: 1px solid var(--bc-blue);
+      background: var(--marca-claro);
+      color: var(--marca-oscuro);
+      border: 1px solid var(--marca);
     }
 
     .alert-box.warning {
@@ -262,7 +252,7 @@
 
     /* ── Submit button ─────────────────────────────────── */
     .form button[type="submit"] {
-      background: var(--bc-blue);
+      background: var(--marca);
       color: #fff;
       border: 0;
       border-radius: var(--radius-btn);
@@ -278,7 +268,7 @@
       gap: 8px;
     }
 
-    .form button[type="submit"]:hover { background: var(--bc-blue-dk); }
+    .form button[type="submit"]:hover { background: var(--marca-oscuro); }
     .form button[type="submit"]:active { transform: scale(.98); }
     .form button[type="submit"]:disabled { background: #a19f9d; cursor: not-allowed; }
 
@@ -307,62 +297,48 @@
 
     .form-section a {
       font-weight: 600;
-      color: var(--bc-blue);
+      color: var(--marca);
       text-decoration: none;
       transition: color .2s;
     }
 
     .form-section a:hover {
-      color: var(--bc-blue-dk);
+      color: var(--marca-oscuro);
       text-decoration: underline;
     }
 
     /* Panel */
     .tab-panel { display: flex; flex-direction: column; }
 
-    /* ── BC-style top bar (decorative) ────────────────── */
-    .bc-topbar {
-      position: fixed;
-      top: 0; left: 0; right: 0;
-      height: 48px;
-      background: var(--bc-blue);
-      display: flex;
-      align-items: center;
-      padding: 0 20px;
-      gap: 16px;
-      z-index: 10;
-      box-shadow: 0 2px 4px rgba(0,0,0,.2);
-    }
-
-    .bc-topbar-logo {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      color: #fff;
-      font-size: .9rem;
-      font-weight: 600;
-    }
-
-    .bc-waffle {
-      display: grid;
-      grid-template-columns: repeat(3,6px);
-      gap: 2px;
-    }
-
-    .bc-waffle span {
-      width: 6px; height: 6px;
-      background: rgba(255,255,255,.85);
-      border-radius: 1px;
-    }
-
-    /* push page content below topbar */
-    .page-wrapper { padding-top: 48px; }
-
     /* ── Responsive ────────────────────────────────────── */
     @media (max-width: 768px) {
       .page-wrapper { grid-template-columns: 1fr; }
       .hero { display: none; }
       .auth-panel { padding: 32px 20px; }
+    }
+
+    .marca-movil {
+      display: none;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 24px;
+      font-weight: 700;
+      font-size: 1.05rem;
+      color: var(--text-main);
+    }
+
+    .marca-movil span {
+      width: 32px; height: 32px;
+      border-radius: 8px;
+      background: var(--marca);
+      color: #fff;
+      display: flex; align-items: center; justify-content: center;
+      font-size: .85rem;
+    }
+
+    /* Después de la regla base, para que la anule en pantallas chicas */
+    @media (max-width: 768px) {
+      .marca-movil { display: flex; }
     }
 
     /* ── Users hint (dev helper) ───────────────────────── */
@@ -395,18 +371,6 @@
 </head>
 <body>
 
-  <!-- BC-style top navigation bar -->
-  <nav class="bc-topbar" role="banner" aria-label="Barra de navegación principal">
-    <div class="bc-topbar-logo">
-      <div class="bc-waffle" aria-hidden="true">
-        <span></span><span></span><span></span>
-        <span></span><span></span><span></span>
-        <span></span><span></span><span></span>
-      </div>
-      <span>Pattern Care ERP</span>
-    </div>
-  </nav>
-
   <div class="page-wrapper">
 
     <!-- ── Hero / Branding panel ──────────────────────── -->
@@ -415,14 +379,13 @@
         <div class="hero-logo-icon"><i class="fa-solid fa-scissors" aria-hidden="true"></i></div>
         <div>
           <div class="hero-logo-text">Pattern Care</div>
-          <div class="hero-logo-sub">Sistema de Gestión Operativa</div>
+          <div class="hero-logo-sub">ERP Textil</div>
         </div>
       </div>
 
-      <h1>Bienvenido al<br><strong>Centro de Control</strong></h1>
+      <h1>Producción, inventario y sucursales en un solo lugar</h1>
       <p>
-        Gestiona tu producción de uniformes médicos, inventarios,
-        sucursales y reportes desde un solo lugar.
+        El sistema de gestión del taller de uniformes médicos de Pattern Care.
       </p>
 
       <div class="hero-badges">
@@ -437,6 +400,7 @@
 
     <!-- ── Auth panel ─────────────────────────────────── -->
     <main class="auth-panel" role="main">
+      <div class="marca-movil"><span aria-hidden="true"><i class="fa-solid fa-scissors"></i></span> Pattern Care</div>
       <div class="form-box" role="region" aria-label="Formulario de autenticación">
 
         <!-- ── LOGIN PANEL ─────────────────────────────── -->

@@ -218,7 +218,7 @@ function mostrarAvisoAcceso(mensaje, tipo = 'error') {
 
     const estilos = {
         error: 'bg-rose-50 border-rose-300 text-rose-700',
-        info:  'bg-blue-50 border-blue-300 text-bc-blue',
+        info:  'bg-marca-50 border-marca-300 text-marca-700',
         ok:    'bg-emerald-50 border-emerald-300 text-emerald-700'
     };
     const iconos = { error: 'fa-shield-halved', info: 'fa-circle-info', ok: 'fa-circle-check' };

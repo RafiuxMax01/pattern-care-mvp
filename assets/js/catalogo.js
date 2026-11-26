@@ -93,14 +93,14 @@ function _pintarCatalogo() {
                 <i class="fa-solid fa-box-open text-4xl mb-3 text-gray-300"></i>
                 <p class="font-semibold text-sm">Sin productos en el catálogo</p>
                 <p class="text-xs mt-1">Agrega un modelo con el botón "Nuevo Modelo"</p>
-                <button type="button" onclick="abrirModalProducto()" class="mt-4 px-4 py-2 rounded-lg bg-violet-600 text-white text-xs font-semibold shadow">
+                <button type="button" onclick="abrirModalProducto()" class="mt-4 px-4 py-2 rounded-lg bg-marca-600 text-white text-xs font-semibold shadow">
                     <i class="fa-solid fa-plus mr-1"></i> Nuevo Modelo
                 </button>
             </div>`;
         return;
     }
 
-    const catColor = { 'Gorros Quirúrgicos': 'bg-blue-50 text-blue-700 border-blue-200', 'Chamarras Médicas': 'bg-indigo-50 text-indigo-700 border-indigo-200', 'Cubrepolvos': 'bg-teal-50 text-teal-700 border-teal-200', 'Otros': 'bg-gray-100 text-gray-600 border-gray-200' };
+    const catColor = { 'Gorros Quirúrgicos': 'bg-marca-50 text-marca-700 border-marca-200', 'Chamarras Médicas': 'bg-marca-50 text-marca-700 border-marca-200', 'Cubrepolvos': 'bg-marca-50 text-marca-700 border-marca-200', 'Otros': 'bg-gray-100 text-gray-600 border-gray-200' };
 
     grid.innerHTML = filtrados.map(p => {
         const variActivas = (p.variantes || []).filter(v => v.activo !== 0);
@@ -111,23 +111,23 @@ function _pintarCatalogo() {
             ? `<img src="${p.foto_url}" alt="${p.nombre}" class="w-full h-32 object-cover rounded-t-xl">`
             : `<div class="w-full h-32 rounded-t-xl bg-gradient-to-br from-gray-50 to-gray-100 flex flex-col items-center justify-center text-gray-300 border-b border-gray-200">
                     <i class="fa-regular fa-image text-3xl mb-1"></i>
-                    <span class="text-[10px]">Sin foto</span>
+                    <span class="text-xs">Sin foto</span>
                </div>`;
 
         return `
-            <div class="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm hover:shadow-md hover:border-violet-300 transition group">
+            <div class="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm hover:shadow-md hover:border-marca-300 transition group">
                 ${imgSrc}
                 <div class="p-3.5 space-y-2">
                     <div class="flex items-start justify-between gap-2">
                         <div class="min-w-0">
-                            <span class="font-mono text-[11px] font-bold text-bc-blue">${p.numero_pieza || '—'}</span>
+                            <span class="font-mono text-xs font-bold text-marca-700">${p.numero_pieza || '—'}</span>
                             <h4 class="font-bold text-gray-900 text-sm leading-tight mt-0.5 truncate" title="${p.nombre}">${p.nombre}</h4>
                         </div>
-                        <span class="shrink-0 px-2 py-0.5 rounded-full text-[10px] font-semibold border ${badgeCat}">${p.categoria.split(' ')[0]}</span>
+                        <span class="shrink-0 px-2 py-0.5 rounded-full text-xs font-semibold border ${badgeCat}">${p.categoria.split(' ')[0]}</span>
                     </div>
 
-                    <div class="text-[11px] text-gray-500 flex items-center gap-1.5">
-                        <i class="fa-solid fa-layer-group text-violet-400"></i>
+                    <div class="text-xs text-gray-500 flex items-center gap-1.5">
+                        <i class="fa-solid fa-layer-group text-marca-500"></i>
                         <span>${variActivas.length} variante(s)</span>
                         <span class="text-gray-300">·</span>
                         <i class="fa-solid fa-tshirt text-gray-400"></i>
@@ -136,22 +136,22 @@ function _pintarCatalogo() {
 
                     ${colores.length ? `
                     <div class="flex flex-wrap gap-1">
-                        ${colores.slice(0,4).map(c => `<span class="px-1.5 py-0.5 rounded bg-gray-100 text-gray-600 text-[10px] border border-gray-200">${c}</span>`).join('')}
-                        ${colores.length > 4 ? `<span class="px-1.5 py-0.5 rounded bg-gray-100 text-gray-500 text-[10px]">+${colores.length-4}</span>` : ''}
+                        ${colores.slice(0,4).map(c => `<span class="px-1.5 py-0.5 rounded bg-gray-100 text-gray-600 text-xs border border-gray-200">${c}</span>`).join('')}
+                        ${colores.length > 4 ? `<span class="px-1.5 py-0.5 rounded bg-gray-100 text-gray-500 text-xs">+${colores.length-4}</span>` : ''}
                     </div>` : ''}
 
                     ${tallas.length ? `
                     <div class="flex flex-wrap gap-1">
-                        ${tallas.map(t => `<span class="px-1.5 py-0.5 rounded bg-blue-50 text-blue-600 text-[10px] font-semibold border border-blue-100">${t}</span>`).join('')}
+                        ${tallas.map(t => `<span class="px-1.5 py-0.5 rounded bg-marca-50 text-marca-600 text-xs font-semibold border border-marca-100">${t}</span>`).join('')}
                     </div>` : ''}
 
                     <div class="flex items-center justify-between pt-2 border-t border-gray-100">
                         <span class="font-bold text-gray-900 text-sm">$${Number(p.precio_base).toLocaleString('es-MX', {minimumFractionDigits:2})}</span>
                         <div class="flex gap-1 opacity-0 group-hover:opacity-100 transition">
-                            <button type="button" onclick="editarProducto(${p.id})" title="Editar" class="p-1.5 rounded bg-gray-100 hover:bg-blue-100 text-gray-500 hover:text-bc-blue transition">
+                            <button type="button" onclick="editarProducto(${p.id})" title="Editar" class="p-1.5 rounded bg-gray-100 hover:bg-marca-100 text-gray-500 hover:text-marca-700 transition">
                                 <i class="fa-solid fa-pen-to-square text-xs"></i>
                             </button>
-                            <button type="button" onclick="abrirDetProducto(${p.id})" title="Ver variantes" class="p-1.5 rounded bg-gray-100 hover:bg-violet-100 text-gray-500 hover:text-violet-600 transition">
+                            <button type="button" onclick="abrirDetProducto(${p.id})" title="Ver variantes" class="p-1.5 rounded bg-gray-100 hover:bg-marca-100 text-gray-500 hover:text-marca-600 transition">
                                 <i class="fa-solid fa-eye text-xs"></i>
                             </button>
                             <button type="button" onclick="eliminarProductoCatalogo(${p.id})" title="Eliminar" class="p-1.5 rounded bg-gray-100 hover:bg-rose-100 text-gray-500 hover:text-rose-600 transition">
@@ -258,7 +258,7 @@ function _irAPaso(num) {
                 ind.className = 'w-7 h-7 rounded-full bg-emerald-500 text-white flex items-center justify-center font-bold text-xs shrink-0';
                 ind.innerHTML = '<i class="fa-solid fa-check text-xs"></i>';
             } else if (n === num) {
-                ind.className = 'w-7 h-7 rounded-full bg-bc-blue text-white flex items-center justify-center font-bold text-xs shrink-0';
+                ind.className = 'w-7 h-7 rounded-full bg-marca-700 text-white flex items-center justify-center font-bold text-xs shrink-0';
                 ind.textContent = n;
             } else {
                 ind.className = 'w-7 h-7 rounded-full bg-gray-200 text-gray-500 flex items-center justify-center font-bold text-xs shrink-0';
@@ -266,7 +266,7 @@ function _irAPaso(num) {
             }
         }
         if (lbl) {
-            lbl.className = n === num ? 'font-semibold text-bc-blue' : (n < num ? 'text-emerald-600 font-medium' : 'text-gray-400');
+            lbl.className = n === num ? 'font-semibold text-marca-700' : (n < num ? 'text-emerald-700 font-medium' : 'text-gray-400');
         }
     });
 
@@ -430,7 +430,7 @@ function _actualizarListaVariantes() {
     vacio?.classList.add('hidden');
 
     lista.innerHTML = activas.map((v, i) => {
-        const colores = { 'Azul': 'bg-blue-100 text-blue-700', 'Verde': 'bg-emerald-100 text-emerald-700', 'Lila': 'bg-violet-100 text-violet-700', 'Rosa': 'bg-pink-100 text-pink-700', 'Blanco': 'bg-gray-100 text-gray-700', 'Negro': 'bg-gray-800 text-white', 'Azul Marino': 'bg-indigo-100 text-indigo-700', 'Multi': 'bg-orange-100 text-orange-700' };
+        const colores = { 'Azul': 'bg-marca-100 text-marca-700', 'Verde': 'bg-emerald-100 text-emerald-700', 'Lila': 'bg-marca-100 text-marca-700', 'Rosa': 'bg-marca-100 text-marca-700', 'Blanco': 'bg-gray-100 text-gray-700', 'Negro': 'bg-gray-800 text-white', 'Azul Marino': 'bg-marca-100 text-marca-700', 'Multi': 'bg-marca-100 text-marca-700' };
         const colorKey = Object.keys(colores).find(k => v.color.startsWith(k)) || 'Azul';
         const cls = colores[colorKey] || 'bg-gray-100 text-gray-700';
         return `
@@ -439,11 +439,11 @@ function _actualizarListaVariantes() {
                     <span class="w-2.5 h-2.5 rounded-full ${cls.split(' ')[0]} border border-gray-300 shrink-0"></span>
                     <span class="font-semibold text-gray-800">${v.color}</span>
                     <span class="text-gray-400">/</span>
-                    <span class="font-semibold text-blue-600">${v.talla}</span>
+                    <span class="font-semibold text-marca-600">${v.talla}</span>
                 </div>
                 <div class="flex items-center gap-2">
-                    <span class="font-mono text-[10px] text-gray-400">${v.sku}</span>
-                    <button type="button" onclick="eliminarVarianteLista(${i})" class="text-rose-400 hover:text-rose-600 p-1 rounded hover:bg-rose-50">
+                    <span class="font-mono text-xs text-gray-400">${v.sku}</span>
+                    <button type="button" onclick="eliminarVarianteLista(${i})" class="text-rose-600 hover:text-rose-600 p-1 rounded hover:bg-rose-50">
                         <i class="fa-solid fa-xmark text-xs"></i>
                     </button>
                 </div>
@@ -461,7 +461,7 @@ function handleFotoChange(event) {
 
 function handleFotoDrop(event) {
     event.preventDefault();
-    document.getElementById('foto-dropzone').classList.remove('border-bc-blue','bg-blue-50');
+    document.getElementById('foto-dropzone').classList.remove('border-marca-700','bg-marca-50');
     const file = event.dataTransfer.files[0];
     if (file && file.type.startsWith('image/')) procesarFotoFile(file);
 }
@@ -607,9 +607,9 @@ function abrirDetProducto(id) {
     const vars = (prod.variantes || []).filter(v => v.activo !== 0);
     const rows = vars.map(v => `
         <tr class="hover:bg-gray-50">
-            <td class="px-3 py-2 font-mono text-xs text-bc-blue font-bold">${v.sku}</td>
+            <td class="px-3 py-2 font-mono text-xs text-marca-700 font-bold">${v.sku}</td>
             <td class="px-3 py-2 text-xs text-gray-800">${v.color}</td>
-            <td class="px-3 py-2 text-xs text-center"><span class="px-2 py-0.5 rounded bg-blue-50 text-blue-600 font-semibold border border-blue-100 text-[11px]">${v.talla}</span></td>
+            <td class="px-3 py-2 text-xs text-center"><span class="px-2 py-0.5 rounded bg-marca-50 text-marca-600 font-semibold border border-marca-100 text-xs">${v.talla}</span></td>
             <td class="px-3 py-2 text-xs text-center text-gray-500">${v.precio_variante ? '$'+Number(v.precio_variante).toFixed(2) : '—'}</td>
         </tr>`).join('');
 
@@ -617,10 +617,10 @@ function abrirDetProducto(id) {
         title: prod.nombre,
         html: `
             <div class="text-left text-xs">
-                <p class="text-gray-500 mb-3"><span class="font-mono font-bold text-blue-600">${prod.numero_pieza}</span> · ${prod.categoria} · ${prod.tipo_tela}</p>
+                <p class="text-gray-500 mb-3"><span class="font-mono font-bold text-marca-600">${prod.numero_pieza}</span> · ${prod.categoria} · ${prod.tipo_tela}</p>
                 ${prod.foto_url ? `<img src="${prod.foto_url}" class="w-full h-32 object-contain rounded-lg mb-3 border border-gray-200">` : ''}
                 <table class="w-full border border-gray-200 rounded-lg overflow-hidden text-left">
-                    <thead class="bg-gray-50 text-[10px] uppercase text-gray-500 border-b border-gray-200">
+                    <thead class="bg-gray-50 text-xs uppercase text-gray-500 border-b border-gray-200">
                         <tr>
                             <th class="px-3 py-2">SKU</th>
                             <th class="px-3 py-2">Color</th>
@@ -632,7 +632,7 @@ function abrirDetProducto(id) {
                 </table>
                 <p class="text-gray-400 mt-2">${vars.length} variante(s) · Stock mínimo: ${prod.stock_minimo} pzas</p>
             </div>`,
-        confirmButtonColor: '#0078d4',
+        confirmButtonColor: '#1f3a5f',
         confirmButtonText: 'Cerrar',
         width: '500px'
     });
