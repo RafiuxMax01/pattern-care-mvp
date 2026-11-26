@@ -1136,7 +1136,7 @@ async function cambiarEstadoSucursalAdmin(id, estado) {
 
                 <div class="pt-3 border-t border-gray-200 flex items-center justify-between font-bold text-xs">
                     <span class="text-gray-600">Total en Toda la Red:</span>
-                    <span class="text-base text-emerald-700">${p.stock_total || p.stock_actual} pzas</span>
+                    <span class="text-base text-gray-900">${p.stock_total || p.stock_actual} pzas</span>
                 </div>
 
                 <div class="pt-2 space-y-1.5">
@@ -1589,9 +1589,9 @@ async function cambiarEstadoSucursalAdmin(id, estado) {
                 html += `
                     <tr class="hover:bg-gray-100">
                         <td class="p-2.5 text-gray-500 tabular-nums">${r.fecha ? r.fecha.substring(0, 16) : 'Reciente'}</td>
-                        <td class="p-2.5 font-bold ${r.tipo_tela === 'SRA' ? 'text-marca-500' : 'text-amber-700'}">${r.tipo_tela}</td>
+                        <td class="p-2.5 font-semibold text-gray-900">${r.tipo_tela}</td>
                         <td class="p-2.5 text-gray-900 font-semibold">${r.metros} m</td>
-                        <td class="p-2.5 text-emerald-700 font-bold">${r.piezas_estimadas} pzas</td>
+                        <td class="p-2.5 text-gray-900 font-semibold tabular-nums">${r.piezas_estimadas} pzas</td>
                         <td class="p-2.5 text-gray-600">${r.sobrante_cm} cm</td>
                         <td class="p-2.5 font-mono text-gray-600">${r.lote_referencia || 'N/A'}</td>
                         <td class="p-2.5 text-gray-500">${r.color || ''}</td>
@@ -1816,7 +1816,7 @@ async function cambiarEstadoSucursalAdmin(id, estado) {
                         <td class="p-3">${badge}</td>
                         <td class="p-3 font-semibold text-gray-700">${m.area}</td>
                         <td class="p-3 text-gray-600 max-w-xs">${m.descripcion_error}</td>
-                        <td class="p-3 text-amber-700 font-medium">${m.material_desperdiciado}</td>
+                        <td class="p-3 text-gray-700">${m.material_desperdiciado}</td>
                         <td class="p-3 text-right font-semibold text-rose-600 tabular-nums">$${parseFloat(m.costo_impacto).toFixed(2)}</td>
                         <td class="p-3 font-mono text-gray-500">${m.lote_afectado || 'N/A'}</td>
                         <td class="p-3 text-gray-500">${m.registrado_por}</td>
@@ -2091,7 +2091,7 @@ async function cambiarEstadoSucursalAdmin(id, estado) {
             bcSearchActiveIndex = -1;
             let html = `
                 <div class="p-2.5 bg-gray-50 border-b border-gray-100 flex items-center justify-between text-xs font-bold text-gray-700">
-                    <span class="flex items-center gap-1.5"><i class="fa-solid fa-bolt text-amber-700"></i> Acciones Frecuentes & Tell Me</span>
+                    <span class="flex items-center gap-1.5"><i class="fa-solid fa-bolt text-gray-400"></i> Acciones frecuentes</span>
                     <span class="text-xs text-gray-400 font-normal">Sugerencias rápidas</span>
                 </div>
                 <div class="py-1">
