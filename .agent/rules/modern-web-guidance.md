@@ -148,6 +148,9 @@ minimum in at least one branch.
 - **No `any`-equivalent patterns** — always validate inputs before use.
 - **No `eval()`**, no `innerHTML` with raw user data (use `textContent` or DOM methods).
 - Use `fetchConSesion()` for calls to `backend/`; plain `fetch` only for public resources.
+- Writes go through `escribirEnServidor(url, payload, mensaje)` when `trabajaConServidor()` is
+  true. If it returns `null`, stop: **never apply the change locally** in server mode. Only the
+  standalone mode writes to `localStorage`.
 - Always handle three UI states: **loading · success · error**.
 - Do not derive state inside event handlers — compute it in dedicated functions.
 - Prefer `const` / `let`; never `var`.
@@ -179,6 +182,8 @@ minimum in at least one branch.
 | Markup or logic in `index.php`                 | Edit `index.html`; `index.php` only serves it     |
 | Auth state in `sessionStorage` / `localStorage` | PHP session + `PatternCareAuth`                 |
 | `fetch('backend/...')` without the session wrapper | `fetchConSesion('backend/...')`               |
+| Falling back to local state when a server write fails | Show the error; `escribirEnServidor()` returns `null` |
+| Creating models/SKUs outside the catalog       | `gestionar_productos.php` (part number sequence)  |
 | A new module without an entry in `PERMISO_POR_MODULO` | Add its permission key (it stays closed otherwise) |
 | `innerHTML = userInput`                        | `textContent = userInput` or DOM API              |
 | `var` declarations                             | `const` / `let`                                   |

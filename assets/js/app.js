@@ -1156,21 +1156,12 @@ async function cambiarEstadoSucursalAdmin(id, estado) {
             if (e) e.stopPropagation();
             const sucursalId = bcState.sucursalActivaId || 1;
 
-            if (bcState.modoBackend === 'mysql') {
-                try {
-                    const res = await fetchConSesion('backend/guardar_inventario.php', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ action: 'ajustar_stock', id: id, sucursal_id: sucursalId, delta: delta })
-                    });
-                    const json = await res.json();
-                    if (json.success) {
-                        sincronizarDatos();
-                        return;
-                    }
-                } catch(err) {
-                    console.error(err);
-                }
+            if (trabajaConServidor()) {
+                const json = await escribirEnServidor('backend/guardar_inventario.php',
+                    { action: 'ajustar_stock', id: id, sucursal_id: sucursalId, delta: delta },
+                    'No se pudo ajustar el stock.');
+                if (json) sincronizarDatos();
+                return;
             }
 
             let detalle = bcState.inventarioDetalle.find(d => d.producto_id == id && d.sucursal_id == sucursalId);
@@ -1281,23 +1272,13 @@ async function cambiarEstadoSucursalAdmin(id, estado) {
                 notas: document.getElementById('trf-notas').value.trim()
             };
 
-            if (bcState.modoBackend === 'mysql') {
-                try {
-                    const res = await fetchConSesion('backend/transferir_stock.php', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(payload)
-                    });
-                    const json = await res.json();
-                    if (!json.success) {
-                        Swal.fire('Error', json.message || 'No fue posible transferir.', 'error');
-                        return;
-                    }
-                    cerrarModalTransferencia();
-                    sincronizarDatos();
-                    Swal.fire({ icon: 'success', title: 'Transferencia Procesada', text: 'Stock actualizado en ambas sucursales.', timer: 1500, showConfirmButton: false });
-                    return;
-                } catch(err) { console.error(err); }
+            if (trabajaConServidor()) {
+                const json = await escribirEnServidor('backend/transferir_stock.php', payload, 'No fue posible transferir.');
+                if (!json) return;
+                cerrarModalTransferencia();
+                sincronizarDatos();
+                Swal.fire({ icon: 'success', title: 'Transferencia Procesada', text: 'Stock actualizado en ambas sucursales.', timer: 1500, showConfirmButton: false });
+                return;
             }
 
             let detOrigen = bcState.inventarioDetalle.find(d => d.producto_id == prodId && d.sucursal_id == origenId);
@@ -1403,6 +1384,19 @@ async function cambiarEstadoSucursalAdmin(id, estado) {
         }
 
         function abrirModalSKU(id = null) {
+            // Con sesión real cada SKU es una variante de un modelo del catálogo
+            // (esquema v2): se crea y se edita allí, que es lo que guarda MySQL.
+            // Este formulario queda para el modo standalone.
+            if (trabajaConServidor()) {
+                if (!id) {
+                    abrirModalProducto();
+                    return;
+                }
+                const sku = bcState.productos.find(x => x.id == id);
+                if (sku && sku.producto_id) abrirModeloDelCatalogo(sku.producto_id);
+                return;
+            }
+
             document.getElementById('form-sku').reset();
             document.getElementById('sku-id').value = '';
             document.getElementById('modal-sku-titulo').innerText = 'Ficha de Producto &bull; Nuevo SKU';
@@ -1455,23 +1449,13 @@ async function cambiarEstadoSucursalAdmin(id, estado) {
                 notas: document.getElementById('sku-notas').value.trim()
             };
 
-            if (bcState.modoBackend === 'mysql') {
-                try {
-                    const res = await fetchConSesion('backend/guardar_inventario.php', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(payload)
-                    });
-                    const json = await res.json();
-                    if (!json.success) {
-                        Swal.fire('Error', json.message, 'error');
-                        return;
-                    }
-                    cerrarModalSKU();
-                    sincronizarDatos();
-                    Swal.fire({ icon: 'success', title: 'Producto Guardado', text: 'Sincronizado en la base de datos de Business Central.', timer: 1500, showConfirmButton: false });
-                    return;
-                } catch(err) { console.error(err); }
+            if (trabajaConServidor()) {
+                const json = await escribirEnServidor('backend/guardar_inventario.php', payload, 'No se pudo guardar el producto.');
+                if (!json) return;
+                cerrarModalSKU();
+                sincronizarDatos();
+                Swal.fire({ icon: 'success', title: 'Producto Guardado', text: 'Sincronizado en la base de datos de Business Central.', timer: 1500, showConfirmButton: false });
+                return;
             }
 
             if (id) {
@@ -1504,19 +1488,10 @@ async function cambiarEstadoSucursalAdmin(id, estado) {
             });
             if (!conf.isConfirmed) return;
 
-            if (bcState.modoBackend === 'mysql') {
-                try {
-                    const res = await fetchConSesion('backend/guardar_inventario.php', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ action: 'eliminar', id: id })
-                    });
-                    const json = await res.json();
-                    if (json.success) {
-                        sincronizarDatos();
-                        return;
-                    }
-                } catch(err) { console.error(err); }
+            if (trabajaConServidor()) {
+                const json = await escribirEnServidor('backend/guardar_inventario.php', { action: 'eliminar', id: id }, 'No se pudo eliminar el producto.');
+                if (json) sincronizarDatos();
+                return;
             }
 
             bcState.productos = bcState.productos.filter(p => p.id != id);
@@ -1574,20 +1549,12 @@ async function cambiarEstadoSucursalAdmin(id, estado) {
                 notas: document.getElementById('sim-notas').value.trim()
             };
 
-            if (bcState.modoBackend === 'mysql') {
-                try {
-                    const res = await fetchConSesion('backend/calcular_rendimiento.php', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(payload)
-                    });
-                    const json = await res.json();
-                    if (json.success) {
-                        sincronizarDatos();
-                        Swal.fire({ icon: 'success', title: 'Cálculo Registrado', text: 'Guardado en MySQL.', timer: 1500, showConfirmButton: false });
-                        return;
-                    }
-                } catch(e) { console.error(e); }
+            if (trabajaConServidor()) {
+                const json = await escribirEnServidor('backend/calcular_rendimiento.php', payload, 'No se pudo registrar el cálculo.');
+                if (!json) return;
+                sincronizarDatos();
+                Swal.fire({ icon: 'success', title: 'Cálculo Registrado', text: 'Guardado en MySQL.', timer: 1500, showConfirmButton: false });
+                return;
             }
 
             const pzas = tipo === 'SRA' ? Math.floor(metros * 6) : Math.floor(metros * 4);
@@ -1764,20 +1731,12 @@ async function cambiarEstadoSucursalAdmin(id, estado) {
                 notas: document.getElementById('orden-notas').value.trim()
             };
 
-            if (bcState.modoBackend === 'mysql') {
-                try {
-                    const res = await fetchConSesion('backend/registrar_produccion.php', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(payload)
-                    });
-                    const json = await res.json();
-                    if (json.success) {
-                        cerrarModalOrden();
-                        sincronizarDatos();
-                        return;
-                    }
-                } catch(e) { console.error(e); }
+            if (trabajaConServidor()) {
+                const json = await escribirEnServidor('backend/registrar_produccion.php', payload, 'No se pudo crear la orden de confección.');
+                if (!json) return;
+                cerrarModalOrden();
+                sincronizarDatos();
+                return;
             }
 
             payload.id = Date.now();
@@ -1788,16 +1747,12 @@ async function cambiarEstadoSucursalAdmin(id, estado) {
         }
 
         async function avanzarFaseOrden(id, nextFase) {
-            if (bcState.modoBackend === 'mysql') {
-                try {
-                    await fetchConSesion('backend/registrar_produccion.php', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ action: 'cambiar_fase', id: id, fase_actual: nextFase })
-                    });
-                    sincronizarDatos();
-                    return;
-                } catch(e) { console.error(e); }
+            if (trabajaConServidor()) {
+                const json = await escribirEnServidor('backend/registrar_produccion.php',
+                    { action: 'cambiar_fase', id: id, fase_actual: nextFase },
+                    'No se pudo avanzar la fase de la orden.');
+                if (json) sincronizarDatos();
+                return;
             }
 
             const o = bcState.ordenes.find(x => x.id == id);
@@ -1814,16 +1769,12 @@ async function cambiarEstadoSucursalAdmin(id, estado) {
             if (!o) return;
             const nuevoEstado = o.estado === 'Detenido / Alerta' ? 'En Proceso' : 'Detenido / Alerta';
 
-            if (bcState.modoBackend === 'mysql') {
-                try {
-                    await fetchConSesion('backend/registrar_produccion.php', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ action: 'cambiar_estado', id: id, estado: nuevoEstado })
-                    });
-                    sincronizarDatos();
-                    return;
-                } catch(e) { console.error(e); }
+            if (trabajaConServidor()) {
+                const json = await escribirEnServidor('backend/registrar_produccion.php',
+                    { action: 'cambiar_estado', id: id, estado: nuevoEstado },
+                    'No se pudo cambiar el estado de la orden.');
+                if (json) sincronizarDatos();
+                return;
             }
 
             o.estado = nuevoEstado;
@@ -1903,20 +1854,12 @@ async function cambiarEstadoSucursalAdmin(id, estado) {
                 registrado_por: document.getElementById('merma-responsable').value
             };
 
-            if (bcState.modoBackend === 'mysql') {
-                try {
-                    const res = await fetchConSesion('backend/control_mermas.php', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(payload)
-                    });
-                    const json = await res.json();
-                    if (json.success) {
-                        cerrarModalMerma();
-                        sincronizarDatos();
-                        return;
-                    }
-                } catch(err) { console.error(err); }
+            if (trabajaConServidor()) {
+                const json = await escribirEnServidor('backend/control_mermas.php', payload, 'No se pudo registrar la merma.');
+                if (!json) return;
+                cerrarModalMerma();
+                sincronizarDatos();
+                return;
             }
 
             payload.id = Date.now();
@@ -1927,16 +1870,10 @@ async function cambiarEstadoSucursalAdmin(id, estado) {
         }
 
         async function eliminarMerma(id) {
-            if (bcState.modoBackend === 'mysql') {
-                try {
-                    await fetchConSesion('backend/control_mermas.php', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ action: 'eliminar', id: id })
-                    });
-                    sincronizarDatos();
-                    return;
-                } catch(e) { console.error(e); }
+            if (trabajaConServidor()) {
+                const json = await escribirEnServidor('backend/control_mermas.php', { action: 'eliminar', id: id }, 'No se pudo eliminar la merma.');
+                if (json) sincronizarDatos();
+                return;
             }
 
             bcState.mermas = bcState.mermas.filter(m => m.id != id);
