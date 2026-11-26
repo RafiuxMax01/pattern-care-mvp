@@ -63,30 +63,78 @@ const PatternCareAuth = {
         return true;
     },
 
-    /** Lee la sesión del servidor al arrancar la aplicación */
+    /**
+     * Lee la sesión del servidor al arrancar la aplicación.
+     *
+     * La sesión de demostración (todos los permisos, datos de ejemplo) solo se
+     * usa cuando no hay PHP detrás: index.html abierto con doble clic o servido
+     * por un servidor estático, que devuelve el .php sin ejecutar. Si PHP
+     * responde con un error (por ejemplo, la base caída), no se entra en modo
+     * demostración: se vuelve a login.html explicando el motivo.
+     */
     async inicializar() {
         authState.cargando = true;
+
+        if (window.location.protocol === 'file:') {
+            return this._entrarEnModoStandalone();
+        }
+
+        let res;
         try {
-            const res = await fetch('backend/auth_sesion.php?action=sesion', {
+            res = await fetch('backend/auth_sesion.php?action=sesion', {
                 credentials: 'same-origin',
                 cache: 'no-store'
             });
-            if (!res.ok) throw new Error('Respuesta no válida del servidor de sesión');
-
-            const json = await res.json();
-            authState.modo = 'servidor';
-            authState.sesion = json.data || null;
         } catch (err) {
-            // index.html abierto con doble clic: no hay backend que consultar
-            authState.modo = 'standalone';
-            authState.sesion = SESION_STANDALONE;
+            // El servidor que sirvió la página ya no contesta
+            authState.cargando = false;
+            irAPantallaAcceso('sin-servidor');
+            return null;
         }
+
+        const cuerpo = await res.text().catch(() => '');
+        let json = null;
+        try {
+            json = JSON.parse(cuerpo);
+        } catch (err) {
+            json = null;
+        }
+
+        if (json === null || typeof json !== 'object') {
+            // No hay PHP: el servidor estático entrega el .php sin ejecutar, o
+            // el backend no existe. Cualquier otra respuesta sin JSON (como la
+            // página de un error fatal de PHP) es un fallo y no abre la demo.
+            const sinPhp = res.status === 404 || (res.ok && cuerpo.trimStart().startsWith('<?php'));
+            if (sinPhp) {
+                return this._entrarEnModoStandalone();
+            }
+            authState.cargando = false;
+            irAPantallaAcceso('sin-servidor');
+            return null;
+        }
+
         authState.cargando = false;
+
+        if (!res.ok || !json.success) {
+            irAPantallaAcceso('sin-servidor');
+            return null;
+        }
+
+        authState.modo = 'servidor';
+        authState.sesion = json.data || null;
 
         if (!authState.sesion) {
             irAPantallaAcceso();
             return null;
         }
+        notificarCambioDeSesion();
+        return authState.sesion;
+    },
+
+    _entrarEnModoStandalone() {
+        authState.modo = 'standalone';
+        authState.sesion = SESION_STANDALONE;
+        authState.cargando = false;
         notificarCambioDeSesion();
         return authState.sesion;
     },
@@ -190,7 +238,7 @@ function mostrarAvisoAcceso(mensaje, tipo = 'error') {
 // ─────────────────────────────────────────────────────────
 // PETICIONES CON SESIÓN
 // Envuelve a fetch() para enviar la cookie de sesión y traducir
-// las respuestas 401 / 403 del middleware a la interfaz.
+// las respuestas 401 / 403 / 503 del middleware a la interfaz.
 // ─────────────────────────────────────────────────────────
 async function fetchConSesion(url, opciones = {}) {
     const res = await fetch(url, Object.assign({ credentials: 'same-origin' }, opciones));
@@ -198,8 +246,10 @@ async function fetchConSesion(url, opciones = {}) {
     if (res.status === 401) {
         authState.sesion = null;
         irAPantallaAcceso('expirada');
-    } else if (res.status === 403) {
-        let mensaje = 'No tienes permiso para esa operación.';
+    } else if (res.status === 403 || res.status === 503) {
+        let mensaje = res.status === 403
+            ? 'No tienes permiso para esa operación.'
+            : 'La base de datos no está disponible. Intenta de nuevo en unos minutos.';
         try {
             const cuerpo = await res.clone().json();
             if (cuerpo && cuerpo.message) mensaje = cuerpo.message;

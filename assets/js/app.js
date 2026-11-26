@@ -368,6 +368,18 @@
                 }
                 throw new Error('Servidor offline');
             } catch (err) {
+                // Con sesión real no se sustituyen los datos por los de ejemplo:
+                // se avisa y se conservan los últimos datos cargados del servidor.
+                if (PatternCareAuth.modo === 'servidor') {
+                    badgeDiv.className = 'flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-rose-50 text-rose-700 border border-rose-300';
+                    badgeDiv.title = 'No se pudieron cargar los datos del servidor. Pulsa sincronizar para reintentar.';
+                    badgeDiv.onclick = null;
+                    badgeDiv.innerHTML = '<span class="w-2 h-2 rounded-full bg-rose-500"></span><span class="hidden sm:inline">Sin conexión con la base de datos</span>';
+                    mostrarAvisoAcceso('No se pudieron cargar los datos del servidor. Lo que ves puede no estar actualizado; pulsa sincronizar para reintentar.', 'error');
+                    if (syncIcon) syncIcon.classList.remove('fa-spin');
+                    return;
+                }
+
                 bcState.modoBackend = 'local_storage';
                 cargarDesdeLocalStorage();
 

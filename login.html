@@ -552,14 +552,31 @@
       const motivo = new URLSearchParams(window.location.search).get('motivo');
       if (motivo === 'expirada') {
         showAlert('login-alert', 'Tu sesión terminó. Vuelve a identificarte.', 'info');
+      } else if (motivo === 'sin-servidor') {
+        showAlert('login-alert', '⚠️ No se pudo verificar tu sesión: el servidor o la base de datos no responden. Intenta de nuevo en unos minutos.');
       }
 
       try {
         const res = await fetch(API_SESION + '?action=sesion', { credentials: 'same-origin', cache: 'no-store' });
-        const json = await res.json();
+        const cuerpo = await res.text();
+        let json;
+        try {
+          json = JSON.parse(cuerpo);
+        } catch (err) {
+          // Sin PHP (servidor estático o backend ausente): misma demo que por file://
+          if (res.status === 404 || (res.ok && cuerpo.trimStart().startsWith('<?php'))) {
+            window.location.replace('index.html');
+            return;
+          }
+          showAlert('login-alert', '⚠️ El servidor respondió con un error. Intenta de nuevo en unos minutos.');
+          return;
+        }
         if (json.success && json.data) {
           window.location.replace(DESTINO);
           return;
+        }
+        if (!res.ok) {
+          showAlert('login-alert', '⚠️ ' + (json.message || 'El servidor no está disponible en este momento.'));
         }
       } catch (err) {
         // Sin respuesta del servidor: se queda en el formulario
